@@ -9,6 +9,7 @@
 #include <inttypes.h>
 #include <iostream>
 #include "sha256.hpp"
+#include "Transaction.hpp"
 
 #define MAXNONCE 1000000
 
@@ -24,23 +25,23 @@ private:
     string PrepareData();
     uint32_t *m_target;
     Block *m_block;
-    uint32_t m_nonce;
+    uint64_t m_nonce;
 };
 
 class Block{
 public:
     ~Block();
     Block();
-    Block(int64_t timeStamp, string data, uint32_t *prevBlockHash, uint32_t *hash, int64_t nonce);
+    Block(int64_t timeStamp, Transaction *tx, uint32_t *prevBlockHash, uint32_t *hash, int64_t nonce);
     
     uint64_t getTimeStamp();
-    string   getData();
+    Transaction *getTransaction();
     uint32_t*getPrevBlockHash();
     uint32_t*getHash();
-    int64_t  getNonce();
+    uint64_t  getNonce();
     
     void setTimeStamp(int64_t timeStamp);
-    void setData(string data);
+    void setTransaction(Transaction *trans);
     void setNonce(uint64_t nonce);
     void setPrevBlockHash(uint32_t *hash);
     void setHash(uint32_t *hash);
@@ -50,10 +51,10 @@ public:
     
 private:
     int64_t m_timeStamp;
-    string m_data;
+    Transaction *m_tx;
     uint32_t *m_prevBlockHash;
     uint32_t *m_hash;
-    int64_t m_nonce;
+    uint64_t m_nonce;
     
     friend ProofOfWork;
     friend Block *decode(uint8_t *dec);

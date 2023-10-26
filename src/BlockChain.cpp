@@ -24,6 +24,7 @@ BlockChain::BlockChain(){
         leveldb::DB::Open(options, "/Users/yasha_nev/projects/BlockChain/BlockChain/testdb", &m_db);
         
         Block *block = genesisBlock();
+
         size_t block_size = 0;
         uint8_t *enc_block = block->encode(&block_size);
         memcpy(cur_hash, block->getHash(), sizeof(uint32_t) * 8);
@@ -34,7 +35,6 @@ BlockChain::BlockChain(){
         
         m_db->Put(leveldb::WriteOptions(), key, value);
         m_db->Put(leveldb::WriteOptions(), "l", value_hash);
-        
         delete block;
         delete[] enc_block;
     }
@@ -44,25 +44,36 @@ BlockChain::~BlockChain(){
     delete m_db;
 }
 
-void BlockChain::addBlock(string data){
-    Block *block_n = newBlock(data, cur_hash);
+void BlockChain::addBlock(string from, string to, int value){
+    Transaction *tx = new Transaction(0, 0, 0);
+    Block *block_n = newBlock(tx, cur_hash);
     
     size_t block_size = 0;
     uint8_t *enc_block = block_n->encode(&block_size);
     
     leveldb::Slice key((char *) block_n->getHash(), sizeof(uint32_t) * 8);
-    leveldb::Slice value((char *)enc_block, block_size);
-    m_db->Put(leveldb::WriteOptions(), key, value);
+    leveldb::Slice key_value((char *)enc_block, block_size);
+    m_db->Put(leveldb::WriteOptions(), key, key_value);
     m_db->Put(leveldb::WriteOptions(), "l", key);
     
     memcpy(cur_hash, block_n->getHash(), sizeof(uint32_t) * 8);
+    
+    delete tx;
+    delete block_n;
 }
 
 Block* BlockChain::genesisBlock(){
     uint32_t zero_hash[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    Block *block_n = newBlock("genesis block", zero_hash);
+    
+    Transaction * coinBase = coinBaseTrans("yasha");
+    
+    Block *block_n = newBlock(coinBase, zero_hash);
+    
+    
     array2String(block_n->getHash());
     memcpy(cur_hash, block_n->getHash(), sizeof(uint32_t) * 8);
+    
+    delete coinBase;
     return block_n;
 }
 
@@ -74,17 +85,19 @@ void BlockChain::printChain(){
         }
         Block *block = decode((uint8_t *) it->value().ToString().c_str());
         block->print();
+        
         delete block;
     }
     delete it;
 }
 
-Block *BlockChain::newBlock(string Data, uint32_t *prevHashBlock){
+Block *BlockChain::newBlock(Transaction *tx, uint32_t *prevHashBlock){
     Block *block_n = new Block( static_cast<uint64_t>(std::time(nullptr)),
-                               Data,
+                               tx,
                                prevHashBlock,
                                new uint32_t[8],
                                0);
+    
     ProofOfWork pow(block_n);
     pow.Run();
     return block_n;

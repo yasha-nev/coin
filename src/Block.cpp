@@ -1,8 +1,8 @@
 #include "Block.hpp"
 
-Block::Block(int64_t timeStamp, string data, uint32_t *prevBlockHash, uint32_t *hash, int64_t nonce){
+Block::Block(int64_t timeStamp, Transaction *tx, uint32_t *prevBlockHash, uint32_t *hash, int64_t nonce){
     m_timeStamp = timeStamp;
-    m_data = data;
+    m_tx = new Transaction(tx);
     m_prevBlockHash = new uint32_t[8];
     m_hash = new uint32_t[8];
     m_nonce = nonce;
@@ -12,7 +12,7 @@ Block::Block(int64_t timeStamp, string data, uint32_t *prevBlockHash, uint32_t *
 
 Block::Block(){
     m_timeStamp = 0;
-    m_data = "";
+    m_tx = new Transaction(0, 0, 0);
     m_prevBlockHash = new uint32_t[8];
     m_hash = new uint32_t[8];
     m_nonce = 0;
@@ -26,14 +26,17 @@ Block::~Block(){
     if (m_prevBlockHash){
         delete[] m_prevBlockHash;
     }
+    if (m_tx){
+        delete m_tx;
+    }
 }
 
 uint64_t Block::getTimeStamp(){
     return m_timeStamp;
 }
 
-string Block::getData(){
-    return m_data;
+Transaction *Block::getTransaction(){
+    return m_tx;
 }
 
 uint32_t *Block::getPrevBlockHash(){
@@ -44,7 +47,7 @@ uint32_t *Block::getHash(){
     return m_hash;
 }
 
-int64_t Block::getNonce(){
+uint64_t Block::getNonce(){
     return m_nonce;
 }
 
@@ -52,8 +55,9 @@ void Block::setTimeStamp(int64_t timeStamp){
     m_timeStamp = timeStamp;
 }
 
-void Block::setData(string data){
-    m_data = data;
+void Block::setTransaction(Transaction *tx){
+    delete m_tx;
+    m_tx = new Transaction(tx);
 }
 
 void Block::setNonce(uint64_t nonce){
@@ -70,25 +74,20 @@ void Block::setHash(uint32_t *hash){
 
 uint8_t *Block::encode(size_t *blockSize){
     *blockSize = sizeof(uint64_t) +
-        sizeof(int) + sizeof(char) * m_data.size() +
+        m_tx->size() +  
         sizeof(uint32_t) * 8 +
         sizeof(uint32_t) * 8 +
-        sizeof(int);
+        sizeof(uint64_t);
     
     uint8_t *enc = new uint8_t[*blockSize];
     uint8_t *ptr = enc;
-    uint64_t char_count = m_data.size();
     
     std::memcpy(ptr, &m_timeStamp, sizeof(uint64_t));
     ptr += sizeof(uint64_t);
     
-    std::memcpy(ptr, &char_count, sizeof(uint64_t));
-    ptr += sizeof(uint64_t);
+    m_tx->encode(ptr);
     
-    for (int i = 0; i < m_data.size(); i++){
-         *ptr = m_data[i];
-        ptr += sizeof(uint8_t);
-    }
+    ptr += m_tx->size();
     
     std::memcpy(ptr, m_prevBlockHash, sizeof(uint32_t) * 8);
     ptr += sizeof(uint32_t) * 8;
@@ -96,32 +95,21 @@ uint8_t *Block::encode(size_t *blockSize){
     std::memcpy(ptr, m_hash, sizeof(uint32_t) * 8);
     ptr += sizeof(uint32_t) * 8;
     
-    std::memcpy(ptr, &m_nonce, sizeof(int));
-        
+    std::memcpy(ptr, &m_nonce, sizeof(uint64_t));
+    
     return enc;
 }
 
 Block* decode(uint8_t *dec){
     Block *block = new Block();
     uint8_t *ptr = dec;
-    uint64_t char_count = 0;
     
     std::memcpy(&block->m_timeStamp, ptr, sizeof(uint64_t));
     ptr += sizeof(uint64_t);
     
-    std::memcpy(&char_count, ptr, sizeof(uint64_t));
-    ptr += sizeof(uint64_t);
+    block->m_tx->decode(ptr);
     
-    // Это вообще веселая штука, я не знаю как сделать чтоб memcpy корректно копироват char объекты без артефактов
-    // std::memcpy(str, ptr, sizeof(str) / sizeof(str[0]));
-    // Потому что char[] = "abc" => {'a', 'b', 'c', '\0'}
-    // пока так
-    
-    block->m_data = "";
-    for (int i = 0; i < char_count; i++){
-        block->m_data += (char) *ptr;
-        ptr += sizeof(uint8_t);
-    }
+    ptr += block->m_tx->size();
     
     std::memcpy(block->m_prevBlockHash, ptr, sizeof(uint32_t) * 8);
     ptr += sizeof(uint32_t) * 8;
@@ -129,17 +117,32 @@ Block* decode(uint8_t *dec){
     std::memcpy(block->m_hash, ptr, sizeof(uint32_t) * 8);
     ptr += sizeof(uint32_t) * 8;
 
-    std::memcpy(&block->m_nonce, ptr, sizeof(int));
+    std::memcpy(&block->m_nonce, ptr, sizeof(uint64_t));
     
     return block;
 }
 
 void Block::print(){
+    cout << "************** BLOCK **************\n";
     cout << "time: " << m_timeStamp << "\n";
-    cout << "Data: " << m_data << "\n";
+    cout << "transaction id: " << m_tx->id << "\n";
+    cout << "_______________TXINTput____________\n";
+    for (int i = 0; i < m_tx->in_count; i++){
+        cout << "transaction id: " << m_tx->in->tranId << "\n";
+        cout << "index: " << m_tx->in->outIndex << "\n";
+        cout << "pubkey from: " << m_tx->in->pubkey << "\n";
+    }
+    
+    cout << "_______________TXOUTPUT____________" << "\n";
+    for (int i = 0; i < m_tx->out_count; i++){
+        cout << "value: " << m_tx->out->value << "\n";
+        cout << "pubkey to: " << m_tx->out->pubkey << "\n";
+    }
+    
     cout << "Nonce: " << m_nonce << "\n";
     cout << "Hash: " << array2String(m_hash) << "\n";
-    cout << "PrevHash: " <<array2String(m_prevBlockHash) << "\n\n";
+    cout << "PrevHash: " <<array2String(m_prevBlockHash) << "\n";
+    cout << "*********************************** \n\n";
 }
 
 void printBigInt(uint32_t *bigint){
@@ -189,7 +192,7 @@ ProofOfWork::~ProofOfWork(){
 string ProofOfWork::PrepareData(){
     string data;
     data += to_string(m_block->getTimeStamp());
-    data += m_block->getData();
+    data += m_block->m_tx->toString();
     data += array2String(m_block->getPrevBlockHash());
     data += to_string(m_nonce);
     return data;
