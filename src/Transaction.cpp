@@ -33,7 +33,7 @@ Transaction::Transaction(Transaction *tx){
     
     if (out_count > 0){
         out = new struct TXOutput[out_count];
-        for (int i = 0; i < in_count; i++){
+        for (int i = 0; i < out_count; i++){
             out[i].value = tx->out[i].value;
             out[i].pubkey = tx->out[i].pubkey;
         }
@@ -59,14 +59,14 @@ size_t Transaction::size(){
         s += sizeof(uint64_t);
         s += sizeof(int);
         s += sizeof(size_t);
-        s += sizeof(char) * in->pubkey.size();
+        s += sizeof(char) * in[i].pubkey.size();
     }
     
     s += sizeof(int);
     for (int i = 0; i < out_count; i++){
         s += sizeof(int);
         s += sizeof(size_t);
-        s += sizeof(char) * out->pubkey.size();
+        s += sizeof(char) * out[i].pubkey.size();
     }
     
     return s;
@@ -80,18 +80,18 @@ void Transaction::encode(uint8_t *ptr){
     ptr += sizeof(int);
     
     for (int i = 0; i < in_count; i++){
-        std::memcpy(ptr, &in->tranId, sizeof(uint64_t));
+        std::memcpy(ptr, &in[i].tranId, sizeof(uint64_t));
         ptr += sizeof(uint64_t);
         
-        std::memcpy(ptr, &in->outIndex, sizeof(int));
+        std::memcpy(ptr, &in[i].outIndex, sizeof(int));
         ptr += sizeof(int);
         
-        size_t pub_size = in->pubkey.size();
+        size_t pub_size = in[i].pubkey.size();
         std::memcpy(ptr, &pub_size, sizeof(size_t));
         ptr += sizeof(size_t);
         
         for (int j = 0; j < pub_size; j++){
-            *ptr = in->pubkey[j];
+            *ptr = in[i].pubkey[j];
             ptr += sizeof(char);
         }
     }
@@ -100,15 +100,15 @@ void Transaction::encode(uint8_t *ptr){
     ptr += sizeof(int);
     
     for (int i = 0; i < out_count; i++){
-        std::memcpy(ptr, &out->value, sizeof(int));
+        std::memcpy(ptr, &out[i].value, sizeof(int));
         ptr += sizeof(int);
-        size_t pub_size = out->pubkey.size();
+        size_t pub_size = out[i].pubkey.size();
         
         std::memcpy(ptr, &pub_size, sizeof(size_t));
         ptr += sizeof(size_t);
         
         for (int j = 0; j < pub_size; j++){
-            *ptr = out->pubkey[j];
+            *ptr = out[i].pubkey[j];
             ptr += sizeof(char);
         }
     }
@@ -130,10 +130,10 @@ void Transaction::decode(uint8_t *ptr){
     
     in = new TXInput[in_count];
     for (int i = 0; i < in_count; i++){
-        std::memcpy(&in->tranId, ptr, sizeof(uint64_t));
+        std::memcpy(&in[i].tranId, ptr, sizeof(uint64_t));
         ptr += sizeof(uint64_t);
         
-        std::memcpy(&in->outIndex, ptr, sizeof(int));
+        std::memcpy(&in[i].outIndex, ptr, sizeof(int));
         ptr += sizeof(int);
         
         size_t pub_size = 0;
@@ -141,7 +141,7 @@ void Transaction::decode(uint8_t *ptr){
         ptr += sizeof(size_t);
         
         for (int j = 0; j < pub_size; j++){
-            in->pubkey += *ptr;
+            in[i].pubkey += *ptr;
             ptr += sizeof(char);
         }
     }
@@ -151,7 +151,7 @@ void Transaction::decode(uint8_t *ptr){
     
     out = new TXOutput[out_count];
     for (int i = 0; i < out_count; i++){
-        std::memcpy(&out->value, ptr, sizeof(int));
+        std::memcpy(&out[i].value, ptr, sizeof(int));
         ptr += sizeof(int);
         
         size_t pub_size = 0;
@@ -159,12 +159,10 @@ void Transaction::decode(uint8_t *ptr){
         ptr += sizeof(size_t);
         
         for (int j = 0; j < pub_size; j++){
-            out->pubkey += *ptr;
+            out[i].pubkey += *ptr;
             ptr += sizeof(char);
         }
     }
-    
-    cout << "pubkeys: " << in->pubkey << " " << out->pubkey << "\n";
 }
 
 string Transaction::toString(){
@@ -172,37 +170,76 @@ string Transaction::toString(){
     result += to_string(id);
     result += to_string(in_count);
     for (int i = 0; i < in_count; i++){
-        result += to_string(in->tranId);
-        result += to_string(in->outIndex);
-        result += in->pubkey;
+        result += to_string(in[i].tranId);
+        result += to_string(in[i].outIndex);
+        result += in[i].pubkey;
     }
     result += to_string(out_count);
     for (int i = 0; i < out_count; i++){
-        result += to_string(out->value);
-        result += out->pubkey;
+        result += to_string(out[i].value);
+        result += out[i].pubkey;
     }
     
     return result;
 }
 
 Transaction *coinBaseTrans(string pubkey){
-    Transaction *TX = new Transaction(15, 1, 1);
+    Transaction *TX = new Transaction(0, 0, 1);
     TX->id = 0;
     
     // Транзакция не ссылается ни на какие выходы
     // Отправителя нет
     
     
-    TX->in_count = 1;
+    /*TX->in_count = 1;
     TX->in->tranId = 0;
     TX->in->outIndex = 0;
-    TX->in->pubkey += pubkey;
+    TX->in->pubkey += pubkey;*/
     
     //REWARD - награза 50бит
     //Кому - майнеру
     TX->out_count = 1;
     TX->out->value = REWARD;
     TX->out->pubkey += pubkey;
+    
+    return TX;
+}
+
+Transaction *simpleTrans(uint64_t id, string pubkey, int value){
+    Transaction *TX = new Transaction(id, 0, 1);
+    TX->id = id;
+    TX->out_count = 1;
+    TX->out->value = value;
+    TX->out->pubkey += pubkey;
+    
+    return TX;
+}
+
+Transaction *realTransaction(uint64_t id, string from, string to, int value, list<TXInput> inputs, int rest){
+    int out_count = 1;
+    if (rest > 0){
+        out_count++;
+    }
+    
+    Transaction *TX = new Transaction(id, (int) inputs.size(), out_count);
+    
+    int i = 0;
+    std::list<TXInput>::iterator it;
+    for (it = inputs.begin(); it != inputs.end(); it++){
+        TX->in[i].tranId = it->tranId;
+        TX->in[i].outIndex = it->outIndex;
+        TX->in[i].pubkey = it->pubkey;
+        i++;
+    }
+    
+    TX->out_count = out_count;
+    TX->out[0].value = value;
+    TX->out[0].pubkey += to;
+    
+    if (rest > 0){
+        TX->out[1].value = rest;
+        TX->out[1].pubkey += from;
+    }
     
     return TX;
 }

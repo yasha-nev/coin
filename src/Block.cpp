@@ -123,26 +123,28 @@ Block* decode(uint8_t *dec){
 }
 
 void Block::print(){
-    cout << "************** BLOCK **************\n";
-    cout << "time: " << m_timeStamp << "\n";
-    cout << "transaction id: " << m_tx->id << "\n";
-    cout << "_______________TXINTput____________\n";
+    cout <<setfill('=') << setw(40) << "BLOCK" << setfill('=') << setw(40) << "\n";
+    cout << "|time: "  << m_timeStamp << "\n";
+    cout << "|transaction id: "  << m_tx->id << "\n";
+    cout << "|Nonce: " <<  m_nonce << "\n";
+    cout << "|Hash: " <<  array2String(m_hash) << "\n";
+    cout << "|PrevHash: " << array2String(m_prevBlockHash) << "\n";
+    cout << "|" << setfill('_') << setw(39) << "TXINPUTS" << setfill('_') << setw(40) << "\n";
+    
     for (int i = 0; i < m_tx->in_count; i++){
-        cout << "transaction id: " << m_tx->in->tranId << "\n";
-        cout << "index: " << m_tx->in->outIndex << "\n";
-        cout << "pubkey from: " << m_tx->in->pubkey << "\n";
+        cout << "|output id : "  << m_tx->in[i].tranId << "\n";
+        cout << "|index: "  <<  m_tx->in[i].outIndex << "\n";
+        cout << "|pubkey from: "  <<  m_tx->in[i].pubkey << "\n";
+        cout << "|" << setfill('-') << setw(79) << "\n";
     }
-    
-    cout << "_______________TXOUTPUT____________" << "\n";
+    cout << "|" << setfill('_') << setw(39) << "TXOUTPUTS" << setfill('_') << setw(40) << "\n";
     for (int i = 0; i < m_tx->out_count; i++){
-        cout << "value: " << m_tx->out->value << "\n";
-        cout << "pubkey to: " << m_tx->out->pubkey << "\n";
+        cout << "|value: " <<  m_tx->out[i].value << "\n";
+        cout << "|pubkey to: " <<  m_tx->out[i].pubkey << "\n";
+        cout << "|" << setfill('-') << setw(79) << "\n";
     }
     
-    cout << "Nonce: " << m_nonce << "\n";
-    cout << "Hash: " << array2String(m_hash) << "\n";
-    cout << "PrevHash: " <<array2String(m_prevBlockHash) << "\n";
-    cout << "*********************************** \n\n";
+    cout <<setfill('=') << setw(80) << "\n" << endl;;
 }
 
 void printBigInt(uint32_t *bigint){
@@ -202,13 +204,13 @@ void ProofOfWork::Run(){
     m_nonce = 0;
     uint32_t *hash;
     sha256 Crypto;
-    
+    cout << "==============Block Hashing==============\n";
     while (m_nonce < MAXNONCE){
         string data = PrepareData();
         hash = Crypto.Hash(data);
         
         if (m_nonce % 100000 == 0){
-            cout << m_nonce << endl;
+            cout << ">";
         }
         
         if (bigIntCmp(hash, m_target) == -1){
@@ -218,4 +220,7 @@ void ProofOfWork::Run(){
         }
         m_nonce += 1;
     }
+    
+    
+    cout << "\n" << endl;
 }

@@ -3,6 +3,7 @@
 
 #include <inttypes.h>
 #include <string>
+#include <list>
 
 #define REWARD 50
 
@@ -40,7 +41,6 @@ struct TXInput{
 
 //Выплата за майнинг, pubkey - адрес майнера
 Transaction *coinBaseTrans(string pubkey);
-//void freeTransaction(Transaction **tx);
-//string transactionToString(Transaction *tx);
-//void cpyTransaction(Transaction *tx_left, Transaction *tx_right);
+Transaction *simpleTrans(uint64_t id, string pubkey, int value);
+Transaction *realTransaction(uint64_t id, string from, string to, int value, list<TXInput> inputs, int rest);
 #endif /* Transaction_hpp */

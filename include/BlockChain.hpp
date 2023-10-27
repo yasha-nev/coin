@@ -1,8 +1,9 @@
 #ifndef BlockChain_hpp
 #define BlockChain_hpp
 
-#include <leveldb/db.h>
+#include "DB.hpp"
 #include "Block.hpp"
+#include <list>
 
 using namespace std;
 
@@ -10,17 +11,18 @@ class BlockChain{
 public:
     BlockChain();
     ~BlockChain();
-    TXOutput *getOutputs(string from, int value, int *count);
+    uint64_t getBalance(string user);
     void addBlock(string from, string to, int value);
     void printChain();
     Block *getBlock(uint32_t *hash);
     
 private:
+    list<TXInput> createInputs(string from, int valuem, int *rest);
     Block *newBlock(Transaction *tx, uint32_t *prevHashBlock);
     Block *genesisBlock();
     uint32_t cur_hash[8];
-    
-    leveldb::DB* m_db;
+    uint64_t blocksIDs;
+    DB m_db;
 };
 
 #endif

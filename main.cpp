@@ -1,20 +1,55 @@
 #include <iostream>
 #include "BlockChain.hpp"
 
-
-#include <assert.h>
-#include <leveldb/db.h>
-
-
 using namespace std;
+
+void CLI(BlockChain *bc){
+    while (true){
+        string command;
+        cout << "CLI>";
+        cin >> command;
+        
+        if (command == "send"){
+            string from;
+            string to;
+            int value;
+            
+            cout << "from: ";
+            cin >> from;
+            
+            cout << "to: ";
+            cin >> to;
+            cout << "value: ";
+            cin >> value;
+            
+            bc->addBlock(from, to, value);
+        }
+    
+        else if (command == "balance"){
+            string user;
+            
+            cout << "user: ";
+            cin >> user;
+            bc->getBalance(user);
+        }
+        
+        else if (command == "print"){
+            bc->printChain();
+        }
+        
+        else if (command == "quit"){
+            break;
+        }
+        
+        else{
+            continue;
+        }
+    }
+}
 
 
 int main(int argc, const char * argv[]) {
     BlockChain bc;
-    
-    //bc.addBlock("Send 1 btc to yasha");
-    //bc.addBlock("Send 2 btc to Oleg");
-    
-    bc.printChain();
+    CLI(&bc);
     return 0;
 }

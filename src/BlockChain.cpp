@@ -9,57 +9,54 @@ static inline bool file_exist (const std::string& name) {
     }
 }
 
+static bool checkFirstBlock(const uint32_t *hash){
+    bool flag = true;
+    
+    for (int i = 0; i < 8; i++){
+        if (hash[i] != 0) {
+            flag = false;
+        }
+    }
+    
+    return flag;
+}
+
 BlockChain::BlockChain(){
-    if (file_exist("/Users/yasha_nev/projects/BlockChain/BlockChain/testdb")){
-        leveldb::Options options;
-        leveldb::DB::Open(options, "/Users/yasha_nev/projects/BlockChain/BlockChain/testdb", &m_db);
-        
-        string hash;
-        m_db->Get(leveldb::ReadOptions(), "l", &hash);
-        memcpy(cur_hash, hash.c_str(), sizeof(uint32_t) * 8);
+    if (file_exist(DBPATH)){
+        m_db.connect();
+        string current_hash = m_db.getCurrentHash();
+        memcpy(cur_hash, current_hash.c_str(), sizeof(uint32_t) * 8);
+        blocksIDs = m_db.getCurrentId((uint32_t *) current_hash.c_str());
     }
     else{
-        leveldb::Options options;
-        options.create_if_missing = true;
-        leveldb::DB::Open(options, "/Users/yasha_nev/projects/BlockChain/BlockChain/testdb", &m_db);
-        
+        m_db.connectIfexist();
         Block *block = genesisBlock();
-
-        size_t block_size = 0;
-        uint8_t *enc_block = block->encode(&block_size);
         memcpy(cur_hash, block->getHash(), sizeof(uint32_t) * 8);
-        
-        leveldb::Slice key((char *) block->getHash(), sizeof(uint32_t) * 8);
-        leveldb::Slice value((char *)enc_block, block_size);
-        leveldb::Slice value_hash((char *)block->getHash(), block_size);
-        
-        m_db->Put(leveldb::WriteOptions(), key, value);
-        m_db->Put(leveldb::WriteOptions(), "l", value_hash);
+        m_db.putBlock(block);
+        blocksIDs = 0;
         delete block;
-        delete[] enc_block;
     }
 }
 
 BlockChain::~BlockChain(){
-    delete m_db;
 }
 
 void BlockChain::addBlock(string from, string to, int value){
-    Transaction *tx = new Transaction(0, 0, 0);
+    blocksIDs++;
+    int rest;
+    //Transaction *tx = simpleTrans(blocksIDs, to, value);
+    list<TXInput> inputs = createInputs(from, value, &rest);
+    
+    if (inputs.empty()){
+        cout << "not money" << endl;
+        return;
+    }
+    Transaction *tx = realTransaction(blocksIDs, from, to, value, inputs, rest);
     Block *block_n = newBlock(tx, cur_hash);
-    
-    size_t block_size = 0;
-    uint8_t *enc_block = block_n->encode(&block_size);
-    
-    leveldb::Slice key((char *) block_n->getHash(), sizeof(uint32_t) * 8);
-    leveldb::Slice key_value((char *)enc_block, block_size);
-    m_db->Put(leveldb::WriteOptions(), key, key_value);
-    m_db->Put(leveldb::WriteOptions(), "l", key);
-    
+    m_db.putBlock(block_n);
     memcpy(cur_hash, block_n->getHash(), sizeof(uint32_t) * 8);
-    
-    delete tx;
     delete block_n;
+    delete tx;
 }
 
 Block* BlockChain::genesisBlock(){
@@ -78,17 +75,17 @@ Block* BlockChain::genesisBlock(){
 }
 
 void BlockChain::printChain(){
-    leveldb::Iterator *it = m_db->NewIterator(leveldb::ReadOptions());
-    for (it->SeekToFirst(); it->Valid(); it->Next()){
-        if (it->key().ToString() == "l"){
-            continue;
-        }
-        Block *block = decode((uint8_t *) it->value().ToString().c_str());
+    uint32_t hash[8];
+    
+    memcpy(hash, cur_hash, sizeof(uint32_t) * 8);
+    string blc;
+    
+    while (!checkFirstBlock(hash)){
+        Block *block = getBlock((uint32_t *) hash);
+        memcpy(hash, block->getPrevBlockHash(), sizeof(uint32_t) * 8);
         block->print();
-        
         delete block;
     }
-    delete it;
 }
 
 Block *BlockChain::newBlock(Transaction *tx, uint32_t *prevHashBlock){
@@ -104,8 +101,134 @@ Block *BlockChain::newBlock(Transaction *tx, uint32_t *prevHashBlock){
 }
 
 Block *BlockChain::getBlock(uint32_t *hash){
-    string dec_block;
-    leveldb::Slice key((char *) hash, sizeof(uint32_t) * 8);
-    m_db->Get(leveldb::ReadOptions(), key, &dec_block);
-    return decode((uint8_t *) dec_block.c_str());
+    return m_db.getBlockByHash(hash);
+}
+
+TXOutput *getOutputs(string from, int value, int *count){
+    return nullptr;
+}
+
+uint64_t BlockChain::getBalance(string user){
+    uint64_t sum = 0;
+    uint32_t hash[8];
+    
+    struct outIds{
+        uint64_t id;
+        int outIndex;
+    };
+    
+    struct outIds outIds[blocksIDs];
+    size_t it = 0;
+    
+    memcpy(hash, cur_hash, sizeof(uint32_t) * 8);
+    string blc;
+    
+    while (!checkFirstBlock(hash)){
+        Block *block = getBlock((uint32_t *) hash);
+        memcpy(hash, block->getPrevBlockHash(), sizeof(uint32_t) * 8);
+        
+        Transaction *tx = block->getTransaction();
+        
+        int l = 0;
+        for (; l < it; l++){
+            if (tx->id == outIds[l].id){
+                break;
+            }
+        }
+        
+        for (int i = 0; i < tx->out_count; i++){
+            if (tx->out[i].pubkey == user){
+                if (l < it && outIds[l].outIndex == i){
+                    break;
+                }
+                
+                sum += tx->out[i].value;
+            }
+        }
+        
+        for (int i = 0; i < tx->in_count; i++){
+            if (tx->in[i].pubkey == user){
+                outIds[it].id = tx->in[i].tranId;
+                outIds[it].outIndex = tx->in[i].outIndex;
+                it++;
+            }
+        }
+        
+        delete block;
+    }
+    cout << "=================Balance=================\n";
+    cout << "user: " << sum << "\n" << endl;
+    
+    return sum;
+}
+
+list<TXInput> BlockChain::createInputs(string from, int value, int *rest){
+    list<TXInput> ls;
+    int sum = 0;
+    uint32_t hash[8];
+    *rest = 0;
+    
+    
+    struct outIds{
+        uint64_t id;
+        int outIndex;
+    };
+    
+    struct outIds outIds[blocksIDs];
+    size_t it = 0;
+    
+    memcpy(hash, cur_hash, sizeof(uint32_t) * 8);
+    string blc;
+    
+    while (!checkFirstBlock(hash)){
+        Block *block = getBlock((uint32_t *) hash);
+        memcpy(hash, block->getPrevBlockHash(), sizeof(uint32_t) * 8);
+        
+        Transaction *tx = block->getTransaction();
+        
+        int l = 0;
+        for (; l < it; l++){
+            if (tx->id == outIds[l].id){
+                break;
+            }
+        }
+        
+        for (int i = 0; i < tx->out_count; i++){
+            if (tx->out[i].pubkey == from){
+                if (l < it && outIds[l].outIndex == i){
+                    break;
+                }
+                
+                TXInput input;
+                input.tranId = tx->id;
+                input.outIndex = i;
+                input.pubkey = from;
+                
+                ls.push_back(input);
+                
+                sum += tx->out[i].value;
+            }
+        }
+        
+        for (int i = 0; i < tx->in_count; i++){
+            if (tx->in[i].pubkey == from){
+                outIds[it].id = tx->in[i].tranId;
+                outIds[it].outIndex = tx->in[i].outIndex;
+                it++;
+            }
+        }
+        
+        if (sum >= value){
+            break;
+        }
+        
+        delete block;
+    }
+    
+    if (sum < value){
+        ls.clear();
+    }
+    *rest = sum - value;
+    
+    return ls;
 }
