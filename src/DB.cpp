@@ -30,7 +30,7 @@ string DB::getCurrentHash(){
 uint64_t DB::getCurrentId(uint32_t *hash){
     uint64_t id;
     Block *block = getBlockByHash(hash);
-    id = block->getTransaction()->id;
+    id = block->getTransaction()->m_id;
     delete block;
     return id;
 }

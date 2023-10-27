@@ -125,22 +125,22 @@ Block* decode(uint8_t *dec){
 void Block::print(){
     cout <<setfill('=') << setw(40) << "BLOCK" << setfill('=') << setw(40) << "\n";
     cout << "|time: "  << m_timeStamp << "\n";
-    cout << "|transaction id: "  << m_tx->id << "\n";
+    cout << "|transaction id: "  << m_tx->m_id << "\n";
     cout << "|Nonce: " <<  m_nonce << "\n";
     cout << "|Hash: " <<  array2String(m_hash) << "\n";
     cout << "|PrevHash: " << array2String(m_prevBlockHash) << "\n";
     cout << "|" << setfill('_') << setw(39) << "TXINPUTS" << setfill('_') << setw(40) << "\n";
     
-    for (int i = 0; i < m_tx->in_count; i++){
-        cout << "|output id : "  << m_tx->in[i].tranId << "\n";
-        cout << "|index: "  <<  m_tx->in[i].outIndex << "\n";
-        cout << "|pubkey from: "  <<  m_tx->in[i].pubkey << "\n";
+    for (int i = 0; i < m_tx->m_inCount; i++){
+        cout << "|output id : "  << m_tx->m_in[i].m_tranId << "\n";
+        cout << "|index: "  <<  m_tx->m_in[i].m_outIndex << "\n";
+        cout << "|pubkey from: "  <<  m_tx->m_in[i].m_pubkey << "\n";
         cout << "|" << setfill('-') << setw(79) << "\n";
     }
     cout << "|" << setfill('_') << setw(39) << "TXOUTPUTS" << setfill('_') << setw(40) << "\n";
-    for (int i = 0; i < m_tx->out_count; i++){
-        cout << "|value: " <<  m_tx->out[i].value << "\n";
-        cout << "|pubkey to: " <<  m_tx->out[i].pubkey << "\n";
+    for (int i = 0; i < m_tx->m_outCount; i++){
+        cout << "|value: " <<  m_tx->m_out[i].m_value << "\n";
+        cout << "|pubkey to: " <<  m_tx->m_out[i].m_pubkey << "\n";
         cout << "|" << setfill('-') << setw(79) << "\n";
     }
     

@@ -11,11 +11,11 @@ using namespace std;
 
 class Transaction{
 public:
-    uint64_t id;
-    int in_count;
-    int out_count;
-    struct TXInput *in;
-    struct TXOutput *out;
+    uint64_t m_id;
+    int m_inCount;
+    int m_outCount;
+    struct TXInput *m_in;
+    struct TXOutput *m_out;
     
     
     Transaction(uint64_t id, int in_cout, int out_count);
@@ -28,15 +28,27 @@ public:
     void decode(uint8_t *ptr);
 };
 
-struct TXOutput{
-    int value;
-    string pubkey;
+class TXOutput{
+public:
+    TXOutput(){};
+    TXOutput(const TXOutput &out);
+    TXOutput(int value, string pubkey);
+    TXOutput &operator =(const TXOutput &out);
+    
+    int m_value;
+    string m_pubkey;
 };
 
-struct TXInput{
-    uint64_t tranId;
-    int outIndex;
-    string pubkey;
+class TXInput{
+public:
+    TXInput(){};
+    TXInput(const TXInput &in);
+    TXInput(uint64_t transId, int outIndex, string pubkey);
+    TXInput& operator =(const TXInput &in);
+    
+    uint64_t m_tranId;
+    int m_outIndex;
+    string m_pubkey;
 };
 
 //Выплата за майнинг, pubkey - адрес майнера

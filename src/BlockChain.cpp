@@ -44,15 +44,14 @@ BlockChain::~BlockChain(){
 void BlockChain::addBlock(string from, string to, int value){
     blocksIDs++;
     int rest;
-    //Transaction *tx = simpleTrans(blocksIDs, to, value);
     list<TXInput> inputs = createInputs(from, value, &rest);
-    
     if (inputs.empty()){
         cout << "not money" << endl;
         return;
     }
     Transaction *tx = realTransaction(blocksIDs, from, to, value, inputs, rest);
     Block *block_n = newBlock(tx, cur_hash);
+    
     m_db.putBlock(block_n);
     memcpy(cur_hash, block_n->getHash(), sizeof(uint32_t) * 8);
     delete block_n;
@@ -61,15 +60,10 @@ void BlockChain::addBlock(string from, string to, int value){
 
 Block* BlockChain::genesisBlock(){
     uint32_t zero_hash[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    
     Transaction * coinBase = coinBaseTrans("yasha");
-    
     Block *block_n = newBlock(coinBase, zero_hash);
-    
-    
     array2String(block_n->getHash());
     memcpy(cur_hash, block_n->getHash(), sizeof(uint32_t) * 8);
-    
     delete coinBase;
     return block_n;
 }
@@ -131,25 +125,24 @@ uint64_t BlockChain::getBalance(string user){
         
         int l = 0;
         for (; l < it; l++){
-            if (tx->id == outIds[l].id){
+            if (tx->m_id == outIds[l].id){
                 break;
             }
         }
         
-        for (int i = 0; i < tx->out_count; i++){
-            if (tx->out[i].pubkey == user){
+        for (int i = 0; i < tx->m_outCount; i++){
+            if (tx->m_out[i].m_pubkey == user){
                 if (l < it && outIds[l].outIndex == i){
                     break;
                 }
                 
-                sum += tx->out[i].value;
+                sum += tx->m_out[i].m_value;
             }
         }
         
-        for (int i = 0; i < tx->in_count; i++){
-            if (tx->in[i].pubkey == user){
-                outIds[it].id = tx->in[i].tranId;
-                outIds[it].outIndex = tx->in[i].outIndex;
+        for (int i = 0; i < tx->m_inCount; i++){
+            if (tx->m_in[i].m_pubkey == user){
+                outIds[it] = {tx->m_in[i].m_tranId, tx->m_in[i].m_outIndex};
                 it++;
             }
         }
@@ -188,32 +181,24 @@ list<TXInput> BlockChain::createInputs(string from, int value, int *rest){
         
         int l = 0;
         for (; l < it; l++){
-            if (tx->id == outIds[l].id){
+            if (tx->m_id == outIds[l].id){
                 break;
             }
         }
         
-        for (int i = 0; i < tx->out_count; i++){
-            if (tx->out[i].pubkey == from){
+        for (int i = 0; i < tx->m_outCount; i++){
+            if (tx->m_out[i].m_pubkey == from){
                 if (l < it && outIds[l].outIndex == i){
                     break;
                 }
-                
-                TXInput input;
-                input.tranId = tx->id;
-                input.outIndex = i;
-                input.pubkey = from;
-                
-                ls.push_back(input);
-                
-                sum += tx->out[i].value;
+                ls.push_back(TXInput(tx->m_id, i, from));
+                sum += tx->m_out[i].m_value;
             }
         }
         
-        for (int i = 0; i < tx->in_count; i++){
-            if (tx->in[i].pubkey == from){
-                outIds[it].id = tx->in[i].tranId;
-                outIds[it].outIndex = tx->in[i].outIndex;
+        for (int i = 0; i < tx->m_inCount; i++){
+            if (tx->m_in[i].m_pubkey == from){
+                outIds[it] = {tx->m_in[i].m_tranId, tx->m_in[i].m_outIndex};
                 it++;
             }
         }
