@@ -125,10 +125,10 @@ Block* decode(uint8_t *dec){
 void Block::print(){
     cout <<setfill('=') << setw(40) << "BLOCK" << setfill('=') << setw(40) << "\n";
     cout << "|time: "  << m_timeStamp << "\n";
-    cout << "|transaction id: "  << m_tx->m_id << "\n";
     cout << "|Nonce: " <<  m_nonce << "\n";
     cout << "|Hash: " <<  array2String(m_hash) << "\n";
     cout << "|PrevHash: " << array2String(m_prevBlockHash) << "\n";
+    cout << "|transaction id: "  << m_tx->m_id << "\n";
     cout << "|" << setfill('_') << setw(39) << "TXINPUTS" << setfill('_') << setw(40) << "\n";
     
     for (int i = 0; i < m_tx->m_inCount; i++){
