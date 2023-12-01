@@ -1,14 +1,5 @@
 #include "sha256.hpp"
 
-uint32_t h0 = 0x6a09e667;
-uint32_t h1 = 0xbb67ae85;
-uint32_t h2 = 0x3c6ef372;
-uint32_t h3 = 0xa54ff53a;
-uint32_t h4 = 0x510e527f;
-uint32_t h5 = 0x9b05688c;
-uint32_t h6 = 0x1f83d9ab;
-uint32_t h7 = 0x5be0cd19;
-
 static uint32_t rightRotate(uint32_t n, uint32_t d)
 {
     return (n >> d) | (n << (32 - d));
@@ -47,6 +38,14 @@ void u32To2digit(uint32_t value){
 }
 
 sha256::sha256(){
+    h0 = 0x6a09e667;
+    h1 = 0xbb67ae85;
+    h2 = 0x3c6ef372;
+    h3 = 0xa54ff53a;
+    h4 = 0x510e527f;
+    h5 = 0x9b05688c;
+    h6 = 0x1f83d9ab;
+    h7 = 0x5be0cd19;
     hash = new uint32_t[8];
 }
 
@@ -169,4 +168,13 @@ uint32_t *sha256::Hash(string msg){
     delete[] blocks;
     
     return hash;
+}
+
+string sha256::getHash(){
+    std::stringstream s;
+
+    for(int i = 0 ; i < 8 ; i++) {
+        s << std::setfill('0') << std::setw(8) << std::hex << hash[i];
+    }
+    return s.str();
 }

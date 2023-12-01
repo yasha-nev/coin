@@ -1,5 +1,8 @@
 #include <iostream>
 #include "BlockChain.hpp"
+#include "ripemd160.hpp"
+#include "base58.hpp"
+#include "rsa.hpp"
 
 using namespace std;
 
@@ -59,9 +62,30 @@ static int bigIntCmp(uint32_t *left, uint32_t *right){
     return 0;
 }
 
-
 int main(int argc, const char * argv[]) {
     BlockChain bc;
     CLI(&bc);
+    
     return 0;
 }
+
+/*
+RSACryptor rsa;
+RIPMD160 rip;
+sha256   sha;
+
+string pubkey = rsa.getPublicKey()->getKey();
+sha.Hash(pubkey);
+rip.Hash(sha.getHash());
+string publicKeyHash = rip.getHash();
+sha.Hash(publicKeyHash);
+string checkSum = sha.getHash();
+string src = "0x0" + publicKeyHash + checkSum;
+
+char *res =  new char[src.size() + 50];
+
+EncodeBase58(const_cast<char*>(src.c_str()), static_cast<int>(src.size()), res, static_cast<int>(src.size() + 50));
+
+cout << src << "\n" << endl;
+cout << res << " " << endl;
+*/

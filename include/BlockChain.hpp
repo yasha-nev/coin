@@ -20,8 +20,8 @@ private:
     list<TXInput> createInputs(string from, int valuem, int *rest);
     Block *newBlock(Transaction *tx, uint32_t *prevHashBlock);
     Block *genesisBlock();
-    uint32_t cur_hash[8];
-    uint64_t blocksIDs;
+    uint32_t m_cur_hash[8];
+    uint64_t m_blocksIDs;
     DB m_db;
 };
 

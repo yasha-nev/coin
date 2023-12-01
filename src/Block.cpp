@@ -161,7 +161,6 @@ std::string array2String(uint32_t *arr) {
     for(int i = 0 ; i < 8 ; i++) {
         s << std::setfill('0') << std::setw(8) << std::hex << arr[i];
     }
-
     return s.str();
 }
 

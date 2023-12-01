@@ -25,15 +25,15 @@ BlockChain::BlockChain(){
     if (file_exist(DBPATH)){
         m_db.connect();
         string current_hash = m_db.getCurrentHash();
-        memcpy(cur_hash, current_hash.c_str(), sizeof(uint32_t) * 8);
-        blocksIDs = m_db.getCurrentId((uint32_t *) current_hash.c_str());
+        memcpy(m_cur_hash, current_hash.c_str(), sizeof(uint32_t) * 8);
+        m_blocksIDs = m_db.getCurrentId((uint32_t *) current_hash.c_str());
     }
     else{
         m_db.connectIfexist();
         Block *block = genesisBlock();
-        memcpy(cur_hash, block->getHash(), sizeof(uint32_t) * 8);
+        memcpy(m_cur_hash, block->getHash(), sizeof(uint32_t) * 8);
         m_db.putBlock(block);
-        blocksIDs = 0;
+        m_blocksIDs = 0;
         delete block;
     }
 }
@@ -42,18 +42,18 @@ BlockChain::~BlockChain(){
 }
 
 void BlockChain::addBlock(string from, string to, int value){
-    blocksIDs++;
+    m_blocksIDs++;
     int rest;
     list<TXInput> inputs = createInputs(from, value, &rest);
     if (inputs.empty()){
         cout << "not money" << endl;
         return;
     }
-    Transaction *tx = realTransaction(blocksIDs, from, to, value, inputs, rest);
-    Block *block_n = newBlock(tx, cur_hash);
+    Transaction *tx = realTransaction(m_blocksIDs, from, to, value, inputs, rest);
+    Block *block_n = newBlock(tx, m_cur_hash);
     
     m_db.putBlock(block_n);
-    memcpy(cur_hash, block_n->getHash(), sizeof(uint32_t) * 8);
+    memcpy(m_cur_hash, block_n->getHash(), sizeof(uint32_t) * 8);
     delete block_n;
     delete tx;
 }
@@ -62,8 +62,7 @@ Block* BlockChain::genesisBlock(){
     uint32_t zero_hash[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     Transaction * coinBase = coinBaseTrans("yasha");
     Block *block_n = newBlock(coinBase, zero_hash);
-    array2String(block_n->getHash());
-    memcpy(cur_hash, block_n->getHash(), sizeof(uint32_t) * 8);
+    memcpy(m_cur_hash, block_n->getHash(), sizeof(uint32_t) * 8);
     delete coinBase;
     return block_n;
 }
@@ -71,7 +70,7 @@ Block* BlockChain::genesisBlock(){
 void BlockChain::printChain(){
     uint32_t hash[8];
     
-    memcpy(hash, cur_hash, sizeof(uint32_t) * 8);
+    memcpy(hash, m_cur_hash, sizeof(uint32_t) * 8);
     string blc;
     
     while (!checkFirstBlock(hash)){
@@ -111,10 +110,10 @@ uint64_t BlockChain::getBalance(string user){
         int outIndex;
     };
     
-    struct outIds outIds[blocksIDs];
+    struct outIds outIds[m_blocksIDs];
     size_t it = 0;
     
-    memcpy(hash, cur_hash, sizeof(uint32_t) * 8);
+    memcpy(hash, m_cur_hash, sizeof(uint32_t) * 8);
     string blc;
     
     while (!checkFirstBlock(hash)){
@@ -167,10 +166,10 @@ list<TXInput> BlockChain::createInputs(string from, int value, int *rest){
         int outIndex;
     };
     
-    struct outIds outIds[blocksIDs];
+    struct outIds outIds[m_blocksIDs];
     size_t it = 0;
     
-    memcpy(hash, cur_hash, sizeof(uint32_t) * 8);
+    memcpy(hash, m_cur_hash, sizeof(uint32_t) * 8);
     string blc;
     
     while (!checkFirstBlock(hash)){
