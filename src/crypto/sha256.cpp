@@ -46,26 +46,19 @@ sha256::sha256(){
     h5 = 0x9b05688c;
     h6 = 0x1f83d9ab;
     h7 = 0x5be0cd19;
-    hash = new uint32_t[8];
 }
 
-sha256::~sha256(){
-    if (hash){
-        delete[] hash;
-    }
-}
-
-uint32_t **sha256::CreateBlocks(string msg, uint64_t *block_count){
+uint32_t **sha256::CreateBlocks(const std::string &msg, uint64_t *blockCount){
     uint32_t datalen = static_cast<uint32_t>(msg.size());
     uint32_t bitstr = datalen * 8;
     uint64_t payload = datalen + 8;
-    *block_count = payload / 64 + 1;
+    *blockCount = payload / 64 + 1;
     
-    uint32_t **blocks = new uint32_t *[*block_count];
+    uint32_t **blocks = new uint32_t *[*blockCount];
     
-    int t = 0;
+    uint32_t t = 0;
     
-    for (int b = 0; b < *block_count; b++){
+    for (uint32_t b = 0; b < *blockCount; b++){
         uint32_t *block = new uint32_t[16];
         for (int i = 0; i < 16; i++){
             block[i] = 0;
@@ -85,14 +78,14 @@ uint32_t **sha256::CreateBlocks(string msg, uint64_t *block_count){
         }
         blocks[b] = block;
     }
-    blocks[*block_count - 1][15] = bitstr;
+    blocks[*blockCount - 1][15] = bitstr;
     
     
     return blocks;
 }
 
 void sha256::HashBlock(uint32_t *block, uint32_t *H){
-    array<uint32_t, 64> k = {
+    std::array<uint32_t, 64> k = {
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
         0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
         0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
@@ -103,7 +96,7 @@ void sha256::HashBlock(uint32_t *block, uint32_t *H){
         0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
     };
     
-    array<uint32_t, 64> w;
+    std::array<uint32_t, 64> w;
     for (int i = 0; i < 16; i++){
         w[i] = block[i];
     }
@@ -146,7 +139,7 @@ void sha256::HashBlock(uint32_t *block, uint32_t *H){
 }
 
 
-uint32_t *sha256::Hash(string msg){
+std::array<uint32_t, 8> sha256::Hash(const std::string &msg){
     hash[0] = h0;
     hash[1] = h1;
     hash[2] = h2;
@@ -156,13 +149,13 @@ uint32_t *sha256::Hash(string msg){
     hash[6] = h6;
     hash[7] = h7;
     
-    uint64_t block_count = 0;
-    uint32_t **blocks = CreateBlocks(msg, &block_count);
-    for (int i = 0; i < block_count; i++){
-        HashBlock(blocks[i], hash);
+    uint64_t blockCount = 0;
+    uint32_t **blocks = CreateBlocks(msg, &blockCount);
+    for (uint64_t i = 0; i < blockCount; i++){
+        HashBlock(blocks[i], hash.data());
     }
     
-    for (int i = 0; i < block_count; i++){
+    for (uint64_t i = 0; i < blockCount; i++){
         delete[] blocks[i];
     }
     delete[] blocks;
@@ -170,7 +163,7 @@ uint32_t *sha256::Hash(string msg){
     return hash;
 }
 
-string sha256::getHash(){
+std::string sha256::getHash(){
     std::stringstream s;
 
     for(int i = 0 ; i < 8 ; i++) {

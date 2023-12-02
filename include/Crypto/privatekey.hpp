@@ -4,21 +4,28 @@
 #include <cmath>
 #include <string>
 #include <sstream>
-
-using namespace std;
+#include <fstream>
+#include "base58.hpp"
 
 class PrivateKey{
 public:
+    PrivateKey(const std::string &path);
     PrivateKey(long _d, long _n);
+    
     char *decrypt(long *enc, size_t size);
+    
     long signature(char *msg);
-    string getKey();
+    
+    std::string getKey();
+    
+    void save(const std::string &path);
 
 private:
     long d;
+    
     long n;
 
-    long decodeNum(int c);
+    long decodeNum(long c);
 };
 
 

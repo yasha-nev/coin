@@ -21,13 +21,13 @@ void DB::connectIfexist(){
     leveldb::DB::Open(options, DBPATH, &m_db);
 }
 
-string DB::getCurrentHash(){
-    string hash;
+std::string DB::getCurrentHash(){
+    std::string hash;
     m_db->Get(leveldb::ReadOptions(), "l", &hash);
     return hash;
 }
 
-uint64_t DB::getCurrentId(uint32_t *hash){
+uint64_t DB::getCurrentId(const std::array<uint32_t, 8> &hash){
     uint64_t id;
     Block *block = getBlockByHash(hash);
     id = block->getTransaction()->m_id;
@@ -35,9 +35,9 @@ uint64_t DB::getCurrentId(uint32_t *hash){
     return id;
 }
 
-Block *DB::getBlockByHash(uint32_t *hash){
-    string byteBlock;
-    leveldb::Slice key((char *) hash, sizeof(uint32_t) * 8);
+Block *DB::getBlockByHash(const std::array<uint32_t, 8> &hash){
+    std::string byteBlock;
+    leveldb::Slice key((char *) hash.data(), hash.size());
     m_db->Get(leveldb::ReadOptions(), key, &byteBlock);
     Block *block = decode((uint8_t *) byteBlock.c_str());
     return block;
@@ -47,9 +47,9 @@ void DB::putBlock(Block *block){
     size_t blockSize = 0;
     uint8_t *encBlock = block->encode(&blockSize);
     
-    leveldb::Slice key((char *) block->getHash(), sizeof(uint32_t) * 8);
+    leveldb::Slice key((char *) block->getHash().data(), block->getHash().size());
     leveldb::Slice value((char *)encBlock, blockSize);
-    leveldb::Slice value_hash((char *)block->getHash(), sizeof(uint32_t) * 8);
+    leveldb::Slice value_hash((char *)block->getHash().data(), block->getHash().size());
     
     m_db->Put(leveldb::WriteOptions(), key, value);
     m_db->Put(leveldb::WriteOptions(), "l", value_hash);

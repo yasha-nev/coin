@@ -1,31 +1,20 @@
 #include "Block.hpp"
 
-Block::Block(int64_t timeStamp, Transaction *tx, uint32_t *prevBlockHash, uint32_t *hash, int64_t nonce){
+Block::Block(const int64_t &timeStamp, Transaction *tx, const std::array<uint32_t, 8> &prevBlockHash, const std::array<uint32_t, 8> &hash, const int64_t &nonce){
     m_timeStamp = timeStamp;
     m_tx = new Transaction(tx);
-    m_prevBlockHash = new uint32_t[8];
-    m_hash = new uint32_t[8];
+    m_prevBlockHash = prevBlockHash;
+    m_hash = hash;
     m_nonce = nonce;
-    memcpy(m_prevBlockHash, prevBlockHash, sizeof(uint32_t) * 8);
-    memcpy(m_hash, hash, sizeof(uint32_t) * 8);
 }
 
 Block::Block(){
     m_timeStamp = 0;
     m_tx = new Transaction(0, 0, 0);
-    m_prevBlockHash = new uint32_t[8];
-    m_hash = new uint32_t[8];
     m_nonce = 0;
 }
 
 Block::~Block(){
-    if (m_hash){
-        delete[] m_hash;
-    }
-    
-    if (m_prevBlockHash){
-        delete[] m_prevBlockHash;
-    }
     if (m_tx){
         delete m_tx;
     }
@@ -39,11 +28,11 @@ Transaction *Block::getTransaction(){
     return m_tx;
 }
 
-uint32_t *Block::getPrevBlockHash(){
+std::array<uint32_t, 8> Block::getPrevBlockHash(){
     return m_prevBlockHash;
 }
 
-uint32_t *Block::getHash(){
+std::array<uint32_t, 8> Block::getHash(){
     return m_hash;
 }
 
@@ -51,7 +40,7 @@ uint64_t Block::getNonce(){
     return m_nonce;
 }
 
-void Block::setTimeStamp(int64_t timeStamp){
+void Block::setTimeStamp(const int64_t &timeStamp){
     m_timeStamp = timeStamp;
 }
 
@@ -60,16 +49,16 @@ void Block::setTransaction(Transaction *tx){
     m_tx = new Transaction(tx);
 }
 
-void Block::setNonce(uint64_t nonce){
+void Block::setNonce(const uint64_t &nonce){
     m_nonce = nonce;
 }
 
-void Block::setPrevBlockHash(uint32_t *hash){
-    memcpy(m_prevBlockHash, hash, sizeof(uint32_t) * 8);
+void Block::setPrevBlockHash(const std::array<uint32_t, 8> &hash){
+    m_prevBlockHash = hash;
 }
 
-void Block::setHash(uint32_t *hash){
-    memcpy(m_hash, hash, sizeof(uint32_t) * 8);
+void Block::setHash(const std::array<uint32_t, 8> &hash){
+    m_hash = hash;
 }
 
 uint8_t *Block::encode(size_t *blockSize){
@@ -89,10 +78,10 @@ uint8_t *Block::encode(size_t *blockSize){
     
     ptr += m_tx->size();
     
-    std::memcpy(ptr, m_prevBlockHash, sizeof(uint32_t) * 8);
+    std::memcpy(ptr, m_prevBlockHash.data(), sizeof(uint32_t) * 8);
     ptr += sizeof(uint32_t) * 8;
     
-    std::memcpy(ptr, m_hash, sizeof(uint32_t) * 8);
+    std::memcpy(ptr, m_hash.data(), sizeof(uint32_t) * 8);
     ptr += sizeof(uint32_t) * 8;
     
     std::memcpy(ptr, &m_nonce, sizeof(uint64_t));
@@ -111,10 +100,22 @@ Block* decode(uint8_t *dec){
     
     ptr += block->m_tx->size();
     
-    std::memcpy(block->m_prevBlockHash, ptr, sizeof(uint32_t) * 8);
+    uint32_t *ptr32 = (uint32_t *)ptr;
+    
+    for (int i = 0; i < 8; i++){
+        block->m_prevBlockHash[i] = *ptr32;
+        ptr32++;
+    }
+    
     ptr += sizeof(uint32_t) * 8;
     
-    std::memcpy(block->m_hash, ptr, sizeof(uint32_t) * 8);
+    ptr32 = (uint32_t *)ptr;
+    
+    for (int i = 0; i < 8; i++){
+        block->m_hash[i] = *ptr32;
+        ptr32++;
+    }
+    
     ptr += sizeof(uint32_t) * 8;
 
     std::memcpy(&block->m_nonce, ptr, sizeof(uint64_t));
@@ -123,39 +124,39 @@ Block* decode(uint8_t *dec){
 }
 
 void Block::print(){
-    cout <<setfill('=') << setw(40) << "BLOCK" << setfill('=') << setw(40) << "\n";
-    cout << "|time: "  << m_timeStamp << "\n";
-    cout << "|Nonce: " <<  m_nonce << "\n";
-    cout << "|Hash: " <<  array2String(m_hash) << "\n";
-    cout << "|PrevHash: " << array2String(m_prevBlockHash) << "\n";
-    cout << "|transaction id: "  << m_tx->m_id << "\n";
-    cout << "|" << setfill('_') << setw(39) << "TXINPUTS" << setfill('_') << setw(40) << "\n";
+    std::cout << std::setfill('=') << std::setw(40) << "BLOCK" << std::setfill('=') << std::setw(40) << "\n";
+    std::cout << "|time: "  << m_timeStamp << "\n";
+    std::cout << "|Nonce: " <<  m_nonce << "\n";
+    std::cout << "|Hash: " <<  array2String(m_hash) << "\n";
+    std::cout << "|PrevHash: " << array2String(m_prevBlockHash) << "\n";
+    std::cout << "|transaction id: "  << m_tx->m_id << "\n";
+    std::cout << "|" << std::setfill('_') << std::setw(39) << "TXINPUTS" << std::setfill('_') << std::setw(40) << "\n";
     
     for (int i = 0; i < m_tx->m_inCount; i++){
-        cout << "|output id : "  << m_tx->m_in[i].m_tranId << "\n";
-        cout << "|index: "  <<  m_tx->m_in[i].m_outIndex << "\n";
-        cout << "|pubkey from: "  <<  m_tx->m_in[i].m_pubkey << "\n";
-        cout << "|" << setfill('-') << setw(79) << "\n";
+        std::cout << "|output id : "  << m_tx->m_in[i].m_tranId << "\n";
+        std::cout << "|index: "  <<  m_tx->m_in[i].m_outIndex << "\n";
+        std::cout << "|pubkey from: "  <<  m_tx->m_in[i].m_pubkey << "\n";
+        std::cout << "|" << std::setfill('-') << std::setw(79) << "\n";
     }
-    cout << "|" << setfill('_') << setw(39) << "TXOUTPUTS" << setfill('_') << setw(40) << "\n";
+    std::cout << "|" << std::setfill('_') << std::setw(39) << "TXOUTPUTS" << std::setfill('_') << std::setw(40) << "\n";
     for (int i = 0; i < m_tx->m_outCount; i++){
-        cout << "|value: " <<  m_tx->m_out[i].m_value << "\n";
-        cout << "|pubkey to: " <<  m_tx->m_out[i].m_pubkey << "\n";
-        cout << "|" << setfill('-') << setw(79) << "\n";
+        std::cout << "|value: " <<  m_tx->m_out[i].m_value << "\n";
+        std::cout << "|pubkey to: " <<  m_tx->m_out[i].m_pubkey << "\n";
+        std::cout << "|" << std::setfill('-') << std::setw(79) << "\n";
     }
     
-    cout <<setfill('=') << setw(80) << "\n" << endl;;
+    std::cout <<std::setfill('=') << std::setw(80) << "\n" << std::endl;;
 }
 
 void printBigInt(uint32_t *bigint){
     for (int i = 0 ; i < 8; i++){
-        cout <<  std::setfill('0') << setw(8) << hex << bigint[i];
+        std::cout <<  std::setfill('0') << std::setw(8) << std::hex << bigint[i];
     }
-    cout << "\n";
+    std::cout << "\n";
     
 }
 
-std::string array2String(uint32_t *arr) {
+std::string array2String(const std::array<uint32_t, 8> &arr) {
     std::stringstream s;
 
     for(int i = 0 ; i < 8 ; i++) {
@@ -164,7 +165,7 @@ std::string array2String(uint32_t *arr) {
     return s.str();
 }
 
-static int bigIntCmp(uint32_t *left, uint32_t *right){
+static int bigIntCmp(const std::array<uint32_t, 8> &left, const std::array<uint32_t, 8> &right){
     for (int i = 0; i < 8; i++){
         if (left[i] > right[i]){
             return 1;
@@ -176,50 +177,42 @@ static int bigIntCmp(uint32_t *left, uint32_t *right){
     return 0;
 }
 
-ProofOfWork::ProofOfWork(struct Block *block){
+ProofOfWork::ProofOfWork(class Block *block){
     m_nonce = 0;
     m_block = block;
-    m_target = new uint32_t[8];
-    memset(m_target, 0, sizeof(uint32_t) * 8);
     m_target[0] = 1 << 16;
 }
 
-ProofOfWork::~ProofOfWork(){
-    if (m_target){
-        delete[] m_target;
-    }
-}
-
-string ProofOfWork::PrepareData(){
-    string data;
-    data += to_string(m_block->getTimeStamp());
+std::string ProofOfWork::PrepareData(){
+    std::string data;
+    data += std::to_string(m_block->getTimeStamp());
     data += m_block->m_tx->toString();
     data += array2String(m_block->getPrevBlockHash());
-    data += to_string(m_nonce);
+    data += std::to_string(m_nonce);
     return data;
 }
 
 void ProofOfWork::Run(){
     m_nonce = 0;
-    uint32_t *hash;
+    std::array<uint32_t, 8> hash;
     sha256 Crypto;
-    cout << "==============Block Hashing==============\n";
+    std::cout << "==============Block Hashing==============\n";
     while (m_nonce < MAXNONCE){
-        string data = PrepareData();
+        std::string data = PrepareData();
+        
         hash = Crypto.Hash(data);
         
         if (m_nonce % 100000 == 0){
-            cout << ">";
+            std::cout << ">";
         }
         
         if (bigIntCmp(hash, m_target) == -1){
             m_block->setNonce(m_nonce);
-            
-            memcpy(m_block->m_hash, hash, sizeof(uint32_t) * 8);
+            m_block->m_hash = hash;
         }
         m_nonce += 1;
     }
     
     
-    cout << "\n" << endl;
+    std::cout << "\n" << std::endl;
 }

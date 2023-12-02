@@ -114,7 +114,6 @@ static uint32_t S_(int j){
 }
 
 RIPMD160::RIPMD160(){
-    hash = new uint32_t[5];
     h0 = 0x67452301;
     h1 = 0xEFCDAB89;
     h2 = 0x98BADCFE;
@@ -122,23 +121,17 @@ RIPMD160::RIPMD160(){
     h4 = 0xC3D2E1F0;
 }
 
-RIPMD160::~RIPMD160(){
-    if (hash){
-        delete[] hash;
-    }
-}
-
-uint32_t **RIPMD160::CreateBlocks(string msg, uint64_t *block_count){
+uint32_t **RIPMD160::CreateBlocks(const std::string &msg, uint64_t *blockCount){
     uint32_t datalen = static_cast<uint32_t>(msg.size());
     uint32_t bitstr = datalen * 8;
     uint64_t payload = datalen + 8;
-    *block_count = payload / 64 + 1;
+    *blockCount = payload / 64 + 1;
     
-    uint32_t **blocks = new uint32_t *[*block_count];
+    uint32_t **blocks = new uint32_t *[*blockCount];
     
-    int t = 0;
+    uint32_t t = 0;
     
-    for (int b = 0; b < *block_count; b++){
+    for (uint64_t b = 0; b < *blockCount; b++){
         uint32_t *block = new uint32_t[16];
         for (int i = 0; i < 16; i++){
             block[i] = 0;
@@ -158,7 +151,7 @@ uint32_t **RIPMD160::CreateBlocks(string msg, uint64_t *block_count){
         }
         blocks[b] = block;
     }
-    blocks[*block_count - 1][14] = bitstr;
+    blocks[*blockCount - 1][14] = bitstr;
     
     
     return blocks;
@@ -205,7 +198,7 @@ void RIPMD160::HashBlock(uint32_t *block, uint32_t *h){
 }
 
 
-uint32_t *RIPMD160::Hash(string msg){
+std::array<uint32_t, 5> RIPMD160::Hash(const std::string &msg){
     hash[0] = h0;
     hash[1] = h1;
     hash[2] = h2;
@@ -215,7 +208,7 @@ uint32_t *RIPMD160::Hash(string msg){
     uint64_t block_count = 0;
     uint32_t **blocks = CreateBlocks(msg, &block_count);
     for (int i = 0; i < block_count; i++){
-        HashBlock(blocks[i], hash);
+        HashBlock(blocks[i], hash.data());
     }
     
     for (int i = 0; i < block_count; i++){

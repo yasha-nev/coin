@@ -1,16 +1,20 @@
 #include <iostream>
 #include "BlockChain.hpp"
-#include "ripemd160.hpp"
-#include "base58.hpp"
-#include "rsa.hpp"
+#include "Wallet.hpp"
 
 using namespace std;
 
-void CLI(BlockChain *bc){
+void CLI(BlockChain &bc, std::array<Wallet, 2> &wallets){
     while (true){
         string command;
         cout << "CLI>";
         cin >> command;
+        
+        if (command == "users"){
+            for (int i = 0; i < wallets.size(); i++){
+                cout << i << " " << wallets[i].getAddres() << "\n";
+            }
+        }
         
         if (command == "send"){
             string from;
@@ -25,7 +29,7 @@ void CLI(BlockChain *bc){
             cout << "value: ";
             cin >> value;
             
-            bc->addBlock(from, to, value);
+            bc.addBlock(from, to, value);
         }
     
         else if (command == "balance"){
@@ -33,11 +37,11 @@ void CLI(BlockChain *bc){
             
             cout << "user: ";
             cin >> user;
-            bc->getBalance(user);
+            bc.getBalance(user);
         }
         
         else if (command == "print"){
-            bc->printChain();
+            bc.printChain();
         }
         
         else if (command == "quit"){
@@ -50,42 +54,18 @@ void CLI(BlockChain *bc){
     }
 }
 
-static int bigIntCmp(uint32_t *left, uint32_t *right){
-    for (int i = 0; i < 8; i++){
-        if (left[i] > right[i]){
-            return 1;
-        }
-        else if (left[i] < right[i]){
-            return -1;
-        }
-    }
-    return 0;
-}
-
 int main(int argc, const char * argv[]) {
+    (void) argc;
+    (void) argv;
+    
     BlockChain bc;
-    CLI(&bc);
+    std::array<Wallet, 2> wallets;
+    
+    //wallets[0] = Wallet("/Users/yasha_nev/projects/BlockChain/BlockChain");
+    
+    CLI(bc, wallets);
     
     return 0;
 }
 
-/*
-RSACryptor rsa;
-RIPMD160 rip;
-sha256   sha;
 
-string pubkey = rsa.getPublicKey()->getKey();
-sha.Hash(pubkey);
-rip.Hash(sha.getHash());
-string publicKeyHash = rip.getHash();
-sha.Hash(publicKeyHash);
-string checkSum = sha.getHash();
-string src = "0x0" + publicKeyHash + checkSum;
-
-char *res =  new char[src.size() + 50];
-
-EncodeBase58(const_cast<char*>(src.c_str()), static_cast<int>(src.size()), res, static_cast<int>(src.size() + 50));
-
-cout << src << "\n" << endl;
-cout << res << " " << endl;
-*/

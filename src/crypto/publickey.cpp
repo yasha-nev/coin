@@ -5,10 +5,37 @@ PublicKey::PublicKey(long _e, long _n){
     n = _n;
 }
 
+PublicKey::PublicKey(const std::string &path){
+    std::fstream strm;
+    
+    strm.open(path, std::ios_base::in);
+    
+    std::string key;
+    
+    strm >> key;
+    
+    std::string res = DecodeBase58(key);
+    size_t found = res.find(" ");
+    
+    n = std::stoul(res.substr(0, found), nullptr, 16);
+    e = std::stoul(res.substr(found), nullptr, 16);
+    
+    strm.close();
+}
+
+void PublicKey::save(const std::string &path){
+    std::fstream strm;
+    
+    strm.open(path, std::ios_base::out);
+    strm << EncodeBase58(getKey());
+    
+    strm.close();
+}
+
 long PublicKey::encodeChar(int c){
     long result = 1;
 
-    for (int i = 0; i < e; i++){
+    for (long i = 0; i < e; i++){
         result = result * c;
         result = fmod(result , n);
     }
@@ -26,8 +53,8 @@ long* PublicKey::encrypt(char *msg, size_t len){
     return encode;
 }
 
-string PublicKey::getKey(){
+std::string PublicKey::getKey(){
     std::stringstream s;
-    s << std::hex << n << e;
+    s << std::hex << n << " " << e;
     return s.str();
 }

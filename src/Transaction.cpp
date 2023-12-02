@@ -9,11 +9,11 @@ Transaction::Transaction(uint64_t id, int inCount, int outCount){
     m_outCount = outCount;
     
     if (m_inCount > 0){
-        m_in = new struct TXInput[inCount];
+        m_in = new class TXInput[inCount];
     }
     
     if (m_outCount > 0){
-        m_out = new struct TXOutput[m_outCount];
+        m_out = new class TXOutput[m_outCount];
     }
 }
 
@@ -23,14 +23,14 @@ Transaction::Transaction(Transaction *tx){
     m_outCount = tx->m_outCount;
     
     if (m_inCount > 0){
-        m_in = new struct TXInput[m_inCount];
+        m_in = new class TXInput[m_inCount];
         for (int i = 0; i < m_inCount; i++){
             m_in[i] = tx->m_in[i];
         }
     }
     
     if (m_outCount > 0){
-        m_out = new struct TXOutput[m_outCount];
+        m_out = new class TXOutput[m_outCount];
         for (int i = 0; i < m_outCount; i++){
             m_out[i] = tx->m_out[i];
         }
@@ -87,7 +87,7 @@ void Transaction::encode(uint8_t *ptr){
         std::memcpy(ptr, &pubSize, sizeof(size_t));
         ptr += sizeof(size_t);
         
-        for (int j = 0; j < pubSize; j++){
+        for (size_t j = 0; j < pubSize; j++){
             *ptr = m_in[i].m_pubkey[j];
             ptr += sizeof(char);
         }
@@ -104,7 +104,7 @@ void Transaction::encode(uint8_t *ptr){
         std::memcpy(ptr, &pubSize, sizeof(size_t));
         ptr += sizeof(size_t);
         
-        for (int j = 0; j < pubSize; j++){
+        for (size_t j = 0; j < pubSize; j++){
             *ptr = m_out[i].m_pubkey[j];
             ptr += sizeof(char);
         }
@@ -133,11 +133,11 @@ void Transaction::decode(uint8_t *ptr){
         std::memcpy(&m_in[i].m_outIndex, ptr, sizeof(int));
         ptr += sizeof(int);
         
-        size_t pub_size = 0;
-        std::memcpy(&pub_size, ptr, sizeof(size_t));
+        size_t pubSize = 0;
+        std::memcpy(&pubSize, ptr, sizeof(size_t));
         ptr += sizeof(size_t);
         
-        for (int j = 0; j < pub_size; j++){
+        for (size_t j = 0; j < pubSize; j++){
             m_in[i].m_pubkey += *ptr;
             ptr += sizeof(char);
         }
@@ -151,11 +151,11 @@ void Transaction::decode(uint8_t *ptr){
         std::memcpy(&m_out[i].m_value, ptr, sizeof(int));
         ptr += sizeof(int);
         
-        size_t pub_size = 0;
-        std::memcpy(&pub_size, ptr, sizeof(size_t));
+        size_t pubSize = 0;
+        std::memcpy(&pubSize, ptr, sizeof(size_t));
         ptr += sizeof(size_t);
         
-        for (int j = 0; j < pub_size; j++){
+        for (size_t j = 0; j < pubSize; j++){
             m_out[i].m_pubkey += *ptr;
             ptr += sizeof(char);
         }
@@ -180,7 +180,7 @@ string Transaction::toString(){
     return result;
 }
 
-Transaction *coinBaseTrans(string pubkey){
+Transaction *coinBaseTrans(const std::string &pubkey){
     Transaction *TX = new Transaction(0, 0, 1);
     TX->m_id = 0;
     
@@ -194,7 +194,7 @@ Transaction *coinBaseTrans(string pubkey){
     return TX;
 }
 
-Transaction *simpleTrans(uint64_t id, string pubkey, int value){
+Transaction *simpleTrans(const uint64_t &id, const std::string &pubkey, int value){
     Transaction *TX = new Transaction(id, 0, 1);
     TX->m_id = id;
     TX->m_outCount = 1;
@@ -203,7 +203,7 @@ Transaction *simpleTrans(uint64_t id, string pubkey, int value){
     return TX;
 }
 
-Transaction *realTransaction(uint64_t id, string from, string to, int value, list<TXInput> inputs, int rest){
+Transaction *realTransaction(const uint64_t &id, const std::string &from, const std::string &to, int value, std::list<TXInput> inputs, int rest){
     int m_outCount = 1;
     if (rest > 0){
         m_outCount++;
@@ -229,7 +229,7 @@ Transaction *realTransaction(uint64_t id, string from, string to, int value, lis
 }
 
 
-TXOutput::TXOutput(int value, string pubkey){
+TXOutput::TXOutput(int value, const std::string &pubkey){
     m_value = value;
     m_pubkey = pubkey;
 }
@@ -248,7 +248,7 @@ TXOutput& TXOutput::operator =(const TXOutput &out){
     return *this;
 }
 
-TXInput::TXInput(uint64_t transId, int outIndex, string pubkey){
+TXInput::TXInput(const uint64_t &transId, int outIndex, const std::string &pubkey){
     m_tranId = transId;
     m_outIndex = outIndex;
     m_pubkey = pubkey;

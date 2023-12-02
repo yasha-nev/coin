@@ -5,23 +5,29 @@
 #include "Block.hpp"
 #include <list>
 
-using namespace std;
-
 class BlockChain{
 public:
     BlockChain();
-    ~BlockChain();
-    uint64_t getBalance(string user);
-    void addBlock(string from, string to, int value);
+    
+    uint64_t getBalance(const std::string &user);
+    
+    void addBlock(const std::string &from, const std::string &to, int value);
+    
     void printChain();
-    Block *getBlock(uint32_t *hash);
+    
+    Block *getBlock(const std::array<uint32_t, 8> &hash);
     
 private:
-    list<TXInput> createInputs(string from, int valuem, int *rest);
-    Block *newBlock(Transaction *tx, uint32_t *prevHashBlock);
+    std::list<TXInput> createInputs(const std::string &from, int valuem, int *rest);
+    
+    Block *newBlock(Transaction *tx, const std::array<uint32_t, 8> &hash);
+    
     Block *genesisBlock();
-    uint32_t m_cur_hash[8];
+    
+    std::array<uint32_t, 8> m_cur_hash;
+    
     uint64_t m_blocksIDs;
+    
     DB m_db;
 };
 

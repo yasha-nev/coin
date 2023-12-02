@@ -4,19 +4,28 @@
 #include <cmath>
 #include <string>
 #include <sstream>
-
-using namespace std;
+#include <fstream>
+#include "base58.hpp"
 
 class PublicKey{
 public:
     PublicKey(long _e, long _n);
+    
+    PublicKey(const std::string &path);
+    
     long *encrypt(char *msg, size_t size);
+    
     long checkSignature(char *msg);
-    string getKey();
+    
+    std::string getKey();
+    
+    void save(const std::string &path);
 
 private:
     long e;
+    
     long n;
+    
     long encodeChar(int c);
 };
 #endif /* publickey_hpp */

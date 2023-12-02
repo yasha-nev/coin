@@ -23,11 +23,13 @@ const char ALPHABET_MAP[256] = {
 
 const double iFactor = 1.36565823730976103695740418120764243208481439700722980119458355862779176747360903943915516885072037696111192757109;
 
-// reslen is the allocated length for result, feel free to overallocate
-int EncodeBase58(char *source, int len, char result[], int reslen) {
-    int zeros = 0, length = 0, pbegin = 0, pend;
-   
-    if (!(pend = len)) return 0;
+std::string EncodeBase58(const std::string &source){
+    size_t pbegin = 0, pend;
+    int zeros = 0, length = 0;
+    
+    std::string result;
+    
+    if (!(pend = source.size())) return 0;
     
     while (pbegin != pend && !source[pbegin])
         pbegin = ++zeros;
@@ -57,8 +59,7 @@ int EncodeBase58(char *source, int len, char result[], int reslen) {
     while ((it2-size) && !b58[it2])
         it2++;
     
-    if ((zeros + size - it2 + 1) > reslen)
-        return 0;
+    result.resize(zeros + size - it2 + 1);
     
     int ri = 0;
     while(ri < zeros)
@@ -69,15 +70,23 @@ int EncodeBase58(char *source, int len, char result[], int reslen) {
     
     result[ri] = 0;
     
-    return ri;
+    return result;
 }
 
-int DecodeBase58(char *str, int len, char *result) {
+std::string DecodeBase58(const std::string &str){
+    std::string res;
+    unsigned char result[str.size() + 1];
+    
     result[0] = 0;
     int resultlen = 1;
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < str.size() - 1; i++) {
+        
         unsigned int carry = (unsigned int) ALPHABET_MAP[str[i]];
-        if (carry == -1) return 0;
+        
+        if (carry == -1){
+            return std::string("");
+        }
+        
         for (int j = 0; j < resultlen; j++) {
             carry += (unsigned int) (result[j]) * 58;
             result[j] = (unsigned char) (carry & 0xff);
@@ -88,16 +97,23 @@ int DecodeBase58(char *str, int len, char *result) {
             carry >>= 8;
         }
     }
-
-    for (int i = 0; i < len && str[i] == '1'; i++)
+    
+    for (int i = 0; i < str.size() - 1 && str[i] == '1'; i++)
         result[resultlen++] = 0;
-
+    
     // Poorly coded, but guaranteed to work.
-    for (int i = resultlen - 1, z = (resultlen >> 1) + (resultlen & 1);
-        i >= z; i--) {
+    for (int i = resultlen - 1, z = (resultlen >> 1) + (resultlen & 1); i >= z; i--) {
         int k = result[i];
+        
         result[i] = result[resultlen - i - 1];
         result[resultlen - i - 1] = k;
     }
-    return resultlen;
+    
+    for (int i = 0; i < resultlen; i++){
+        res += result[i];
+    }
+    
+    return res;
 }
+
+
