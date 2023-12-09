@@ -3,6 +3,7 @@
 
 #include <inttypes.h>
 #include <string>
+#include <string.h>
 #include <list>
 
 #define REWARD 50

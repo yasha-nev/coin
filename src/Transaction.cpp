@@ -70,21 +70,21 @@ size_t Transaction::size(){
 }
 
 void Transaction::encode(uint8_t *ptr){
-    std::memcpy(ptr, &m_id, sizeof(uint64_t));
+    memcpy(ptr, &m_id, sizeof(uint64_t));
     ptr += sizeof(uint64_t);
     
-    std::memcpy(ptr, &m_inCount, sizeof(int));
+    memcpy(ptr, &m_inCount, sizeof(int));
     ptr += sizeof(int);
     
     for (int i = 0; i < m_inCount; i++){
-        std::memcpy(ptr, &m_in[i].m_tranId, sizeof(uint64_t));
+        memcpy(ptr, &m_in[i].m_tranId, sizeof(uint64_t));
         ptr += sizeof(uint64_t);
         
-        std::memcpy(ptr, &m_in[i].m_outIndex, sizeof(int));
+        memcpy(ptr, &m_in[i].m_outIndex, sizeof(int));
         ptr += sizeof(int);
         
         size_t pubSize = m_in[i].m_pubkey.size();
-        std::memcpy(ptr, &pubSize, sizeof(size_t));
+        memcpy(ptr, &pubSize, sizeof(size_t));
         ptr += sizeof(size_t);
         
         for (size_t j = 0; j < pubSize; j++){
@@ -93,15 +93,15 @@ void Transaction::encode(uint8_t *ptr){
         }
     }
     
-    std::memcpy(ptr, &m_outCount, sizeof(int));
+    memcpy(ptr, &m_outCount, sizeof(int));
     ptr += sizeof(int);
     
     for (int i = 0; i < m_outCount; i++){
-        std::memcpy(ptr, &m_out[i].m_value, sizeof(int));
+        memcpy(ptr, &m_out[i].m_value, sizeof(int));
         ptr += sizeof(int);
         size_t pubSize = m_out[i].m_pubkey.size();
         
-        std::memcpy(ptr, &pubSize, sizeof(size_t));
+        memcpy(ptr, &pubSize, sizeof(size_t));
         ptr += sizeof(size_t);
         
         for (size_t j = 0; j < pubSize; j++){
@@ -119,22 +119,22 @@ void Transaction::decode(uint8_t *ptr){
         delete[] m_out;
     }
     
-    std::memcpy(&m_id, ptr, sizeof(uint64_t));
+    memcpy(&m_id, ptr, sizeof(uint64_t));
     ptr += sizeof(uint64_t);
     
-    std::memcpy(&m_inCount, ptr, sizeof(int));
+    memcpy(&m_inCount, ptr, sizeof(int));
     ptr += sizeof(int);
     
     m_in = new TXInput[m_inCount];
     for (int i = 0; i < m_inCount; i++){
-        std::memcpy(&m_in[i].m_tranId, ptr, sizeof(uint64_t));
+        memcpy(&m_in[i].m_tranId, ptr, sizeof(uint64_t));
         ptr += sizeof(uint64_t);
         
-        std::memcpy(&m_in[i].m_outIndex, ptr, sizeof(int));
+        memcpy(&m_in[i].m_outIndex, ptr, sizeof(int));
         ptr += sizeof(int);
         
         size_t pubSize = 0;
-        std::memcpy(&pubSize, ptr, sizeof(size_t));
+        memcpy(&pubSize, ptr, sizeof(size_t));
         ptr += sizeof(size_t);
         
         for (size_t j = 0; j < pubSize; j++){
@@ -143,16 +143,16 @@ void Transaction::decode(uint8_t *ptr){
         }
     }
     
-    std::memcpy(&m_outCount, ptr, sizeof(int));
+    memcpy(&m_outCount, ptr, sizeof(int));
     ptr += sizeof(int);
     
     m_out = new TXOutput[m_outCount];
     for (int i = 0; i < m_outCount; i++){
-        std::memcpy(&m_out[i].m_value, ptr, sizeof(int));
+        memcpy(&m_out[i].m_value, ptr, sizeof(int));
         ptr += sizeof(int);
         
         size_t pubSize = 0;
-        std::memcpy(&pubSize, ptr, sizeof(size_t));
+        memcpy(&pubSize, ptr, sizeof(size_t));
         ptr += sizeof(size_t);
         
         for (size_t j = 0; j < pubSize; j++){

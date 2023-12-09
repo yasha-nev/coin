@@ -61,6 +61,14 @@ void Block::setHash(const std::array<uint32_t, 8> &hash){
     m_hash = hash;
 }
 
+size_t Block::size(){
+    return sizeof(uint64_t) +
+    m_tx->size() +
+    sizeof(uint32_t) * 8 +
+    sizeof(uint32_t) * 8 +
+    sizeof(uint64_t);
+}
+
 uint8_t *Block::encode(size_t *blockSize){
     *blockSize = sizeof(uint64_t) +
         m_tx->size() +  
@@ -71,20 +79,20 @@ uint8_t *Block::encode(size_t *blockSize){
     uint8_t *enc = new uint8_t[*blockSize];
     uint8_t *ptr = enc;
     
-    std::memcpy(ptr, &m_timeStamp, sizeof(uint64_t));
+    memcpy(ptr, &m_timeStamp, sizeof(uint64_t));
     ptr += sizeof(uint64_t);
     
     m_tx->encode(ptr);
     
     ptr += m_tx->size();
     
-    std::memcpy(ptr, m_prevBlockHash.data(), sizeof(uint32_t) * 8);
+    memcpy(ptr, m_prevBlockHash.data(), sizeof(uint32_t) * 8);
     ptr += sizeof(uint32_t) * 8;
     
-    std::memcpy(ptr, m_hash.data(), sizeof(uint32_t) * 8);
+    memcpy(ptr, m_hash.data(), sizeof(uint32_t) * 8);
     ptr += sizeof(uint32_t) * 8;
     
-    std::memcpy(ptr, &m_nonce, sizeof(uint64_t));
+    memcpy(ptr, &m_nonce, sizeof(uint64_t));
     
     return enc;
 }
@@ -93,7 +101,7 @@ Block* decode(uint8_t *dec){
     Block *block = new Block();
     uint8_t *ptr = dec;
     
-    std::memcpy(&block->m_timeStamp, ptr, sizeof(uint64_t));
+    memcpy(&block->m_timeStamp, ptr, sizeof(uint64_t));
     ptr += sizeof(uint64_t);
     
     block->m_tx->decode(ptr);
@@ -118,7 +126,7 @@ Block* decode(uint8_t *dec){
     
     ptr += sizeof(uint32_t) * 8;
 
-    std::memcpy(&block->m_nonce, ptr, sizeof(uint64_t));
+    memcpy(&block->m_nonce, ptr, sizeof(uint64_t));
     
     return block;
 }

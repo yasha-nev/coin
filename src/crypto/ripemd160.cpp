@@ -219,7 +219,7 @@ std::array<uint32_t, 5> RIPMD160::Hash(const std::string &msg){
     return hash;
 }
 
-string RIPMD160::getHash(){
+std::string RIPMD160::getHash(){
     std::stringstream s;
     
     for ( uint32_t i = 0; i < 20; ++i ) {

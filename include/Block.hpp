@@ -59,6 +59,8 @@ public:
     
     void setHash(const std::array<uint32_t, 8> &hash);
     
+    size_t size();
+    
     void print();
     
     uint8_t *encode(size_t *blockSize);

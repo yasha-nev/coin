@@ -7,6 +7,7 @@
 #include "sha256.hpp"
 #include "base58.hpp"
 #include "rsa.hpp"
+#include "Network.hpp"
 
 class Wallet{
 public:

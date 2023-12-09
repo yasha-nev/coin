@@ -15,12 +15,20 @@ public:
     
     void printChain();
     
+    void putBlock(Block *block);
+    
     Block *getBlock(const std::array<uint32_t, 8> &hash);
+    
+    Block *getPastBlock();
+    
+    std::array<uint32_t, 8> getPastBlockHash();
+    
+    std::list<std::array<uint32_t, 8>> getHashesBefore(std::array<uint32_t, 8> curHash);
     
 private:
     std::list<TXInput> createInputs(const std::string &from, int valuem, int *rest);
     
-    Block *newBlock(Transaction *tx, const std::array<uint32_t, 8> &hash);
+    Block *newBlock(uint64_t time, Transaction *tx, const std::array<uint32_t, 8> &hash);
     
     Block *genesisBlock();
     

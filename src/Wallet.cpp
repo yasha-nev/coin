@@ -20,7 +20,7 @@ std::string Wallet:: getAddres(){
     std::string pubKeyHash = publicKeyHash();
     std::string sum = checkSum(pubKeyHash);
     
-    string src = version() + pubKeyHash + sum;
+    std::string src = version() + pubKeyHash + sum;
     return EncodeBase58(src);
 }
 

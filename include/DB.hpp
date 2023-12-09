@@ -4,8 +4,8 @@
 #include "Block.hpp"
 #include "leveldb/db.h"
 
-//Users/yasha_nev/projects/BlockChain/BlockChain/testdb
-#define DBPATH "testdb"
+
+#define DBPATH "./testdb"
 
 class DB {
 public:

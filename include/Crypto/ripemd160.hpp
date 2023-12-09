@@ -1,25 +1,22 @@
 #ifndef ripemd160_hpp
 #define ripemd160_hpp
 
-#include <inttypes.h>
-#include <string>
-#include <iostream>
 #include <bit>
+#include <string>
 #include <iomanip>
 #include <sstream>
-
-using namespace std;
+#include <inttypes.h>
 
 class RIPMD160{
 public:
     RIPMD160();
     
-    std::array<uint32_t, 5> Hash(const string &msg);
+    std::array<uint32_t, 5> Hash(const std::string &msg);
     
-    string getHash();
+    std::string getHash();
     
 private:
-    uint32_t **CreateBlocks(const string &msg, uint64_t *block_count);
+    uint32_t **CreateBlocks(const std::string &msg, uint64_t *block_count);
     
     void HashBlock(uint32_t *block, uint32_t *hash);
     

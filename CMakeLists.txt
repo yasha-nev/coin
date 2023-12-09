@@ -8,9 +8,12 @@ add_subdirectory(leveldb)
 
 include_directories(
     include
-    include/crypto
+    include/Crypto
+    include/net
+    
     src
     src/crypto
+    src/net
     leveldb/include
     )
 
@@ -26,6 +29,9 @@ set(SRCS
     src/crypto/privatekey.cpp
     src/crypto/ripemd160.cpp
     src/crypto/base58.cpp
+    src/net/Message.cpp
+    src/net/Network.cpp
+    src/net/Server.cpp
     )
 
 set(HEADERS
@@ -34,12 +40,15 @@ set(HEADERS
     include/DB.hpp
     include/BlockChain.hpp
     include/Transaction.hpp
-    include/crypto/sha256.hpp
-    include/crypto/rsa.hpp
-    include/crypto/publickey.hpp
-    include/crypto/privatekey.hpp
-    include/crypto/ripemd160.hpp
-    include/crypto/base58.hpp
+    include/Crypto/sha256.hpp
+    include/Crypto/rsa.hpp
+    include/Crypto/publickey.hpp
+    include/Crypto/privatekey.hpp
+    include/Crypto/ripemd160.hpp
+    include/Crypto/base58.hpp
+    include/net/Message.hpp
+    include/net/Network.hpp
+    include/net/Server.hpp
     )
 
 

@@ -1,10 +1,11 @@
 #include <iostream>
 #include "BlockChain.hpp"
 #include "Wallet.hpp"
+#include "Message.hpp"
 
 using namespace std;
 
-void CLI(BlockChain &bc, std::array<Wallet, 2> &wallets){
+void CLI(BlockChain &bc, std::array<Wallet, 2> &wallets, Network &net){
     while (true){
         string command;
         cout << "CLI>";
@@ -48,6 +49,21 @@ void CLI(BlockChain &bc, std::array<Wallet, 2> &wallets){
             break;
         }
         
+        else if(command == "updatedb"){
+            net.getBlocks();
+        }
+        
+        else if(command == "connect"){
+            string host;
+            int port;
+            cout << "host: ";
+            cin >> host;
+            cout << "port: ";
+            cin >> port;
+            
+            net.connectTo(host, port);
+        }
+        
         else{
             continue;
         }
@@ -55,16 +71,19 @@ void CLI(BlockChain &bc, std::array<Wallet, 2> &wallets){
 }
 
 int main(int argc, const char * argv[]) {
-    (void) argc;
-    (void) argv;
+    if (argc < 2){
+        return 0;
+    }
+    int port = stoi(argv[1]);
     
     BlockChain bc;
+    Network net(std::list<std::pair<std::string, int>>(), port, &bc);
     std::array<Wallet, 2> wallets;
     
-    //wallets[0] = Wallet("/Users/yasha_nev/projects/BlockChain/BlockChain");
+    // wallets[0] = Wallet("/Users/yasha_nev/projects/BlockChain/BlockChain");
     
-    CLI(bc, wallets);
-    
+    CLI(bc, wallets, net);
+
     return 0;
 }
 
