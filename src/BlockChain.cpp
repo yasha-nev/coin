@@ -1,4 +1,5 @@
 #include "BlockChain.hpp"
+#include <cstdint>
 
 static inline bool file_exist (const std::string& name) {
     if (FILE *file = fopen(name.c_str(), "r")) {
@@ -46,7 +47,7 @@ BlockChain::BlockChain(){
     }
 }
 
-void BlockChain::addBlock(const std::string &from, const std::string &to, int value){
+void BlockChain::addBlock(Wallet &from, const std::string &address, int value){
     m_blocksIDs++;
     int rest;
     std::list<TXInput> inputs = createInputs(from, value, &rest);
@@ -54,7 +55,10 @@ void BlockChain::addBlock(const std::string &from, const std::string &to, int va
         std::cout << "not money" << std::endl;
         return;
     }
-    Transaction *tx = realTransaction(m_blocksIDs, from, to, value, inputs, rest);
+    Transaction *tx = realTransaction(m_blocksIDs, from.getAddres(), address, value, inputs, rest);
+    
+    transactionSign(from, tx);
+
     Block *block_n = newBlock(static_cast<uint64_t>(std::time(nullptr)), tx, m_cur_hash);
     
     m_db.putBlock(block_n);
@@ -120,7 +124,6 @@ Block *BlockChain::newBlock(uint64_t time, Transaction *tx, const std::array<uin
 
 void BlockChain::putBlock(Block *block){
     if (!block){
-        std::cout << "fuck" << std::endl;
         return;
     }
     
@@ -145,7 +148,7 @@ TXOutput *getOutputs(const std::string &from, int value, int *count){
     return nullptr;
 }
 
-uint64_t BlockChain::getBalance(const std::string &user){
+uint64_t BlockChain::getBalance(Wallet &user){
     uint64_t sum = 0;
     std::array<uint32_t, 8> hash;
     
@@ -174,7 +177,7 @@ uint64_t BlockChain::getBalance(const std::string &user){
         }
         
         for (int i = 0; i < tx->m_outCount; i++){
-            if (tx->m_out[i].m_pubkey == user){
+            if (tx->m_out[i].m_address == user.getAddres()){
                 if (l < it && outIds[l].outIndex == i){
                     break;
                 }
@@ -184,7 +187,7 @@ uint64_t BlockChain::getBalance(const std::string &user){
         }
         
         for (int i = 0; i < tx->m_inCount; i++){
-            if (tx->m_in[i].m_pubkey == user){
+            if (tx->m_in[i].m_pubkey == user.getPubKey()->getKey()){
                 outIds[it] = {tx->m_in[i].m_tranId, tx->m_in[i].m_outIndex};
                 it++;
             }
@@ -198,7 +201,7 @@ uint64_t BlockChain::getBalance(const std::string &user){
     return sum;
 }
 
-std::list<TXInput> BlockChain::createInputs(const std::string &from, int value, int *rest){
+std::list<TXInput> BlockChain::createInputs(Wallet &from, int value, int *rest){
     std::list<TXInput> ls;
     int sum = 0;
     std::array<uint32_t, 8> hash;
@@ -230,17 +233,17 @@ std::list<TXInput> BlockChain::createInputs(const std::string &from, int value, 
         }
         
         for (int i = 0; i < tx->m_outCount; i++){
-            if (tx->m_out[i].m_pubkey == from){
+            if (tx->m_out[i].m_address == from.getAddres()){
                 if (l < it && outIds[l].outIndex == i){
                     break;
                 }
-                ls.push_back(TXInput(tx->m_id, i, from));
+                ls.push_back(TXInput(tx->m_id, i, from.getPubKey()->getKey()));
                 sum += tx->m_out[i].m_value;
             }
         }
         
         for (int i = 0; i < tx->m_inCount; i++){
-            if (tx->m_in[i].m_pubkey == from){
+            if (tx->m_in[i].m_pubkey == from.getPubKey()->getKey()){
                 outIds[it] = {tx->m_in[i].m_tranId, tx->m_in[i].m_outIndex};
                 it++;
             }
@@ -259,4 +262,19 @@ std::list<TXInput> BlockChain::createInputs(const std::string &from, int value, 
     *rest = sum - value;
     
     return ls;
+}
+
+void BlockChain::transactionSign(Wallet &wal, Transaction *tx){
+    std::string signstr;
+    for (size_t i = 0; i < tx->m_outCount; i++){
+        signstr += tx->m_out->m_address;
+    }
+
+	for (size_t i = 0; i < tx->m_inCount; i++){
+        sha256 cryptor;
+        std::string key = tx->m_in[i].m_pubkey + signstr;
+        cryptor.Hash(key);
+        tx->m_in[i].m_sign = cryptor.getHash();
+    }
+    return;
 }

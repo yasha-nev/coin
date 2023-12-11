@@ -16,6 +16,14 @@ public:
     Wallet(const std::string &keyPath);
     
     void save(const std::string &keyPath);
+
+    PublicKey *getPubKey(){
+        return pubkey;
+    }
+
+    PrivateKey *getPrivKey(){
+        return privkey;
+    }
     
     std::string getAddres();
     

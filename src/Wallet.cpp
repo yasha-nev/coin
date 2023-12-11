@@ -21,7 +21,12 @@ std::string Wallet:: getAddres(){
     std::string sum = checkSum(pubKeyHash);
     
     std::string src = version() + pubKeyHash + sum;
-    return EncodeBase58(src);
+    
+    std::string res = EncodeBase58(src);
+    
+    res.pop_back();
+    
+    return res;
 }
 
 std::string Wallet::checkSum(const std::string &payload){

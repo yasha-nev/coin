@@ -144,12 +144,13 @@ void Block::print(){
         std::cout << "|output id : "  << m_tx->m_in[i].m_tranId << "\n";
         std::cout << "|index: "  <<  m_tx->m_in[i].m_outIndex << "\n";
         std::cout << "|pubkey from: "  <<  m_tx->m_in[i].m_pubkey << "\n";
+        std::cout << "|sign: "  <<  m_tx->m_in[i].m_sign << "\n";
         std::cout << "|" << std::setfill('-') << std::setw(79) << "\n";
     }
     std::cout << "|" << std::setfill('_') << std::setw(39) << "TXOUTPUTS" << std::setfill('_') << std::setw(40) << "\n";
     for (int i = 0; i < m_tx->m_outCount; i++){
         std::cout << "|value: " <<  m_tx->m_out[i].m_value << "\n";
-        std::cout << "|pubkey to: " <<  m_tx->m_out[i].m_pubkey << "\n";
+        std::cout << "|address to: " <<  m_tx->m_out[i].m_address << "\n";
         std::cout << "|" << std::setfill('-') << std::setw(79) << "\n";
     }
     

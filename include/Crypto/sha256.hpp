@@ -7,6 +7,7 @@
 #include <sstream>
 #include <inttypes.h>
 #include <ctype.h>
+#include <array>
 
 class sha256{
 public:

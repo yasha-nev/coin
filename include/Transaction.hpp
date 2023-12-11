@@ -47,7 +47,7 @@ public:
     
     int m_value;
     
-    std::string m_pubkey;
+    std::string m_address;
 };
 
 class TXInput{
@@ -65,6 +65,8 @@ public:
     int m_outIndex;
     
     std::string m_pubkey;
+
+    std::string m_sign;
 };
 
 //Выплата за майнинг, pubkey - адрес майнера

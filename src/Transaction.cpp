@@ -57,13 +57,15 @@ size_t Transaction::size(){
         s += sizeof(int);
         s += sizeof(size_t);
         s += sizeof(char) * m_in[i].m_pubkey.size();
+        s += sizeof(size_t);
+        s += sizeof(char) * m_in[i].m_sign.size();
     }
     
     s += sizeof(int);
     for (int i = 0; i < m_outCount; i++){
         s += sizeof(int);
         s += sizeof(size_t);
-        s += sizeof(char) * m_out[i].m_pubkey.size();
+        s += sizeof(char) * m_out[i].m_address.size();
     }
     
     return s;
@@ -91,6 +93,15 @@ void Transaction::encode(uint8_t *ptr){
             *ptr = m_in[i].m_pubkey[j];
             ptr += sizeof(char);
         }
+
+        size_t sigSize = m_in[i].m_sign.size();
+        memcpy(ptr, &sigSize, sizeof(size_t));
+        ptr += sizeof(size_t);
+
+        for (size_t j = 0; j < sigSize; j++){
+            *ptr = m_in[i].m_sign[j];
+            ptr += sizeof(char);
+        }
     }
     
     memcpy(ptr, &m_outCount, sizeof(int));
@@ -99,13 +110,13 @@ void Transaction::encode(uint8_t *ptr){
     for (int i = 0; i < m_outCount; i++){
         memcpy(ptr, &m_out[i].m_value, sizeof(int));
         ptr += sizeof(int);
-        size_t pubSize = m_out[i].m_pubkey.size();
+        size_t pubSize = m_out[i].m_address.size();
         
         memcpy(ptr, &pubSize, sizeof(size_t));
         ptr += sizeof(size_t);
         
         for (size_t j = 0; j < pubSize; j++){
-            *ptr = m_out[i].m_pubkey[j];
+            *ptr = m_out[i].m_address[j];
             ptr += sizeof(char);
         }
     }
@@ -141,6 +152,15 @@ void Transaction::decode(uint8_t *ptr){
             m_in[i].m_pubkey += *ptr;
             ptr += sizeof(char);
         }
+
+        size_t sigSize = 0;
+        memcpy(&sigSize, ptr, sizeof(size_t));
+        ptr += sizeof(size_t);
+        
+        for (size_t j = 0; j < sigSize; j++){
+            m_in[i].m_sign += *ptr;
+            ptr += sizeof(char);
+        }
     }
     
     memcpy(&m_outCount, ptr, sizeof(int));
@@ -156,7 +176,7 @@ void Transaction::decode(uint8_t *ptr){
         ptr += sizeof(size_t);
         
         for (size_t j = 0; j < pubSize; j++){
-            m_out[i].m_pubkey += *ptr;
+            m_out[i].m_address += *ptr;
             ptr += sizeof(char);
         }
     }
@@ -170,11 +190,12 @@ string Transaction::toString(){
         result += to_string(m_in[i].m_tranId);
         result += to_string(m_in[i].m_outIndex);
         result += m_in[i].m_pubkey;
+        result += m_in[i].m_sign;
     }
     result += to_string(m_outCount);
     for (int i = 0; i < m_outCount; i++){
         result += to_string(m_out[i].m_value);
-        result += m_out[i].m_pubkey;
+        result += m_out[i].m_address;
     }
     
     return result;
@@ -229,14 +250,14 @@ Transaction *realTransaction(const uint64_t &id, const std::string &from, const 
 }
 
 
-TXOutput::TXOutput(int value, const std::string &pubkey){
+TXOutput::TXOutput(int value, const std::string &address){
     m_value = value;
-    m_pubkey = pubkey;
+    m_address = address;
 }
 
 TXOutput::TXOutput(const TXOutput &out){
     m_value = out.m_value;
-    m_pubkey = out.m_pubkey;
+    m_address = out.m_address;
 }
 
 TXOutput& TXOutput::operator =(const TXOutput &out){
@@ -244,7 +265,7 @@ TXOutput& TXOutput::operator =(const TXOutput &out){
         return *this;
     }
     m_value = out.m_value;
-    m_pubkey = out.m_pubkey;
+    m_address = out.m_address;
     return *this;
 }
 
@@ -258,6 +279,7 @@ TXInput::TXInput(const TXInput &in){
     m_tranId = in.m_tranId;
     m_outIndex = in.m_outIndex;
     m_pubkey = in.m_pubkey;
+    m_sign = in.m_sign;
 }
 
 TXInput& TXInput::operator =(const TXInput &in){
@@ -267,6 +289,7 @@ TXInput& TXInput::operator =(const TXInput &in){
     m_tranId = in.m_tranId;
     m_outIndex = in.m_outIndex;
     m_pubkey = in.m_pubkey;
+    m_sign = in.m_sign;
     return *this;
 }
 

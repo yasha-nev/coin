@@ -7,6 +7,8 @@
 #include "BlockChain.hpp"
 #include <utility>
 
+class BlockChain;
+
 class Network{
 public:
     

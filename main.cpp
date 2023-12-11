@@ -1,44 +1,33 @@
-#include <iostream>
 #include "BlockChain.hpp"
 #include "Wallet.hpp"
 #include "Message.hpp"
 
 using namespace std;
 
-void CLI(BlockChain &bc, std::array<Wallet, 2> &wallets, Network &net){
+void CLI(BlockChain &bc, Wallet wallet, Network &net){
     while (true){
         string command;
         cout << "CLI>";
         cin >> command;
         
-        if (command == "users"){
-            for (int i = 0; i < wallets.size(); i++){
-                cout << i << " " << wallets[i].getAddres() << "\n";
-            }
+        if (command == "user"){
+            cout << wallet.getAddres() << "\n";
         }
         
         if (command == "send"){
-            string from;
             string to;
             int value;
-            
-            cout << "from: ";
-            cin >> from;
             
             cout << "to: ";
             cin >> to;
             cout << "value: ";
             cin >> value;
             
-            bc.addBlock(from, to, value);
+            bc.addBlock(wallet, to, value);
         }
     
         else if (command == "balance"){
-            string user;
-            
-            cout << "user: ";
-            cin >> user;
-            bc.getBalance(user);
+            bc.getBalance(wallet);
         }
         
         else if (command == "print"){
@@ -78,11 +67,8 @@ int main(int argc, const char * argv[]) {
     
     BlockChain bc;
     Network net(std::list<std::pair<std::string, int>>(), port, &bc);
-    std::array<Wallet, 2> wallets;
-    
-    // wallets[0] = Wallet("/Users/yasha_nev/projects/BlockChain/BlockChain");
-    
-    CLI(bc, wallets, net);
+    Wallet wallet("./");
+    CLI(bc, wallet, net);
 
     return 0;
 }
