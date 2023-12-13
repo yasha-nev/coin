@@ -115,5 +115,3 @@ std::string DecodeBase58(const std::string &str){
     
     return res;
 }
-
-

@@ -9,7 +9,6 @@ Client::Client(int socket, sockaddr_in addr, int id, std::list<Message *> *msgs)
     m_msgs = msgs;
 }
 
-
 Client::~Client(){
     if (m_sock == -1){
         return;
@@ -182,6 +181,10 @@ void Server::messageHandler(Client *client){
                 msg = new BlockMsg();
             }
             
+            else if (type == MsgTypes::Tx){
+                msg = new TxMsg();
+            }
+            
             else if (type == MsgTypes::noFound){
                 msg = new NoFoundMsg();
             }
@@ -190,6 +193,7 @@ void Server::messageHandler(Client *client){
             }
             
             msg->parse(buff, r);
+            
             msg->setClientId(client->getId());
             
             m_msgMtx->lock();

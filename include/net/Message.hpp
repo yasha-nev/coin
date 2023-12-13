@@ -15,6 +15,7 @@ enum MsgTypes{
     gData   = 1,
     sBlock  = 2,
     Inv     = 3,
+    Tx      = 4,
     noFound = 4
 };
 
@@ -27,22 +28,19 @@ public:
     
     virtual uint8_t *toByte(size_t &size) = 0;
     
-    virtual uint8_t getCommand(){
-        return m_comm;
-    }
+    uint8_t getCommand();
     
-    virtual void setClientId(int id){
-        clientId = id;
-    }
+    void setClientId(int id);
     
-    virtual int getClientId(){
-        return clientId;
-    }
+    int getClientId();
     
 protected:
-    int clientId = -1;
+    int m_clientId = -1;
+    
     uint8_t m_ver = 0;
+    
     size_t m_size;
+    
     uint8_t m_comm;
 };
 
@@ -178,6 +176,34 @@ public:
 
 private:
     Block *m_block;
+    
+};
+
+/*               Message Header
+ *  ------------------------------------------
+ * | start_string | Command | Size | Checksum |
+ *  ------------------------------------------
+ *                   Payload
+ *  --------------------------------------------
+ * |              serilized block               |
+ *  --------------------------------------------
+ */
+
+class TxMsg : public Message{
+public:
+    
+    TxMsg();
+    
+    TxMsg(Transaction *tx);
+    
+    virtual void parse(uint8_t *data, size_t size) override;
+    
+    virtual uint8_t *toByte(size_t &size) override;
+    
+    Transaction *getTransaction();
+
+private:
+    Transaction *m_tx;
     
 };
 

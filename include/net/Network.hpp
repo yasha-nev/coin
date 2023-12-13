@@ -7,17 +7,20 @@
 #include "BlockChain.hpp"
 #include <utility>
 
-class BlockChain;
-
 class Network{
 public:
     
     Network(std::list< std::pair<std::string, int>> clientIp, int port, BlockChain *bc);
+    
     ~Network();
     
     void getBlocks();
     
+    void sendToMempool(Transaction *tx);
+    
     void connectTo(std::string host, int ip);
+    
+    Transaction *getFromMempool();
     
 private:
     
@@ -39,11 +42,15 @@ private:
 
     std::list <std::pair<std::string, int>> m_clientsIp;
     
+    std::list<Transaction *> m_mempool;
+    
     std::atomic<bool> m_run;
+    
     std::mutex m_mtx;
+    
     std::thread m_procThr;
+    
     int m_port;
 };
 
 #endif
-

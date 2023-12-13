@@ -23,6 +23,7 @@ set(SRCS
     src/DB.cpp
     src/BlockChain.cpp
     src/Transaction.cpp
+    src/Mainer.cpp
     src/crypto/sha256.cpp
     src/crypto/rsa.cpp
     src/crypto/publickey.cpp
@@ -40,6 +41,7 @@ set(HEADERS
     include/DB.hpp
     include/BlockChain.hpp
     include/Transaction.hpp
+    include/Mainer.hpp
     include/Crypto/sha256.hpp
     include/Crypto/rsa.hpp
     include/Crypto/publickey.hpp

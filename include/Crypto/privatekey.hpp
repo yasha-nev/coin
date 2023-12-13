@@ -9,8 +9,15 @@
 
 class PrivateKey{
 public:
+    PrivateKey(){d = 0; n = 0;};
+    
     PrivateKey(const std::string &path);
+    
     PrivateKey(long _d, long _n);
+    
+    PrivateKey(const PrivateKey &out);
+    
+    PrivateKey &operator =(const PrivateKey &out);
     
     char *decrypt(long *enc, size_t size);
     

@@ -23,6 +23,10 @@ Network::~Network(){
         delete m_serv;
     }
     
+    for (Transaction *tx : m_mempool){
+        delete tx;
+    }
+    
     m_run.store(false, std::memory_order_relaxed);
     
     m_procThr.join();
@@ -46,6 +50,18 @@ void Network::getBlocks(){
     delete msg;
 }
 
+void Network::sendToMempool(Transaction *tx){
+    std::list<int> clientsid = m_serv->getClientsId();
+    
+    int id = clientsid.front();
+    
+    TxMsg *msg = new TxMsg(tx);
+    
+    m_serv->sendDataTo(id, msg);
+    
+    delete msg;
+}
+
 void Network::noFound(int clintId){
     
     NoFoundMsg *msg = new NoFoundMsg();
@@ -57,6 +73,7 @@ void Network::noFound(int clintId){
 }
 
 void Network::inv(std::array<uint32_t, 8> hash, int clientId){
+    
     std::list<std::array<uint32_t, 8>> lst = m_bc->getHashesBefore(hash);
     
     InvMsg *msg = new InvMsg(InvTypes::iBlock, lst);
@@ -68,14 +85,17 @@ void Network::inv(std::array<uint32_t, 8> hash, int clientId){
 
 void Network::getData(std::list<std::array<uint32_t, 8>> hashes, int clientId){
     GetDataMsg *msg = new GetDataMsg(DataTypes::dBlock, hashes);
+    
     m_serv->sendDataTo(clientId, msg);
+    
     delete msg;
 }
 
 void Network::sblock(std::list<std::array<uint32_t, 8>> hashes, int clientId){
     for (std::array<uint32_t, 8> hash : hashes){
         Block *block = m_bc->getBlock(hash);
-        if (block == nullptr){
+        
+        if (!block){
             continue;
         }
         
@@ -85,6 +105,8 @@ void Network::sblock(std::list<std::array<uint32_t, 8>> hashes, int clientId){
         
         delete block;
         delete msg;
+        
+        std::this_thread::sleep_for(50ms);
     }
 }
 
@@ -111,8 +133,11 @@ void Network::process(){
         
         if (msg->getCommand() == MsgTypes::gBlocks){
             GetBlocksMsg *gdmsg = dynamic_cast<GetBlocksMsg *>(msg);
+            
             std::list<std::array<uint32_t, 8>> hashes = gdmsg->getHashes();
+            
             std::array<uint32_t, 8> hash = hashes.front();
+            
             inv(hash, msg->getClientId());
         }
         
@@ -129,10 +154,17 @@ void Network::process(){
         else if (msg->getCommand() == MsgTypes::sBlock){
             BlockMsg *blockmsg = dynamic_cast<BlockMsg *>(msg);
             Block *block = blockmsg->getBlock();
-            
             m_bc->putBlock(block);
-            
             delete block;
+        }
+        
+        else if (msg->getCommand() == MsgTypes::Tx){
+            TxMsg *txmsg = dynamic_cast<TxMsg *>(msg);
+            Transaction *tx = txmsg->getTransaction();
+            
+            m_mtx.lock();
+            m_mempool.push_back(tx);
+            m_mtx.unlock();
         }
         
         else if (msg->getCommand() == MsgTypes::noFound){
@@ -147,4 +179,17 @@ void Network::process(){
     }
 }
 
-
+Transaction *Network::getFromMempool(){
+    Transaction * tx = nullptr;
+    
+    m_mtx.lock();
+    
+    if (m_mempool.size() != 0){
+        tx = m_mempool.front();
+        m_mempool.pop_front();
+    }
+    
+    m_mtx.unlock();
+    
+    return tx;
+}

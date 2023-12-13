@@ -1,8 +1,5 @@
 #include "Transaction.hpp"
 
-#include <iostream>
-using namespace std;
-
 Transaction::Transaction(uint64_t id, int inCount, int outCount){
     m_id = id;
     m_inCount = inCount;
@@ -182,28 +179,47 @@ void Transaction::decode(uint8_t *ptr){
     }
 }
 
-string Transaction::toString(){
-    string result;
-    result += to_string(m_id);
-    result += to_string(m_inCount);
+std::string Transaction::toString(){
+    std::string result;
+    result += std::to_string(m_id);
+    result += std::to_string(m_inCount);
     for (int i = 0; i < m_inCount; i++){
-        result += to_string(m_in[i].m_tranId);
-        result += to_string(m_in[i].m_outIndex);
+        result += std::to_string(m_in[i].m_tranId);
+        result += std::to_string(m_in[i].m_outIndex);
         result += m_in[i].m_pubkey;
         result += m_in[i].m_sign;
     }
-    result += to_string(m_outCount);
+    result += std::to_string(m_outCount);
     for (int i = 0; i < m_outCount; i++){
-        result += to_string(m_out[i].m_value);
+        result += std::to_string(m_out[i].m_value);
         result += m_out[i].m_address;
     }
     
     return result;
 }
 
-Transaction *coinBaseTrans(const std::string &pubkey){
+void Transaction::print(){
+    std::cout << "|transaction id: "  << m_id << "\n";
+    std::cout << "|" << std::setfill('_') << std::setw(39) << "TXINPUTS" << std::setfill('_') << std::setw(40) << "\n";
+    
+    for (int i = 0; i < m_inCount; i++){
+        std::cout << "|output id : "  << m_in[i].m_tranId << "\n";
+        std::cout << "|index: "  <<  m_in[i].m_outIndex << "\n";
+        std::cout << "|pubkey from: "  <<  m_in[i].m_pubkey << "\n";
+        std::cout << "|sign: "  <<  m_in[i].m_sign << "\n";
+        std::cout << "|" << std::setfill('-') << std::setw(79) << "\n";
+    }
+    std::cout << "|" << std::setfill('_') << std::setw(39) << "TXOUTPUTS" << std::setfill('_') << std::setw(40) << "\n";
+    for (int i = 0; i < m_outCount; i++){
+        std::cout << "|value: " <<  m_out[i].m_value << "\n";
+        std::cout << "|address to: " <<  m_out[i].m_address << "\n";
+        std::cout << "|" << std::setfill('-') << std::setw(79) << "\n";
+    }
+}
+
+Transaction *coinBaseTrans(const uint64_t &id, const std::string &pubkey){
     Transaction *TX = new Transaction(0, 0, 1);
-    TX->m_id = 0;
+    TX->m_id = id;
     
     // Транзакция не ссылается ни на какие выходы
     // Отправителя нет
@@ -212,15 +228,6 @@ Transaction *coinBaseTrans(const std::string &pubkey){
     
     TX->m_outCount = 1;
     *(TX->m_out) = TXOutput(REWARD, pubkey);
-    return TX;
-}
-
-Transaction *simpleTrans(const uint64_t &id, const std::string &pubkey, int value){
-    Transaction *TX = new Transaction(id, 0, 1);
-    TX->m_id = id;
-    TX->m_outCount = 1;
-    
-    *(TX->m_out) = TXOutput(value, pubkey);
     return TX;
 }
 
@@ -292,5 +299,3 @@ TXInput& TXInput::operator =(const TXInput &in){
     m_sign = in.m_sign;
     return *this;
 }
-
-

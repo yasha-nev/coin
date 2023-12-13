@@ -1,6 +1,5 @@
-#include <iostream>
 #include "BlockChain.hpp"
-#include "Wallet.hpp"
+#include "Mainer.hpp"
 #include "Message.hpp"
 
 using namespace std;
@@ -13,12 +12,16 @@ int main(int argc, const char * argv[]) {
     
     BlockChain bc;
     Network net(std::list<std::pair<std::string, int>>(), port, &bc);
+    Mainer mainer(&bc, &net);
 
     while (true){
     }
 
     return 0;
 }
+
+
+
 
 
 

@@ -4,7 +4,11 @@
 #include <inttypes.h>
 #include <string>
 #include <string.h>
+#include <sstream>
+#include <iomanip>
+#include <iostream>
 #include <list>
+
 
 #define REWARD 50
 
@@ -33,6 +37,8 @@ public:
     void encode(uint8_t *ptr);
     
     void decode(uint8_t *ptr);
+    
+    void print();
 };
 
 class TXOutput{
@@ -69,10 +75,7 @@ public:
     std::string m_sign;
 };
 
-//Выплата за майнинг, pubkey - адрес майнера
-Transaction *coinBaseTrans(const std::string &pubkey);
-
-Transaction *simpleTrans(const uint64_t &id, const std::string &pubkey, int value);
+Transaction *coinBaseTrans(const uint64_t &id, const std::string &address);
 
 Transaction *realTransaction(const uint64_t &id, const std::string &from, const std::string &to, int value, std::list<TXInput> inputs, int rest);
 

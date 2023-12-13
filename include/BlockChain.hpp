@@ -5,21 +5,20 @@
 #include "Block.hpp"
 #include <list>
 #include <array>
-#include "Wallet.hpp"
-
-class Wallet;
 
 class BlockChain{
 public:
     BlockChain();
     
-    uint64_t getBalance(Wallet &user);
-    
-    void addBlock(Wallet &from, const std::string &address, int value);
-    
     void printChain();
     
     void putBlock(Block *block);
+    
+    void createBlock(uint64_t time, std::list<Transaction *> tx);
+    
+    uint64_t getPastTransactionId();
+    
+    uint64_t getBalance(const std::string &pubkey, const std::string &address);
     
     Block *getBlock(const std::array<uint32_t, 8> &hash);
     
@@ -29,20 +28,19 @@ public:
     
     std::list<std::array<uint32_t, 8>> getHashesBefore(std::array<uint32_t, 8> curHash);
     
-private:
-    std::list<TXInput> createInputs(Wallet &from, int value, int *rest);
-
-    void transactionSign(Wallet &wal, Transaction *tx);
+    std::list<TXInput> getInputs(const std::string &pubkey, const std::string &address, int value, int *rest);
     
-    Block *newBlock(uint64_t time, Transaction *tx, const std::array<uint32_t, 8> &hash);
+private:
+    
+    Block *newBlock(uint64_t time, std::list<Transaction *> tx, const std::array<uint32_t, 8> &hash);
     
     Block *genesisBlock();
     
     std::array<uint32_t, 8> m_cur_hash;
     
-    uint64_t m_blocksIDs;
-    
     DB m_db;
 };
+
+bool file_exist (const std::string& path);
 
 #endif

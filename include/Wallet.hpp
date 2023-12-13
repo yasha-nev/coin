@@ -8,35 +8,36 @@
 #include "base58.hpp"
 #include "rsa.hpp"
 #include "Network.hpp"
+#include "BlockChain.hpp"
+#include "Transaction.hpp"
 
 class Wallet{
 public:
-    Wallet();
+    Wallet(BlockChain *bc, Network *net);
     
-    Wallet(const std::string &keyPath);
-    
-    void save(const std::string &keyPath);
-
-    PublicKey *getPubKey(){
-        return pubkey;
-    }
-
-    PrivateKey *getPrivKey(){
-        return privkey;
-    }
+    ~Wallet();
     
     std::string getAddres();
     
-private:
+    uint64_t getBalance();
+    
+    void createTransaction(const std::string &address, int value);
+    
+protected:
+    
+    void transactionSign(Transaction *tx);
+    
     std::string checkSum(const std::string &payload);
     
     std::string version();
     
-    std::string publicKeyHash();
+    PrivateKey m_privkey;
     
-    PrivateKey *privkey;
+    PublicKey m_pubkey;
     
-    PublicKey *pubkey;
+    BlockChain *m_bc;
+    
+    Network *m_net;
 };
 
 #endif /* Wallet_hpp */

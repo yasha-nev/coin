@@ -15,6 +15,8 @@
 
 #define MAXNONCE 1000000
 
+class BlockChain;
+
 class ProofOfWork{
 public:
     ProofOfWork(class Block *block);
@@ -37,11 +39,15 @@ public:
     
     Block();
     
-    Block(const int64_t &timeStamp, Transaction *tx, const std::array<uint32_t, 8> &prevBlockHash, const std::array<uint32_t, 8> &hash, const int64_t &nonce);
+    Block(const int64_t &timeStamp, 
+          std::list<Transaction *>tx,
+          const std::array<uint32_t, 8> &prevBlockHash,
+          const std::array<uint32_t, 8> &hash,
+          const int64_t &nonce);
     
     uint64_t getTimeStamp();
     
-    Transaction *getTransaction();
+    std::list<Transaction *> getTransaction();
     
     std::array<uint32_t, 8> getPrevBlockHash();
     
@@ -51,7 +57,7 @@ public:
     
     void setTimeStamp(const int64_t &timeStamp);
     
-    void setTransaction(Transaction *trans);
+    void setTransaction(std::list<Transaction *>trans);
     
     void setNonce(const uint64_t &nonce);
     
@@ -65,10 +71,12 @@ public:
     
     uint8_t *encode(size_t *blockSize);
     
+    friend BlockChain;
+    
 private:
     int64_t m_timeStamp;
     
-    Transaction *m_tx;
+    std::list<Transaction *> m_tx;
     
     std::array<uint32_t, 8> m_prevBlockHash;
     

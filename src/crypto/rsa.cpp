@@ -86,4 +86,3 @@ void RSACryptor::createKeys(){
     privKey = new PrivateKey(d, n);
     pubKey = new PublicKey(e, n);
 }
-

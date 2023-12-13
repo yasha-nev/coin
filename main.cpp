@@ -1,6 +1,7 @@
 #include "BlockChain.hpp"
 #include "Wallet.hpp"
 #include "Message.hpp"
+#include "Mainer.hpp"
 
 using namespace std;
 
@@ -23,11 +24,12 @@ void CLI(BlockChain &bc, Wallet wallet, Network &net){
             cout << "value: ";
             cin >> value;
             
-            bc.addBlock(wallet, to, value);
+            wallet.createTransaction(to, value);
         }
     
         else if (command == "balance"){
-            bc.getBalance(wallet);
+            std::cout << "=================Balance=================\n";
+            std::cout << "user: " << wallet.getBalance() << "\n";
         }
         
         else if (command == "print"){
@@ -59,16 +61,47 @@ void CLI(BlockChain &bc, Wallet wallet, Network &net){
     }
 }
 
+void asWallet(BlockChain &bc, Network &net){
+    Wallet wallet(&bc, &net);
+    CLI(bc, wallet, net);
+}
+
+void asMainer(BlockChain &bc, Network &net){
+    Mainer mainer(&bc, &net);
+    
+    while(true){
+        string command;
+        cout << "CLI>";
+        cin >> command;
+        
+        if (command == "quit"){
+            return;
+        }
+    }
+}
+
 int main(int argc, const char * argv[]) {
-    if (argc < 2){
+    if (argc < 3){
+        std::cout << "enter the port and operating mode \n";
+        std::cout << "-w wallet mode, -m mainer mode\n";
+        std::cout << "example ./main 5060 -w" << std::endl;
         return 0;
     }
     int port = stoi(argv[1]);
+    std::string res = argv[2];
+    
     
     BlockChain bc;
     Network net(std::list<std::pair<std::string, int>>(), port, &bc);
-    Wallet wallet("./");
-    CLI(bc, wallet, net);
+    if (res == "-w"){
+        asWallet(bc, net);
+    }
+    else if(res=="-m"){
+        asMainer(bc, net);
+    }
+    else{
+        
+    }
 
     return 0;
 }

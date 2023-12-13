@@ -6,6 +6,22 @@ PrivateKey::PrivateKey(long _d, long _n){
     n = _n;
 }
 
+PrivateKey::PrivateKey(const PrivateKey &out){
+    d = out.d;
+    n = out.n;
+}
+
+PrivateKey &PrivateKey::operator =(const PrivateKey &out){
+    if (this == &out) {
+        return *this;
+    }
+    
+    d = out.d;
+    n = out.n;
+    
+    return *this;
+}
+
 PrivateKey::PrivateKey(const std::string &path){
     std::fstream strm;
     
