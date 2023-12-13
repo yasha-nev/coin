@@ -12,6 +12,12 @@
 #include "Transaction.hpp"
 #include "Wallet.hpp"
 
+/*!
+    \brief Кошелек
+
+    Пользовательских интерфейс для взаимодействия
+    с блокчейном и сетью.
+*/
 class Mainer: public Wallet{
 public:
     Mainer(BlockChain *bc, Network *net);
