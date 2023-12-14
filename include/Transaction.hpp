@@ -16,11 +16,12 @@
     \brief Транзакция
 
     Является частью блока
+    Хранит информацию о переводах средств
 */
 class Transaction{
 public:
     /*!
-    Базовый конструктор
+    \brief Базовый конструктор
     */
     uint64_t m_id; /*!< id транзакции */
     
@@ -33,7 +34,7 @@ public:
     class TXOutput *m_out; /*!< Выходы */
     
     /*!
-    Конструктор
+    \brief Конструктор с параметрами
     \param [in] id - id транзакции
     \param [in] in_cout - количество входов
     \param [in] out_count - количество выходов
@@ -41,67 +42,70 @@ public:
     Transaction(uint64_t id, int in_cout, int out_count);
     
     /*!
-    Конструктор копирования
+    \brief Конструктор копирования
     */
     Transaction(Transaction *tx);
     
     /*!
-    Диструктор
+    \brief Диструктор
     */
     ~Transaction();
 
     /*!
-    Переводид поля транзакции в строку
+    \brief Парсит поля транзакции в строку
     */
     std::string toString();
 
     /*!
-    Размер транзакции
+    \brief Размер транзакции
     */
     size_t size();
 
     /*!
-    Сериализация
+    \brief Сериализация транзакции
     \param [in] ptr - массив байт для записи
     */
     void encode(uint8_t *ptr);
     
     /*!
-    Десериализация
+    \brief Десериализация транзакции
     \param [in] ptr - массив байт для чтения
     */
     void decode(uint8_t *ptr);
     
+    /*!
+    \brief Вывод информации о транзакции в консоль
+    */
     void print();
 };
 
 /*!
-    \brief Выход
+    \brief Выход транзакции
 
-    Элемент Транзакции
+     Хранит информацию куда был сделал перевод
 */
 class TXOutput{
 public:
     /*!
-    Конструктор
+     \brief Конструктор
     */
     TXOutput(){};
     
     /*!
-    Конструктор копирования
+     \brief Конструктор копирования
     */
     TXOutput(const TXOutput &out);
     
     /*!
-    Конструктор с параметрами
+     \brief Конструктор с параметрами
 
-    \param [in] value - количество передоваемых монет
-    \param [in] pubkey - адрес кошелька
+     \param [in] value - количество передоваемых монет
+     \param [in] pubkey - адрес кошелька
     */
     TXOutput(int value, const std::string &pubkey);
     
     /*!
-    Перегрузка =
+     \brief Перегрузка оператора  =
     */
     TXOutput &operator =(const TXOutput &out);
     
@@ -111,24 +115,25 @@ public:
 };
 
 /*!
-    \brief Вход
+    \brief Вход транзакции
 
-    Элемент Транзакции
+    Хранит информацию откуда были взяты средства
+    Является частью Транзакции
 */
 class TXInput{
 public:
     /*!
-    Конструктор
+     \brief Конструктор
     */
     TXInput(){};
     
     /*!
-    Конструктор копирования
+     \brief Конструктор копирования
     */
     TXInput(const TXInput &in);
     
     /*!
-    Конструктор с параметрами
+     \brief Конструктор с параметрами
 
     \param [in] transId - id транзакции
     \param [in] outIndex - индекс выхода в транзакции
@@ -137,7 +142,7 @@ public:
     TXInput(const uint64_t &transId, int outIndex, const std::string &pubkey);
 
     /*!
-    Перегрузка =
+     \brief Перегрузка =
     */
     TXInput& operator =(const TXInput &in);
     
@@ -151,21 +156,21 @@ public:
 };
 
 /*!
-Вознограждение
-\param [in] id - id транзакции
-\param [in] address - адрес кошелька
+ \brief Вознограждение
+ \param [in] id - id транзакции
+ \param [in] address - адрес кошелька
 */
 Transaction *coinBaseTrans(const uint64_t &id, const std::string &address);
 
 /*!
-Вознограждение
+ \brief Создание обычной транзакции
 
-\param [in] id - id транзакции
-\param [in] from - публичный ключ отправителя
-\param [in] to - адрес получателя
-\param [in] value - сумма перевода
-\param [in] inputs - список выходов
-\param [in] rest - размер сдачи
+ \param [in] id - id транзакции
+ \param [in] from - публичный ключ отправителя
+ \param [in] to - адрес получателя
+ \param [in] value - сумма перевода
+ \param [in] inputs - список выходов
+ \param [in] rest - размер сдачи
 */
 Transaction *realTransaction(const uint64_t &id, const std::string &from, const std::string &to, int value, std::list<TXInput> inputs, int rest);
 

@@ -4,16 +4,16 @@
 #include <string>
 
 /*!
-Кодирование строки в формат base58
-\param [in] source - исходная строка
-\return кодированная строка
+ \brief Кодирование строки в формат base58
+ \param [in] source - Исходная строка
+ \return Кодированная строка
 */
 std::string EncodeBase58(const std::string &source);
 
 /*!
-Декодирование строки из формата base58
-\param [in] str  - кодированная строка
-\return декодированная строка
+ \brief Декодирование строки из формата base58
+ \param [in] str  - Кодированная строка
+ \return Декодированная строка
 */
 std::string DecodeBase58(const std::string &str);
 

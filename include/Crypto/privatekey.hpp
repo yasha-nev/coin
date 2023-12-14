@@ -13,35 +13,35 @@
 class PrivateKey{
 public:
     /*!
-    конструктор
+     \brief Конструктор
     */
     PrivateKey(){d = 0; n = 0;};
     
     /*!
-    конструктор
-    \param [in] path путь к расположению ключа
+     \brief Конструктор
+     \param [in] path путь к расположению ключа
     */
     PrivateKey(const std::string &path);
     
     /*!
-    конструктор
-    \param [in] _d -  простое число D
-    \param [in] _n - простое число N
+     \brief Конструктор
+     \param [in] _d -  простое число D
+     \param [in] _n - простое число N
     */
     PrivateKey(long _d, long _n);
     
     /*!
-    конструктор копирования
+     \brief Конструктор копирования
     */
     PrivateKey(const PrivateKey &out);
     
     /*!
-         Перегрузка оператора =
+     \brief Перегрузка оператора =
     */
     PrivateKey &operator =(const PrivateKey &out);
     
     /*!
-    Расшифрование сообщения
+     \brief Расшифровка сообщения
     \param [in] enc - массив байт
     \param [in] size - размер сообщения
     \return исходное сообщение
@@ -49,20 +49,21 @@ public:
     char *decrypt(long *enc, size_t size);
 
     /*!
-    Создание подписи
-    \param [in] msg - исходное сообщение
-    \return результат подписи
+     \brief Создание подписи
+     \param [in] msg - исходное сообщение
+     \return результат подписи
     */
     long signature(char *msg);
     
     /*!
-    \return строковое представление ключа
+     \brief Представления клуча в hex форамате
+     \return строковое представление ключа
     */
     std::string getKey();
     
     /*!
-    сохранение ключа
-    \param [in] path - путь для сохранения
+     \brief Сохранение ключа
+     \param [in] path - путь для сохранения
     */
     void save(const std::string &path);
 
@@ -72,9 +73,9 @@ private:
     long n; /*!< простое число N */
 
     /*!
-    Декодирование символа
-    \param [in] c - кодированный символ
-    \return декодированный символ
+     \brief Декодирование символа
+     \param [in] c - кодированный символ
+     \return декодированный символ
     */
     long decodeNum(long c);
 };

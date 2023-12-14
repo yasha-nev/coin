@@ -10,38 +10,40 @@
 class RSACryptor{
 public:
     /*!
-    конструктор
+     \brief Конструктор
     */
     RSACryptor();
     
     /*!
-    деструктор
+     \brief Деструктор
     */
     ~RSACryptor();
 
     /*!
-    \return созданный приватный ключ
+     \brief Получить указатель на приватный ключю
+     \return Класс ключа
     */
     PrivateKey * getPrivateKey();
     
     /*!
-    \return созданный публичный ключ
+     \brief Получить указатель на  публичного ключа
+     \return Класс ключ
     */
     PublicKey * getPublicKey();
 
     /*!
-    Шифрование сообщения
-    \param [in] msg - исходное сообщение
-    \param [in] len - длина сообщения
-    \return массив байт
+     \brief Шифрование сообщения
+     \param [in] msg - исходное сообщение
+     \param [in] len - длина сообщения
+     \return массив байт
     */
     long* enc (char* msg, size_t len);
     
     /*!
-    расшифровка сообщения
-    \param [in] enc - массив байт
-    \param [in] len - размер сообщения
-    \return расшифрованное сообщение
+     \brief Расшифровка сообщения
+     \param [in] enc - массив байт
+     \param [in] len - размер сообщения
+     \return расшифрованное сообщение
     */
     char* dec(long * enc, size_t len);
 
@@ -51,7 +53,7 @@ private:
     PublicKey *pubKey; /*!< публичный ключ*/
     
     /*!
-    Создание ключей
+     \brief Создание ключей
     */
     void createKeys();
 };

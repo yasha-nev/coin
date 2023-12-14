@@ -7,57 +7,58 @@
 #define DBPATH "./testdb"
 
 /*!
-    \brief DAO для работы с базой данных
+    \brief DAO для работы с базой данных leveldb
 */
 class DB {
 public:
 
     /*!
-    конструктор
+    \brief Конструктор
     */
     DB();
     
     /*!
-    диструктор
+    \brief Диструктор
     */
     ~DB();
     
     /*!
-    Создание базы данных
+    \brief Создание базы данных
     */
     void connect();
     
     /*!
-    Открытие базы данных
+     \brief Открытие базы данных
     */
     void connectIfexist();
     
     /*!
-    Положить блок
+    \brief Запись блока в базу данных
     \param [in] block - блок данных
     */
     void putBlock(Block *block);
 
     /*!
+    \brief Достает последний записанный блок
     \return хэш последнего блока
     */
     std::string getCurrentHash();
     
     /*!
+    \brief Достает id последнего блока
     \param [in] hash - хэш блока
     \return id последнего блока
     */
     uint64_t getCurrentId(const std::array<uint32_t, 8> &hash);
     
     /*!
-    \param [in] hash - хэщ блока
+    \brief Достает блок по его хэшу
+    \param [in] hash - хэш блока
     \return блок  данных
     */
     Block *getBlockByHash(const std::array<uint32_t, 8> &hash);
     
     leveldb::DB* m_db;  /*!< указатель на базу данных*/
 };
-
-#include <stdio.h>
 
 #endif /* DB_hpp */

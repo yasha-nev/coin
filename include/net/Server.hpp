@@ -40,7 +40,7 @@ enum socket_status{
 class Client{
 public:
     /*!
-    Конструктор
+     \brief Конструктор
     \param[in] socket - сокет
     \param[in] addr - unix адрес сокета
     \param[in] id - id клиета у сервера
@@ -49,33 +49,37 @@ public:
     Client(int socket, sockaddr_in addr, int id, std::list<Message *> *msgs);
     
     /*!
-    Диструктор
+     \brief Диструктор
     */
     ~Client();
     
     /*!
-    Отправить сообщение
+     \brief Отправить сообщение
     \param [in] msg указатель на сообщение которое надо отправить
     */
     void sendData(Message *msg);
     
     /*!
-    \return сокет
+     \brief Вернуть соке
+     \return unix сокет
     */
     int getSocket();
     
     /*!
-    \return id клиета
+     \brief id клиента
+     \return id
     */
     int getId();
 
     /*!
-    \return порт
+     \brief порт для сервера
+     \return порт
     */
     uint16_t getPort();
 
     /*!
-    \return ip
+     \brief ip сервера
+     \return ip в unix формате
     */
     uint32_t getHost();
     
@@ -97,56 +101,57 @@ private:
 class Server{
 public:
     /*!
-    Конструктор
-    \param[in] port - порт
-    \param[in] msgs - буффер сообщений
-    \param[in] mtx - мьютекс
+     \brief Конструктор
+     \param[in] port - порт
+     \param[in] msgs - буффер сообщений
+     \param[in] mtx - мьютекс
     */
     Server(int port, std::list<Message *> *msgs, std::mutex *mtx);
     
     /*!
-    Диструктор
+     \brief Диструктор
     */
     ~Server();
     
     /*!
-    Начать работу сервера
+     \brief Начать работу сервера
     */
     void start();
     
     /*!
-    Закончить работу сервера
+     \brief Закончить работу сервера
     */
     void stop();
 
     /*!
-    Начать соединение
-    \param [in] ip адрес клиента
-    \param [in] port порт клиента
-    \return статус соединения
+     \brief Начать соединение
+     \param [in] ip адрес клиента
+     \param [in] port порт клиента
+     \return статус соединения
     */
     int connectTo(std::string ip, int port);
     
     /*!
-    Отправить сообщение
-    \param [in] id - id клиента
-    \param [in] msg - указатель на сообщение
+     \brief Отправить сообщение
+     \param [in] id - id клиента
+     \param [in] msg - указатель на сообщение
     */
     void sendDataTo(int id, Message *msg);
     
     /*!
-    \return список клиентов
+     \brief Получить список клиентов сервера
+     \return список клиентов
     */
     std::list<int> getClientsId();
 
 private:
     /*!
-    Обработчик соединения с клиентами
+     \brief Обработчик соединения с клиентами
     */
     void acceptClients();
     
     /*!
-    Обработчик сообщений
+     \brief Обработчик сообщений
     \param [in] client - указатель на клиента
     */
     void messageHandler(Client *client);
@@ -167,9 +172,9 @@ private:
     
     std::list<Message *> *m_msgs; /*!< буффер сообщений*/
     
-    std::thread *m_acceptThread;
+    std::thread *m_acceptThread; /*!< поток для подключения клиентов */
     
-    std::vector<std::thread *> m_messageThreads;
+    std::vector<std::thread *> m_messageThreads; /*!< мьютекс для работы пересылки сообщений */
     
     std::mutex m_mtx; /*!< мьютекс для работы с потоками*/
     

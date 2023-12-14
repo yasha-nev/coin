@@ -20,48 +20,53 @@
 class Wallet{
 public:
     /*!
-    Базовый конструктор
+     \brief Базовый конструктор
      \param [in] bc - локальная цепь блоков
      \param [in] net - p2p сеть
     */
     Wallet(BlockChain *bc, Network *net);
     
     /*!
-    Диструктор
+     \brief Диструктор
     */
     ~Wallet();
     
     /*!
-    Генерирует адресс кошелька
-    \return строка с адрессом
+     \brief Генерирует адресс кошелька
+     \return строка с адрессом
     */
     std::string getAddres();
     
     /*!
-    Баланс кошелька
-    \return  сумма
+     \brief Баланс кошелька
+     \return  сумма
     */
     uint64_t getBalance();
     
     /*!
-     Создать форму транзакции
-    \param [in] address - адрес перевода
-    \param [in] value - сумма перевода
+     \brief Создать форму транзакции
+     \param [in] address - адрес перевода
+     \param [in] value - сумма перевода
     */
     void createTransaction(const std::string &address, int value);
     
 protected:
     /*!
-     Подписать транзакцию
-    \param [in] tx - адрес перевода
+     \brief Подписать транзакцию
+     \param [in] tx - адрес перевода
     */
     void transactionSign(Transaction *tx);
     
-
+    /*!
+     \brief Создания хэша для проверки
+     \param [in] payload ресурс хэширования
+     \return строка хэша в hex формате
+    */
     std::string checkSum(const std::string &payload);
     
     /*!
-    \return версия кошелька
+     \brief Версия кошелька
+     \return строка версии
     */
     std::string version();
     

@@ -16,59 +16,64 @@
 class PublicKey{
 public:
     /*!
-    конструктор
+     \brief Конструктор
     */
     PublicKey(){e = 0; n = 0;};
     
     /*!
-    конструктор
-    \param [in] _e - простое число e
-    \param [in] _n - простое число n
+     \brief Конструктор
+     \param [in] _e - простое число e
+     \param [in] _n - простое число n
     */
     PublicKey(long _e, long _n);
     
     /*!
-    конструктор
-    \param [in] path путь к расположению ключа
+     \brief Конструктор
+     \param [in] path путь к расположению ключа
     */
     PublicKey(const std::string &path);
     
     /*!
-    конструктор копирования
+     \brief Конструктор копирования
     */
     PublicKey(const PublicKey &out);
     
     /*!
-    Перегрузка оператора =
+     \brief Перегрузка оператора =
     */
     PublicKey &operator =(const PublicKey &out);
     
     /*!
-    Шифрование сообщения
-    \param [in] msg - исходное сообщение
-    \param [in] size - размер сообщения
-    \return массив байт
+     \brief Шифрование сообщения
+     \param [in] msg - исходное сообщение
+     \param [in] size - размер сообщения
+     \return массив байт
     */
     long *encrypt(char *msg, size_t size);
     
     /*!
-    проверка подписи
-    \param [in] msg - исходное сообщение
-    \return результат проверки
+     \brief Проверка подписи
+     \param [in] msg - исходное сообщение
+     \return результат проверки
     */
     long checkSignature(char *msg);
     
     /*!
-    \return строковое представление ключа
+     \brief Представления ключа в hex формате
+     \return Строковое представление ключа
     */
     std::string getKey();
 
     /*!
-    сохранение ключа
-    \param [in] path - путь для сохранения
+     \brief Сохранение ключа
+     \param [in] path - путь для сохранения
     */
     void save(const std::string &path);
     
+    /*!
+     \brief перевод ключа в формат base58
+     \return хэш строки
+    */
     std::string hash();
 
 private:
@@ -77,9 +82,9 @@ private:
     long n; /*!< простое число N*/
     
     /*!
-    Кодирования символа
-    \param [in] c - символа
-    \return кодированный символ
+     \brief Кодирования символа
+     \param [in] c - символа
+     \return кодированный символ
     */
     long encodeChar(int c);
 };

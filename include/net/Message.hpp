@@ -28,37 +28,39 @@ enum MsgTypes{
 class Message{
 public:
     /*!
-    Виртуальный диструктор
+     \brief Виртуальный диструктор
     */
     virtual ~Message();
 
     /*!
-    Десериализация
+     \brief Десериализация
     \param [in] data - исходный массив байт
     \param [in] size - размер сообщения
     */
     virtual void parse(uint8_t *data, size_t size) = 0;
     
     /*!
-    Сериализация
+     \brief Сериализация
     \param [out] size - размер сообщения
     \return массив байт
     */
     virtual uint8_t *toByte(size_t &size) = 0;
     
     /*!
-    \return тип сообщения
+     \brief Тип message
+     \return байт
     */
     uint8_t getCommand();
     
     /*!
-    Задать id клиента
-    \param [in] id - id клиента
+     \brief Задать id клиента
+     \param [in] id - id клиента
     */
     void setClientId(int id);
     
     /*!
-    \return id клиента
+     \brief id клиента получившего сообщение
+     \return id
     */
     int getClientId();
     
@@ -86,7 +88,7 @@ protected:
  */
 
 /*!
-    \brief Block message
+    \brief Block Сообщение
     Сообщения для запроса блоков у другого узла
 
     потомок Message
@@ -94,27 +96,27 @@ protected:
 class GetBlocksMsg : public Message{
 public:
     /*!
-    Конструктор
+     \brief Конструктор
     */
     GetBlocksMsg();
 
     /*!
-    Конструктор с параметрами
-    \param hashes - хэши блоков
+     \brief Конструктор с параметрами
+     \param hashes - хэши блоков
     */
     GetBlocksMsg(std::list<std::array<uint32_t, 8>> hashes);
     
     /*!
-    Десериализация
-    \param [in] data - исходный массив байт
-    \param [in] size - размер сообщения
+     \brief Десериализация
+     \param [in] data - исходный массив байт
+     \param [in] size - размер сообщения
     */
     virtual void parse(uint8_t *data, size_t size) override;
     
     /*!
-    Сериализация
-    \param [out] size - размер сообщения
-    \return массив байт
+     \brief Сериализация
+     \param [out] size - размер сообщения
+     \return массив байт
     */
     virtual uint8_t *toByte(size_t &size) override;
     
@@ -151,7 +153,7 @@ enum InvTypes{
 };
 
 /*!
-    \brief INV message
+    \brief INV Сообщение
     Ответ на getBlock сообщение
 
     потомок Message
@@ -159,28 +161,28 @@ enum InvTypes{
 class InvMsg : public Message{
 public:
     /*!
-    Конструктор
+     \brief Конструктор
     */
     InvMsg();
     
     /*!
-    Конструктор с параметрами
-    \param [in] type - тип сериализованных данных
-    \param [in] hashes - список хэшей блоков
+     \brief Конструктор с параметрами
+     \param [in] type - тип сериализованных данных
+     \param [in] hashes - список хэшей блоков
     */
     InvMsg(InvTypes type, std::list<std::array<uint32_t, 8>> hashes);
     
     /*!
-    Десериализация
-    \param [in] data - исходный массив байт
-    \param [in] size - размер сообщения
+     \brief Десериализация
+     \param [in] data - исходный массив байт
+     \param [in] size - размер сообщения
     */
     virtual void parse(uint8_t *data, size_t size) override;
     
     /*!
-    Сериализация
-    \param [out] size - размер сообщения
-    \return массив байт
+     \brief Сериализация
+     \param [out] size - размер сообщения
+     \return массив байт
     */
     virtual uint8_t *toByte(size_t &size) override;
     
@@ -220,7 +222,7 @@ enum DataTypes{
 };
 
 /*!
-    \brief GetData message
+    \brief GetData Сообщение
     Запрос на получение информации от другого узла
 
     потомок Message
@@ -228,25 +230,25 @@ enum DataTypes{
 class GetDataMsg : public Message{
 public:
     /*!
-    Конструктор
+     \brief Конструктор
     */
     GetDataMsg();
     
     /*!
-    Конструктор с параметрами
+     \brief Конструктор с параметрами
     \param [in] type - тип сериализованный данных
     */
     GetDataMsg(DataTypes type, std::list<std::array<uint32_t, 8>> hashes);
     
     /*!
-    Десериализация
+     \brief Десериализация
     \param [in] data - исходный массив байт
     \param [in] size - размер сообщения
     */
     virtual void parse(uint8_t *data, size_t size) override;
     
     /*!
-    Сериализация
+     \brief Сериализация
     \param [out] size - размер сообщения
     \return массив байт
     */
@@ -275,40 +277,40 @@ private:
  */
 
 /*!
-    \brief Block message
-    Хранит блок цепи
+    \brief Block Сообщение
+    Служит для передачи блока цепи между узлами сети
 
     потомок Message
 */
 class BlockMsg : public Message{
 public:
     /*!
-    Конструктор
+     \brief Конструктор
     */
     BlockMsg();
     
     /*!
-    Конструктор с параметром
-    \param [in] blocks - блок из цепи
+     \brief Конструктор с параметром
+     \param [in] blocks - блок из цепи
     */
     BlockMsg(Block *blocks);
     
     /*!
-    Десериализация
-    \param [in] data - исходный массив байт
-    \param [in] size - размер сообщения
+     \brief Десериализация
+     \param [in] data - исходный массив байт
+     \param [in] size - размер сообщения
     */
     virtual void parse(uint8_t *data, size_t size) override;
     
     /*!
-    Сериализация
-    \param [out] size - размер сообщения
-    \return массив байт
+     \brief Сериализация
+     \param [out] size - размер сообщения
+     \return массив байт
     */
     virtual uint8_t *toByte(size_t &size) override;
     
     /*!
-    \return блок из цепи
+     \return блок из цепи
     */
     Block *getBlock();
 
@@ -327,6 +329,12 @@ private:
  *  --------------------------------------------
  */
 
+/*!
+    \brief Tx Сообщение
+        
+    Служит для отправки транзакций между узлами сети
+    Потомок Message
+*/
 class TxMsg : public Message{
 public:
     
@@ -353,7 +361,7 @@ private:
  */
 
 /*!
-    \brief NoFoundMsg message
+    \brief NoFoundMsg Сообщение
     Ответ в случае ошибки
 
     потомок Message
