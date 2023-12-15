@@ -36,14 +36,6 @@ void CLI(BlockChain &bc, Wallet wallet, Network &net){
             bc.printChain();
         }
         
-        else if (command == "quit"){
-            break;
-        }
-        
-        else if(command == "updatedb"){
-            net.getBlocks();
-        }
-        
         else if(command == "connect"){
             string host;
             int port;
@@ -55,7 +47,22 @@ void CLI(BlockChain &bc, Wallet wallet, Network &net){
             net.connectTo(host, port);
         }
         
+        else if(command == "updatedb"){
+            net.getBlocks();
+        }
+        
+        else if (command == "quit"){
+            break;
+        }
+        
         else{
+            std::cout << "user      - get wallet address \n";
+            std::cout << "send      - create and send Transaction \n";
+            std::cout << "balance   - get wallet balance \n";
+            std::cout << "connect   - connect to user of network \n";
+            std::cout << "print     - print the blockchain \n";
+            std::cout << "updatedb  - obtain blocks from network users \n";
+            std::cout << "quit      - exit from programm \n";
             continue;
         }
     }

@@ -10,7 +10,8 @@ static bool isPrime(long prime){
 }
 
 static long generatePrime(int a){
-    long prime = a;
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    long prime = a + rand() % 1000;
     while(!isPrime(prime)){
         prime++;
     }
@@ -77,8 +78,9 @@ PublicKey * RSACryptor::getPublicKey() {
 
 void RSACryptor::createKeys(){
     long phi, p, q, n, d, e;
-    p = generatePrime(512);
+    p = generatePrime(1024);
     q = generatePrime(1024);
+    
     n = p * q;
     phi = (p - 1) * (q - 1);
     e = generateE(phi, n);
