@@ -12,20 +12,36 @@
 #include "Transaction.hpp"
 #include "Wallet.hpp"
 
+/*!
+    \brief Майнер
+
+    Интерфейс для создания клиента создающего новые блоки за вознаграждение
+*/
 class Mainer: public Wallet{
 public:
+    /*!
+     \brief Конструктор с параметрами
+     \param [in] bc указатель на локальный блокчейн
+     \param [in] net указатель на клиента p2p сети
+    */
     Mainer(BlockChain *bc, Network *net);
     
+    /*!
+     \brief Диструкток
+    */
     ~Mainer();
     
+    /*!
+     \brief Процесс хэшинга новых блоков
+    */
     void process();
     
 private:
-    std::thread m_thr;
+    std::thread m_thr; /*!< Поток под process*/
     
-    std::atomic<bool> m_run;
+    std::atomic<bool> m_run; /*!< Управление потоком */
     
-    std::mutex m_mtx;
+    std::mutex m_mtx; /*!< Управления данными в потоке */
 };
 
 #endif /* Mainer_hpp */
