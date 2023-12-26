@@ -3,6 +3,7 @@
 
 #include "Block.hpp"
 #include "leveldb/db.h"
+#include <memory>
 
 #define DBPATH "./testdb"
 
@@ -36,7 +37,7 @@ public:
     \brief Запись блока в базу данных
     \param [in] block - блок данных
     */
-    void putBlock(Block *block);
+    void putBlock(std::shared_ptr<Block> &block);
 
     /*!
     \brief Достает последний записанный блок

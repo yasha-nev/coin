@@ -1,4 +1,5 @@
 #include "Network.hpp"
+#include <memory>
 
 using namespace std::literals::chrono_literals;
 
@@ -153,9 +154,8 @@ void Network::process(){
         
         else if (msg->getCommand() == MsgTypes::sBlock){
             BlockMsg *blockmsg = dynamic_cast<BlockMsg *>(msg);
-            Block *block = blockmsg->getBlock();
+            auto block = std::shared_ptr<Block> (blockmsg->getBlock());
             m_bc->putBlock(block);
-            delete block;
         }
         
         else if (msg->getCommand() == MsgTypes::Tx){
