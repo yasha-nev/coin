@@ -1,6 +1,6 @@
 #include "Message.hpp"
 
-#define STARTSIZE 16
+#define STARTSIZE 9
 
 Message::~Message(){
     

@@ -5,6 +5,8 @@
 #include "Block.hpp"
 #include <list>
 #include <array>
+#include <vector>
+#include <memory>
 
 /*!
     \brief Цепь блоков
@@ -26,7 +28,7 @@ public:
      \brief Подожить блок в базе данных
      \param [in] block указатель на блок
     */
-    void putBlock(Block *block);
+    void putBlock(std::shared_ptr<Block> &block);
     
     /*!
      \brief Создать блок из списка транзакций

@@ -29,9 +29,8 @@ std::string DB::getCurrentHash(){
 
 uint64_t DB::getCurrentId(const std::array<uint32_t, 8> &hash){
     uint64_t id;
-    Block *block = getBlockByHash(hash);
+    auto block = std::unique_ptr<Block>(getBlockByHash(hash));
     id = block->getTransaction().back()->m_id;
-    delete block;
     return id;
 }
 
@@ -46,16 +45,15 @@ Block *DB::getBlockByHash(const std::array<uint32_t, 8> &hash){
     return block;
 }
 
-void DB::putBlock(Block *block){
+void DB::putBlock(std::shared_ptr<Block> &block){
     size_t blockSize = 0;
-    uint8_t *encBlock = block->encode(&blockSize);
+    std::unique_ptr<uint8_t[]> encBlock = std::unique_ptr<uint8_t[]> (block->encode(&blockSize));
     
     leveldb::Slice key((char *) block->getHash().data(), block->getHash().size());
     
-    leveldb::Slice value((char *)encBlock, blockSize);
+    leveldb::Slice value((char *)encBlock.get(), blockSize);
     leveldb::Slice value_hash((char *)block->getHash().data(), block->getHash().size());
     
     m_db->Put(leveldb::WriteOptions(), key, value);
     m_db->Put(leveldb::WriteOptions(), "l", value_hash);
-    delete[] encBlock;
 }
