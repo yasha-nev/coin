@@ -38,26 +38,30 @@ BlockChain::BlockChain(){
     }
     else{
         m_db.connectIfexist();
-        auto block = std::shared_ptr<Block>(genesisBlock());
+        auto block = std::unique_ptr<Block>(genesisBlock());
         m_cur_hash = block->getHash();
         
         m_db.putBlock(block);
     }
 }
 
-void BlockChain::createBlock(uint64_t time, std::list<Transaction *> tx){
-    auto block_n = std::shared_ptr<Block>(newBlock(static_cast<uint64_t>(std::time(nullptr)), tx, m_cur_hash));
+void BlockChain::createBlock(uint64_t time, const std::list<Transaction> &tx){
+    auto block_n = newBlock(static_cast<uint64_t>(std::time(nullptr)), tx, m_cur_hash);
     
     m_db.putBlock(block_n);
     m_cur_hash = block_n->getHash();
 }
 
-Block* BlockChain::genesisBlock(){
+std::unique_ptr<Block> BlockChain::genesisBlock(){
     std::array<uint32_t, 8> zero_hash = {0, 0, 0, 0, 0, 0, 0, 0};
-    std::list<Transaction *> lst;
-    lst.push_back(coinBaseTrans(0, "BcVtjVsKHxRNbne4MKCBxaQbJyoQsZQ8JTb1m3mAygwkyCLFP6Jvmrrf"));
+    std::list<Transaction> lst;
     
-    Block *block_n = newBlock(0, lst, zero_hash);
+    uint64_t id = 0;
+    std::string pubkey = "BcVtjVsKHxRNbne4MKCBxaQbJyoQsZQ8JTb1m3mAygwkyCLFP6Jvmrrf";
+    
+    lst.push_back(CoinBaseTransaction(id, pubkey));
+    
+    std::unique_ptr<Block> block_n = newBlock(0, lst, zero_hash);
     m_cur_hash = block_n->getHash();
     
     return block_n;
@@ -69,7 +73,7 @@ void BlockChain::printChain(){
     std::string blc;
     
     while (!checkFirstBlock(hash)){
-        auto block = std::unique_ptr<Block>(getBlock(hash));
+        auto block = getBlock(hash);
         hash = block->getPrevBlockHash();
         block->print();
     }
@@ -90,7 +94,7 @@ std::list<std::array<uint32_t, 8>> BlockChain::getHashesBefore(std::array<uint32
             break;
         }
         
-        auto block = std::unique_ptr<Block> (getBlock(hash));
+        auto block = getBlock(hash);
         
         if (!block){
             break;
@@ -106,7 +110,7 @@ std::list<std::array<uint32_t, 8>> BlockChain::getHashesBefore(std::array<uint32
     
 }
 
-Block *BlockChain::newBlock(uint64_t time, std::list<Transaction *> tx, const std::array<uint32_t, 8> &prevHashBlock){
+std::unique_ptr<Block>BlockChain::newBlock(uint64_t time, const std::list<Transaction> &tx, const std::array<uint32_t, 8> &prevHashBlock){
     Block *block_n = new Block(time,
                                tx,
                                prevHashBlock,
@@ -115,19 +119,19 @@ Block *BlockChain::newBlock(uint64_t time, std::list<Transaction *> tx, const st
     
     ProofOfWork pow(block_n);
     pow.Run();
-    return block_n;
+    return std::unique_ptr<Block>(block_n);
 }
 
-void BlockChain::putBlock(std::shared_ptr<Block> &block){
+void BlockChain::putBlock(std::unique_ptr<Block> &block){
     m_db.putBlock(block);
     m_cur_hash = block->getHash();
 }
 
-Block *BlockChain::getBlock(const std::array<uint32_t, 8> &hash){
+std::unique_ptr<Block> BlockChain::getBlock(const std::array<uint32_t, 8> &hash){
     return m_db.getBlockByHash(hash);
 }
 
-Block *BlockChain::getPastBlock(){
+std::unique_ptr<Block> BlockChain::getPastBlock(){
     return m_db.getBlockByHash(m_cur_hash);
 }
 
@@ -136,11 +140,9 @@ std::array<uint32_t, 8> BlockChain::getPastBlockHash(){
 }
 
 uint64_t BlockChain::getPastTransactionId(){
-    auto block = std::unique_ptr<Block> (m_db.getBlockByHash(m_cur_hash));
+    auto block = m_db.getBlockByHash(m_cur_hash);
     
-    uint64_t id = block->m_tx.back()->m_id;
-    
-    return id;
+    return block->m_tx.back().m_id;
 }
 
 TXOutput *getOutputs(const std::string &from, int value, int *count){
@@ -166,9 +168,9 @@ uint64_t BlockChain::getBalance(const std::string &pubkey, const std::string &ad
         auto block = std::unique_ptr<Block> (getBlock(hash));
         hash = block->getPrevBlockHash();
         
-        std::list<Transaction *>txList = block->getTransaction();
+        std::list<Transaction>txList = block->getTransaction();
         
-        for (Transaction * tx : txList){
+        for (auto &tx : txList){
             
             std::vector<outId> sup;
             
@@ -176,8 +178,8 @@ uint64_t BlockChain::getBalance(const std::string &pubkey, const std::string &ad
                 sup.push_back(outIds[l]);
             }
             
-            for (int i = 0; i < tx->m_outCount; i++){
-                if (tx->m_out[i].m_address == address){
+            for (size_t i = 0; i < tx.m_out.size(); i++){
+                if (tx.m_out[i].m_address == address){
                     
                     bool flag = true;
                     
@@ -188,15 +190,15 @@ uint64_t BlockChain::getBalance(const std::string &pubkey, const std::string &ad
                     }
                     
                     if (flag){
-                        sum += tx->m_out[i].m_value;
+                        sum += tx.m_out[i].m_value;
                     }
                 }
             }
             
-            for (int i = 0; i < tx->m_inCount; i++){
-                if (tx->m_in[i].m_pubkey == pubkey){
+            for (int i = 0; i < tx.m_in.size(); i++){
+                if (tx.m_in[i].m_pubkey == pubkey){
                     
-                    outId oi = {tx->m_in[i].m_tranId, tx->m_in[i].m_outIndex};
+                    outId oi = {tx.m_in[i].m_tranId, tx.m_in[i].m_outIndex};
                     
                     outIds.push_back(oi);
                 }
@@ -230,9 +232,9 @@ std::list<TXInput> BlockChain::getInputs(const std::string &pubkey, const std::s
         auto block = std::unique_ptr<Block> (getBlock(hash));
         hash = block->getPrevBlockHash();
         
-        std::list<Transaction *>txList = block->getTransaction();
+        std::list<Transaction> txList = block->getTransaction();
         
-        for (Transaction * tx : txList){
+        for (auto &tx : txList){
             
             std::vector<outId> sup;
             
@@ -240,8 +242,8 @@ std::list<TXInput> BlockChain::getInputs(const std::string &pubkey, const std::s
                 sup.push_back(outIds[l]);
             }
             
-            for (int i = 0; i < tx->m_outCount; i++){
-                if (tx->m_out[i].m_address == address){
+            for (int i = 0; i < tx.m_out.size(); i++){
+                if (tx.m_out[i].m_address == address){
                     
                     bool flag = true;
                     
@@ -252,16 +254,16 @@ std::list<TXInput> BlockChain::getInputs(const std::string &pubkey, const std::s
                     }
                     
                     if (flag){
-                        ls.push_back(TXInput(tx->m_id, i, pubkey));
-                        sum += tx->m_out[i].m_value;
+                        ls.push_back(TXInput(tx.m_id, i, pubkey));
+                        sum += tx.m_out[i].m_value;
                     }
                 }
             }
             
-            for (int i = 0; i < tx->m_inCount; i++){
-                if (tx->m_in[i].m_pubkey == pubkey){
+            for (int i = 0; i < tx.m_in.size(); i++){
+                if (tx.m_in[i].m_pubkey == pubkey){
                     
-                    outId oi = {tx->m_in[i].m_tranId, tx->m_in[i].m_outIndex};
+                    outId oi = {tx.m_in[i].m_tranId, tx.m_in[i].m_outIndex};
                     
                     outIds.push_back(oi);
                 }

@@ -1,7 +1,7 @@
 #include "Block.hpp"
 
 Block::Block(const int64_t &timeStamp, 
-             std::list<Transaction *>tx,
+             const std::list<Transaction> &tx,
              const std::array<uint32_t, 8> &prevBlockHash,
              const std::array<uint32_t, 8> &hash,
              const int64_t &nonce){
@@ -18,16 +18,13 @@ Block::Block(){
 }
 
 Block::~Block(){
-    for (Transaction *tx : m_tx){
-        delete tx;
-    }
 }
 
 uint64_t Block::getTimeStamp(){
     return m_timeStamp;
 }
 
-std::list<Transaction *> Block::getTransaction(){
+std::list<Transaction> Block::getTransaction(){
     return m_tx;
 }
 
@@ -47,7 +44,7 @@ void Block::setTimeStamp(const int64_t &timeStamp){
     m_timeStamp = timeStamp;
 }
 
-void Block::setTransaction(std::list<Transaction *> tx){
+void Block::setTransaction(std::list<Transaction> &tx){
     m_tx = tx;
 }
 
@@ -66,8 +63,8 @@ void Block::setHash(const std::array<uint32_t, 8> &hash){
 size_t Block::size(){
     
     size_t txsize = 0;
-    for (Transaction * tx: m_tx){
-        txsize += tx->size();
+    for (auto &tx: m_tx){
+        txsize += tx.size();
     }
     
     return sizeof(uint64_t) +
@@ -90,8 +87,9 @@ uint8_t *Block::encode(size_t *blockSize){
     
     memcpy(ptr, &txnum, sizeof(size_t)); ptr += sizeof(size_t);
     
-    for (Transaction *tx : m_tx){
-        tx->encode(ptr); ptr += tx->size();
+    for (auto &tx : m_tx){
+        tx.encode(ptr); 
+        ptr += tx.size();
     }
     
     memcpy(ptr, m_prevBlockHash.data(), sizeof(uint32_t) * 8); ptr += sizeof(uint32_t) * 8;
@@ -114,10 +112,10 @@ Block* decode(uint8_t *dec){
     memcpy(&txnum, ptr, sizeof(size_t)); ptr += sizeof(size_t);
     
     for (size_t i = 0; i < txnum; i++){
-        Transaction *tx = new Transaction(0, 0, 0);
-        tx->decode(ptr);
+        Transaction tx = Transaction(0, 0, 0);
+        tx.decode(ptr);
         
-        block->m_tx.push_back(tx); ptr += tx->size();
+        block->m_tx.push_back(tx); ptr += tx.size();
     }
     
     uint32_t *ptr32 = (uint32_t *)ptr;
@@ -150,8 +148,8 @@ void Block::print(){
     std::cout << "|Hash: " <<  array2String(m_hash) << "\n";
     std::cout << "|PrevHash: " << array2String(m_prevBlockHash) << "\n";
     
-    for (Transaction *tx : m_tx){
-        tx->print();
+    for (auto &tx : m_tx){
+        tx.print();
     }
     std::cout <<std::setfill('=') << std::setw(80) << "\n" << std::endl;
 }
@@ -195,8 +193,8 @@ std::string ProofOfWork::PrepareData(){
     std::string data;
     data += std::to_string(m_block->getTimeStamp());
     
-    for (Transaction *tx : m_block->m_tx){
-        data += tx->toString();
+    for (auto &tx : m_block->m_tx){
+        data += tx.toString();
     }
     data += array2String(m_block->getPrevBlockHash());
     data += std::to_string(m_nonce);

@@ -46,7 +46,7 @@ public:
     \param[in] id - id клиета у сервера
     \param[in] msgs - указатель на буффер сообщений
     */
-    Client(int socket, sockaddr_in addr, int id, std::list<Message *> *msgs);
+    Client(int socket, sockaddr_in addr, int id, std::list<std::unique_ptr<Message>> *msgs);
     
     /*!
      \brief Диструктор
@@ -92,7 +92,7 @@ private:
     
     struct sockaddr_in m_cliaddr; /*!< unix адрес*/
     
-    std::list<Message *> *m_msgs; /*!< буффер сообщений*/
+    std::list<std::unique_ptr<Message>> *m_msgs; /*!< буффер сообщений*/
 };
 
 /*!
@@ -106,7 +106,7 @@ public:
      \param[in] msgs - буффер сообщений
      \param[in] mtx - мьютекс
     */
-    Server(int port, std::list<Message *> *msgs, std::mutex *mtx);
+    Server(int port, std::list<std::unique_ptr<Message>> *msgs, std::mutex *mtx);
     
     /*!
      \brief Диструктор
@@ -154,7 +154,7 @@ private:
      \brief Обработчик сообщений
     \param [in] client - указатель на клиента
     */
-    void messageHandler(Client *client);
+    void messageHandler(std::shared_ptr<Client> client);
     
     int m_port; /*!< Порт */
     
@@ -168,13 +168,13 @@ private:
     
     std::atomic<bool> m_run; /*!< атомик для управления потоками*/
     
-    std::vector<Client *> m_clients; /*!< список клиентов*/
+    std::vector<std::shared_ptr<Client>> m_clients; /*!< список клиентов*/
     
-    std::list<Message *> *m_msgs; /*!< буффер сообщений*/
+    std::list<std::unique_ptr<Message>> *m_msgs; /*!< буффер сообщений*/
     
-    std::thread *m_acceptThread; /*!< поток для подключения клиентов */
+    std::unique_ptr<std::thread> m_acceptThread; /*!< поток для подключения клиентов */
     
-    std::vector<std::thread *> m_messageThreads; /*!< мьютекс для работы пересылки сообщений */
+    std::vector<std::unique_ptr<std::thread>> m_messageThreads; /*!< мьютекс для работы пересылки сообщений */
     
     std::mutex m_mtx; /*!< мьютекс для работы с потоками*/
     

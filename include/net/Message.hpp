@@ -44,7 +44,7 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) = 0;
+    virtual uint8_t *toByte(size_t &size) const = 0;
     
     /*!
      \brief Тип message
@@ -70,7 +70,7 @@ protected:
     uint8_t m_ver = 0; /*!< версия*/
     
     size_t m_size; /*!< размер сообщения*/
-    
+public:
     uint8_t m_comm; /*!< тип сообщения*/
 };
 
@@ -118,7 +118,7 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) override;
+    virtual uint8_t *toByte(size_t &size) const override;
     
     /*!
     \return список хэшей
@@ -184,7 +184,7 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) override;
+    virtual uint8_t *toByte(size_t &size) const override;
     
     /*!
     \return список хэшей
@@ -252,7 +252,7 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) override;
+    virtual uint8_t *toByte(size_t &size) const override;
     
     /*!
     \return список хэшей
@@ -307,7 +307,7 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) override;
+    virtual uint8_t *toByte(size_t &size) const override;
     
     /*!
      \return блок из цепи
@@ -344,7 +344,7 @@ public:
     
     virtual void parse(uint8_t *data, size_t size) override;
     
-    virtual uint8_t *toByte(size_t &size) override;
+    virtual uint8_t *toByte(size_t &size) const override;
     
     Transaction *getTransaction();
 
@@ -385,7 +385,7 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) override;
+    virtual uint8_t *toByte(size_t &size) const override;
 
 };
 

@@ -2,7 +2,7 @@
 
 #define BUFLEN 1024
 
-Client::Client(int socket, sockaddr_in addr, int id, std::list<Message *> *msgs){
+Client::Client(int socket, sockaddr_in addr, int id, std::list<std::unique_ptr<Message>> *msgs){
     m_sock = socket;
     m_cliaddr = addr;
     m_id = id;
@@ -36,10 +36,11 @@ void Client::sendData(Message *msg){
     size_t size;
     uint8_t *enc = msg->toByte(size);
     send(m_sock, enc, size, 0);
+    
     delete[] enc;
 }
 
-Server::Server(int port, std::list<Message *> *msgs, std::mutex *mtx){
+Server::Server(int port, std::list<std::unique_ptr<Message>> *msgs, std::mutex *mtx){
     m_status = socket_status::stop;
     m_sock = -1;
     m_port = port;
@@ -59,18 +60,11 @@ void Server::stop(){
     close(m_sock);
     m_run.store(false, std::memory_order_relaxed);
     
-    for (int i = 0; i < m_clients.size(); i++){
-        if (m_clients[i]){
-            delete m_clients[i];
-        }
-    }
-    
     if (m_acceptThread){
         for (int i = 0; i < m_messageThreads.size(); i++){
             m_messageThreads[i]->join();
         }
         m_acceptThread->join();
-        delete m_acceptThread;
     }
    
     m_status = socket_status::stop;
@@ -109,7 +103,7 @@ void Server::start(){
     
     m_status = socket_status::start;
     m_run.store(true, std::memory_order_relaxed);
-    m_acceptThread = new std::thread(&Server::acceptClients, this);
+    m_acceptThread = std::make_unique<std::thread>(&Server::acceptClients, this);
 }
 
 void Server::acceptClients(){
@@ -125,13 +119,13 @@ void Server::acceptClients(){
         int len = sizeof(sockaddr);
         
         clientSocket = accept(m_sock, (sockaddr *) &clientAddr, (socklen_t *) &len);
+        std::cout << "client conntect \n" << std::endl;
         if (clientSocket > 0){
-            Client *cl = new Client(clientSocket, clientAddr, m_ids, m_msgs);
-            std::thread *thr = new std::thread(&Server::messageHandler, this, cl);
+            auto cl = std::make_shared<Client>(clientSocket, clientAddr, m_ids, m_msgs);
             
             m_mtx.lock();
             m_clients.push_back(cl);
-            m_messageThreads.push_back(thr);
+            m_messageThreads.push_back(std::make_unique<std::thread>(&Server::messageHandler, this, cl));
             m_ids++;
             m_mtx.unlock();
         }
@@ -140,10 +134,12 @@ void Server::acceptClients(){
     }
 }
 
-void Server::messageHandler(Client *client){
+void Server::messageHandler(std::shared_ptr<Client>client){
     if (m_status != socket_status::start){
         return;
     }
+    
+    std::cout << "message handler start \n" << std::endl;
     
     using namespace std::chrono_literals;
     
@@ -161,32 +157,32 @@ void Server::messageHandler(Client *client){
                 continue;
             }
             
-            uint8_t type = buff[16];
+            uint8_t type = buff[9];
             
-            Message *msg;
+            std::unique_ptr<Message> msg;
             
             if (type == MsgTypes::gBlocks){
-                msg = new GetBlocksMsg();
+                msg = std::make_unique<GetBlocksMsg>();
             }
             
             else if (type == MsgTypes::Inv){
-                msg = new InvMsg();
+                msg = std::make_unique<InvMsg>();
             }
             
             else if (type == MsgTypes::gData){
-                msg = new GetDataMsg();
+                msg = std::make_unique<GetDataMsg>();
             }
             
             else if (type == MsgTypes::sBlock){
-                msg = new BlockMsg();
+                msg = std::make_unique<BlockMsg>();
             }
             
             else if (type == MsgTypes::Tx){
-                msg = new TxMsg();
+                msg = std::make_unique<TxMsg>();
             }
             
             else if (type == MsgTypes::noFound){
-                msg = new NoFoundMsg();
+                msg = std::make_unique<NoFoundMsg>();
             }
             else{
                 continue;
@@ -197,7 +193,7 @@ void Server::messageHandler(Client *client){
             msg->setClientId(client->getId());
             
             m_msgMtx->lock();
-            m_msgs->push_back(msg);
+            m_msgs->push_back(std::move(msg));
             m_msgMtx->unlock();
         }
         
@@ -226,13 +222,10 @@ int Server::connectTo(std::string host, int port){
         std::cout << "connection error\n";
         return -1;
     }
-    
-    Client *cl = new Client(serverSocket, serverAddr, m_ids, m_msgs);
-    std::thread *thr = new std::thread(&Server::messageHandler, this, cl);
-    
     m_mtx.lock();
+    auto cl = std::make_shared<Client>(serverSocket, serverAddr, m_ids, m_msgs);
     m_clients.push_back(cl);
-    m_messageThreads.push_back(thr);
+    m_messageThreads.push_back(std::make_unique<std::thread>(&Server::messageHandler, this, cl));
     m_ids++;
     m_mtx.unlock();
     

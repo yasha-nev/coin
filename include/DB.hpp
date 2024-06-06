@@ -37,7 +37,7 @@ public:
     \brief Запись блока в базу данных
     \param [in] block - блок данных
     */
-    void putBlock(std::shared_ptr<Block> &block);
+    void putBlock(std::unique_ptr<Block> &block);
 
     /*!
     \brief Достает последний записанный блок
@@ -57,7 +57,7 @@ public:
     \param [in] hash - хэш блока
     \return блок  данных
     */
-    Block *getBlockByHash(const std::array<uint32_t, 8> &hash);
+    std::unique_ptr<Block> getBlockByHash(const std::array<uint32_t, 8> &hash);
     
     leveldb::DB* m_db;  /*!< указатель на базу данных*/
 };

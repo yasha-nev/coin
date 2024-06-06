@@ -30,11 +30,11 @@ std::string DB::getCurrentHash(){
 uint64_t DB::getCurrentId(const std::array<uint32_t, 8> &hash){
     uint64_t id;
     auto block = std::unique_ptr<Block>(getBlockByHash(hash));
-    id = block->getTransaction().back()->m_id;
+    id = block->getTransaction().back().m_id;
     return id;
 }
 
-Block *DB::getBlockByHash(const std::array<uint32_t, 8> &hash){
+std::unique_ptr<Block> DB::getBlockByHash(const std::array<uint32_t, 8> &hash){
     std::string byteBlock;
     
     leveldb::Slice key((char *) hash.data(), hash.size());
@@ -42,10 +42,10 @@ Block *DB::getBlockByHash(const std::array<uint32_t, 8> &hash){
     
     Block *block = decode((uint8_t *) byteBlock.c_str());
     
-    return block;
+    return std::unique_ptr<Block>(block);
 }
 
-void DB::putBlock(std::shared_ptr<Block> &block){
+void DB::putBlock(std::unique_ptr<Block> &block){
     size_t blockSize = 0;
     std::unique_ptr<uint8_t[]> encBlock = std::unique_ptr<uint8_t[]> (block->encode(&blockSize));
     

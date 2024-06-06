@@ -37,6 +37,7 @@ void GetBlocksMsg::parse(uint8_t *data, size_t size){
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) + sizeof(uint32_t) * 8;
     size_t count = 0;
     size_t payload_size;
+    
     memcpy(&payload_size, data + sizeof(char) * STARTSIZE + sizeof(uint8_t), sizeof(size_t));
     size_t ptr = headerSize;
     memcpy(&m_ver, data + ptr, sizeof(uint8_t)); ptr += sizeof(uint8_t);
@@ -49,12 +50,13 @@ void GetBlocksMsg::parse(uint8_t *data, size_t size){
             memcpy(&h, data + ptr + j * sizeof(uint32_t), sizeof(uint32_t));
             hash[j] = h;
         }
+        
         m_hashes.push_back(hash);
         ptr += sizeof(uint32_t) * 8;
     }
 }
 
-uint8_t *GetBlocksMsg::toByte(size_t &size){
+uint8_t *GetBlocksMsg::toByte(size_t &size) const{
     size_t count = m_hashes.size() + 1;
     size_t payloadSize = sizeof(uint8_t) + sizeof(size_t) + sizeof(uint32_t) * 8 * (m_hashes.size() + 1);
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) + sizeof(uint32_t) * 8;
@@ -138,7 +140,7 @@ void InvMsg::parse(uint8_t *data, size_t size){
     }
 }
 
-uint8_t *InvMsg::toByte(size_t &size){
+uint8_t *InvMsg::toByte(size_t &size) const{
     size_t count = m_hashes.size() + 1;
     size_t payloadSize = sizeof(size_t) + sizeof(uint8_t) * (m_hashes.size()) + sizeof(uint32_t) * 8 * (m_hashes.size());
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) + sizeof(uint32_t) * 8;
@@ -216,7 +218,7 @@ void GetDataMsg::parse(uint8_t *data, size_t size){
     }
 }
 
-uint8_t *GetDataMsg::toByte(size_t &size){
+uint8_t *GetDataMsg::toByte(size_t &size) const{
     size_t count = m_hashes.size() + 1;
     size_t payloadSize = sizeof(size_t) + sizeof(uint8_t) * (m_hashes.size()) + sizeof(uint32_t) * 8 * (m_hashes.size());
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) + sizeof(uint32_t) * 8;
@@ -284,7 +286,7 @@ void BlockMsg::parse(uint8_t *data, size_t size){
     m_block = decode(data + ptr);
 }
 
-uint8_t *BlockMsg::toByte(size_t &size){
+uint8_t *BlockMsg::toByte(size_t &size) const{
     size_t payloadSize = m_block->size();
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) + sizeof(uint32_t) * 8;
     size = headerSize + payloadSize;
@@ -349,7 +351,7 @@ void TxMsg::parse(uint8_t *data, size_t size){
     m_tx->decode(data + ptr);
 }
 
-uint8_t *TxMsg::toByte(size_t &size){
+uint8_t *TxMsg::toByte(size_t &size) const{
     size_t payloadSize = m_tx->size();
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) + sizeof(uint32_t) * 8;
     size = headerSize + payloadSize;
@@ -360,6 +362,7 @@ uint8_t *TxMsg::toByte(size_t &size){
     //create header
     
     memcpy(msg + ptr, STARTSTR, STARTSIZE); ptr += STARTSIZE;
+    std::cout << ptr << std::endl;
     memcpy(msg + ptr, &m_comm, sizeof(uint8_t)); ptr += sizeof(uint8_t);
     memcpy(msg + ptr, &size, sizeof(size_t)); ptr += sizeof(size_t);
     
@@ -385,7 +388,7 @@ NoFoundMsg::NoFoundMsg(){
 void NoFoundMsg::parse(uint8_t *data, size_t size){
 }
 
-uint8_t *NoFoundMsg::toByte(size_t &size){
+uint8_t *NoFoundMsg::toByte(size_t &size) const{
     size_t payloadSize = 0;
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) + sizeof(uint32_t) * 8;
     size = headerSize + payloadSize;

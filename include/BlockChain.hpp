@@ -28,14 +28,14 @@ public:
      \brief Подожить блок в базе данных
      \param [in] block указатель на блок
     */
-    void putBlock(std::shared_ptr<Block> &block);
+    void putBlock(std::unique_ptr<Block> &block);
     
     /*!
      \brief Создать блок из списка транзакций
      \param [in] time - время создания блока
      \param [in] tx - список транзакций
     */
-    void createBlock(uint64_t time, std::list<Transaction *> tx);
+    void createBlock(uint64_t time, const std::list<Transaction> &tx);
     
     /*!
      \brief Получить id последней транзакции
@@ -54,13 +54,13 @@ public:
      \param [in] hash - хэш блока
      \return блок
     */
-    Block *getBlock(const std::array<uint32_t, 8> &hash);
+    std::unique_ptr<Block>getBlock(const std::array<uint32_t, 8> &hash);
     
     /*!
      \brief Получить последний записанный блок
      \return Блок
     */
-    Block *getPastBlock();
+    std::unique_ptr<Block>getPastBlock();
     
     /*!
      \brief Получить хэш последнего блока
@@ -93,13 +93,13 @@ private:
      \param [in] hash - хэш предыдущего блока
      \return указатель на созданный блок
     */
-    Block *newBlock(uint64_t time, std::list<Transaction *> tx, const std::array<uint32_t, 8> &hash);
+    std::unique_ptr<Block> newBlock(uint64_t time, const std::list<Transaction> &tx, const std::array<uint32_t, 8> &hash);
     
     /*!
      \brief Создание базового первого блока
      \return указатель на созданный блок
     */
-    Block *genesisBlock();
+    std::unique_ptr<Block> genesisBlock();
     
     std::array<uint32_t, 8> m_cur_hash; /*!< хэш последнего блока*/
     

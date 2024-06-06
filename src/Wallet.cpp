@@ -54,7 +54,7 @@ void Wallet::createTransaction(const std::string &address, int value){
         std::cout << "not money" << std::endl;
         return;
     }
-    Transaction *tx = realTransaction(m_bc->getPastTransactionId() + 1, getAddres(), address, value, inputs, rest);
+    Transaction *tx = new RealTransaction(m_bc->getPastTransactionId() + 1, getAddres(), address, value, inputs, rest);
     
     transactionSign(tx);
     
@@ -65,11 +65,11 @@ void Wallet::createTransaction(const std::string &address, int value){
 
 void Wallet::transactionSign(Transaction *tx){
     std::string signstr;
-    for (size_t i = 0; i < tx->m_outCount; i++){
-        signstr += tx->m_out->m_address;
+    for (size_t i = 0; i < tx->m_out.size(); i++){
+        signstr += tx->m_out[i].m_address;
     }
 
-    for (size_t i = 0; i < tx->m_inCount; i++){
+    for (size_t i = 0; i < tx->m_in.size(); i++){
         sha256 cryptor;
         std::string key = tx->m_in[i].m_pubkey + signstr;
         cryptor.Hash(key);

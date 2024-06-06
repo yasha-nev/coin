@@ -12,6 +12,105 @@
 
 #define REWARD 50
 
+
+/*!
+    \brief Выход транзакции
+
+     Хранит информацию куда был сделал перевод
+*/
+class TXOutput{
+public:
+    /*!
+     \brief Конструктор
+    */
+    TXOutput(){};
+    
+    /*!
+     \brief Конструктор копирования
+    */
+    TXOutput(const TXOutput &out);
+    
+    /*!
+     \brief Конструктор перемещения
+    */
+    TXOutput(const TXOutput &&out);
+    
+    /*!
+     \brief Конструктор с параметрами
+
+     \param [in] value - количество передоваемых монет
+     \param [in] pubkey - адрес кошелька
+    */
+    TXOutput(int value, const std::string &pubkey);
+    
+    /*!
+     \brief Перегрузка оператора  =
+    */
+    TXOutput &operator =(const TXOutput &out);
+    
+    /*!
+     \brief Перегрузка оператора  = перемещения
+    */
+    TXOutput &operator =(const TXOutput &&out);
+    
+    
+    
+    int m_value; /*!< количество монет */
+    
+    std::string m_address; /*!< адрес кошелька */
+};
+
+/*!
+    \brief Вход транзакции
+
+    Хранит информацию откуда были взяты средства
+    Является частью Транзакции
+*/
+class TXInput{
+public:
+    /*!
+     \brief Конструктор
+    */
+    TXInput(){};
+    
+    /*!
+     \brief Конструктор копирования
+    */
+    TXInput(const TXInput &in);
+    
+    /*!
+     \brief Конструктор перемещения
+    */
+    TXInput(const TXInput &&in);
+    
+    /*!
+     \brief Конструктор с параметрами
+
+    \param [in] transId - id транзакции
+    \param [in] outIndex - индекс выхода в транзакции
+    \param [in] pubkey - публичный ключ отправителя
+    */
+    TXInput(const uint64_t &transId, int outIndex, const std::string &pubkey);
+
+    /*!
+     \brief Перегрузка =
+    */
+    TXInput& operator =(const TXInput &in);
+    
+    /*!
+     \brief Перегрузка = перемещения
+    */
+    TXInput& operator =(const TXInput &&in);
+    
+    uint64_t m_tranId; /*!< id транзакции */
+    
+    int m_outIndex; /*!< индекс выхода в транзакции*/
+    
+    std::string m_pubkey; /*!< публичный ключ */
+
+    std::string m_sign; /*!< цифровая подпись */
+};
+
 /*!
     \brief Транзакция
 
@@ -25,13 +124,9 @@ public:
     */
     uint64_t m_id; /*!< id транзакции */
     
-    int m_inCount; /*!< Количество входов */
+    std::vector<TXInput> m_in; /*!< Входы */
     
-    int m_outCount; /*!< Количество выходов */
-    
-    class TXInput *m_in; /*!< Входы */
-    
-    class TXOutput *m_out; /*!< Выходы */
+    std::vector<TXOutput> m_out; /*!< Выходы */
     
     /*!
     \brief Конструктор с параметрами
@@ -79,81 +174,30 @@ public:
     void print();
 };
 
-/*!
-    \brief Выход транзакции
 
-     Хранит информацию куда был сделал перевод
-*/
-class TXOutput{
+class CoinBaseTransaction: public Transaction{
 public:
-    /*!
-     \brief Конструктор
-    */
-    TXOutput(){};
-    
-    /*!
-     \brief Конструктор копирования
-    */
-    TXOutput(const TXOutput &out);
-    
-    /*!
-     \brief Конструктор с параметрами
+    CoinBaseTransaction(uint64_t &id, std::string &address);
 
-     \param [in] value - количество передоваемых монет
-     \param [in] pubkey - адрес кошелька
-    */
-    TXOutput(int value, const std::string &pubkey);
-    
-    /*!
-     \brief Перегрузка оператора  =
-    */
-    TXOutput &operator =(const TXOutput &out);
-    
-    int m_value; /*!< количество монет */
-    
-    std::string m_address; /*!< адрес кошелька */
+private:
+    std::string m_address;
 };
 
-/*!
-    \brief Вход транзакции
-
-    Хранит информацию откуда были взяты средства
-    Является частью Транзакции
-*/
-class TXInput{
+class RealTransaction: public Transaction{
 public:
-    /*!
-     \brief Конструктор
-    */
-    TXInput(){};
-    
-    /*!
-     \brief Конструктор копирования
-    */
-    TXInput(const TXInput &in);
-    
-    /*!
-     \brief Конструктор с параметрами
+    RealTransaction(const uint64_t &id, const std::string &from, const std::string &to, int value, std::list<TXInput> &inputs, int rest);
 
-    \param [in] transId - id транзакции
-    \param [in] outIndex - индекс выхода в транзакции
-    \param [in] pubkey - публичный ключ отправителя
-    */
-    TXInput(const uint64_t &transId, int outIndex, const std::string &pubkey);
-
-    /*!
-     \brief Перегрузка =
-    */
-    TXInput& operator =(const TXInput &in);
+private:
+    std::string m_from;
     
-    uint64_t m_tranId; /*!< id транзакции */
+    std::string m_to;
     
-    int m_outIndex; /*!< индекс выхода в транзакции*/
+    int m_value;
     
-    std::string m_pubkey; /*!< публичный ключ */
-
-    std::string m_sign; /*!< цифровая подпись */
+    int m_rest;
+    
 };
+
 
 /*!
  \brief Вознограждение

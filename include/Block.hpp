@@ -71,7 +71,7 @@ public:
      \param [in] nonce - случайное число
     */
     Block(const int64_t &timeStamp,
-          std::list<Transaction *>tx,
+          const std::list<Transaction> &tx,
           const std::array<uint32_t, 8> &prevBlockHash,
           const std::array<uint32_t, 8> &hash,
           const int64_t &nonce);
@@ -86,7 +86,7 @@ public:
      \brief Список транзакций
      \return Список указателей
     */
-    std::list<Transaction *> getTransaction();
+    std::list<Transaction> getTransaction();
     
     /*!
      \brief Хэш предыдущего блока
@@ -116,7 +116,7 @@ public:
      \brief Задать список транзакций
      \param [in] trans список транзакций
     */
-    void setTransaction(std::list<Transaction *>trans);
+    void setTransaction(std::list<Transaction> &trans);
     
     /*!
      \brief Задать случайное число
@@ -159,7 +159,7 @@ public:
 private:
     int64_t m_timeStamp; /*!< время создания*/
     
-    std::list<Transaction *> m_tx; /*!< список транзакций*/
+    std::list<Transaction> m_tx; /*!< список транзакций*/
     
     std::array<uint32_t, 8> m_prevBlockHash; /*!< хэш предыдущего блока*/
     

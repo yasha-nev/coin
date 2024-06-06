@@ -50,7 +50,7 @@ public:
      \brief Получить транзакцию из буфера для создания блока
      \return укалатель на транзакцию
     */
-    Transaction *getFromMempool();
+    std::unique_ptr<Transaction> getFromMempool();
     
 private:
     /*!
@@ -85,15 +85,15 @@ private:
     */
     void sblock(std::list<std::array<uint32_t, 8>> hashes, int clientId);
     
-    Server *m_serv;  /*!< Сервер*/
+    std::unique_ptr<Server> m_serv;  /*!< Сервер*/
     
     BlockChain *m_bc;  /*!< Локальный blockchain */
     
-    std::list<Message *> m_msgs;  /*!< Буффер сообщений*/
+    std::list<std::unique_ptr<Message>> m_msgs;  /*!< Буффер сообщений*/
 
     std::list <std::pair<std::string, int>> m_clientsIp;  /*!< список серверов*/
     
-    std::list<Transaction *> m_mempool; /*!< Буффер транзакций без блока */
+    std::list<std::unique_ptr<Transaction>> m_mempool; /*!< Буффер транзакций без блока */
     
     std::atomic<bool> m_run;  /*!< Атомик для управления потоками */
 

@@ -18,20 +18,22 @@ Mainer::~Mainer(){
 
 void Mainer::process(){
     while (m_run.load(std::memory_order_relaxed)){
-        Transaction *tx = m_net->getFromMempool();
+        auto tx = m_net->getFromMempool();
         
         if (!tx){
             std::this_thread::sleep_for(50ms);
             continue;
         }
         
-        std::list<Transaction *> txList;
+        std::list<Transaction> txList;
         
-        txList.push_back(tx);
+        txList.push_back(tx.get());
         
-        txList.push_back(coinBaseTrans(tx->m_id + 1, getAddres()));
+        uint64_t txid = tx->m_id + 1;
+        std::string address = getAddres();
+        txList.push_back(CoinBaseTransaction(txid, address));
         
-        m_bc->createBlock(std::time(nullptr), txList);
+        m_bc->createBlock(static_cast<uint64_t>(std::time(nullptr)), txList);
         
         std::this_thread::sleep_for(50ms);
     }
