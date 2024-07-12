@@ -17,6 +17,14 @@ Block::Block(){
     m_nonce = 0;
 }
 
+Block::Block(Block * block){
+    m_timeStamp = block->m_timeStamp;
+    m_tx = block->m_tx;
+    m_prevBlockHash = block->m_prevBlockHash;
+    m_hash = block->m_hash;
+    m_nonce = block->m_nonce;
+}
+
 Block::~Block(){
 }
 
@@ -75,12 +83,7 @@ size_t Block::size(){
     sizeof(uint64_t);
 }
 
-uint8_t *Block::encode(size_t *blockSize){
-    *blockSize = size();
-    
-    uint8_t *enc = new uint8_t[*blockSize];
-    uint8_t *ptr = enc;
-    
+void Block::encode(uint8_t *ptr){
     memcpy(ptr, &m_timeStamp, sizeof(uint64_t)); ptr += sizeof(uint64_t);
     
     size_t txnum = m_tx.size();
@@ -97,31 +100,27 @@ uint8_t *Block::encode(size_t *blockSize){
     memcpy(ptr, m_hash.data(), sizeof(uint32_t) * 8); ptr += sizeof(uint32_t) * 8;
     
     memcpy(ptr, &m_nonce, sizeof(uint64_t));
-    
-    return enc;
 }
 
-Block* decode(uint8_t *dec){
-    Block *block = new Block();
-    uint8_t *ptr = dec;
+void Block::decode(uint8_t *ptr){
+    m_timeStamp = 0;
     
-    memcpy(&block->m_timeStamp, ptr, sizeof(uint64_t)); ptr += sizeof(uint64_t);
+    memcpy(&m_timeStamp, ptr, sizeof(uint64_t)); ptr += sizeof(uint64_t);
     
     size_t txnum = 0;
-    
     memcpy(&txnum, ptr, sizeof(size_t)); ptr += sizeof(size_t);
     
+    m_tx.clear();
     for (size_t i = 0; i < txnum; i++){
         Transaction tx = Transaction(0, 0, 0);
         tx.decode(ptr);
         
-        block->m_tx.push_back(tx); ptr += tx.size();
+        m_tx.push_back(tx); ptr += tx.size();
     }
-    
     uint32_t *ptr32 = (uint32_t *)ptr;
     
     for (int i = 0; i < 8; i++){
-        block->m_prevBlockHash[i] = *ptr32;
+        m_prevBlockHash[i] = *ptr32;
         ptr32++;
     }
     
@@ -130,15 +129,13 @@ Block* decode(uint8_t *dec){
     ptr32 = (uint32_t *)ptr;
     
     for (int i = 0; i < 8; i++){
-        block->m_hash[i] = *ptr32;
+        m_hash[i] = *ptr32;
         ptr32++;
     }
     
     ptr += sizeof(uint32_t) * 8;
-
-    memcpy(&block->m_nonce, ptr, sizeof(uint64_t));
     
-    return block;
+    memcpy(&m_nonce, ptr, sizeof(uint64_t));
 }
 
 void Block::print(){

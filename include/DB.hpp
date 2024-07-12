@@ -37,7 +37,7 @@ public:
     \brief Запись блока в базу данных
     \param [in] block - блок данных
     */
-    void putBlock(std::unique_ptr<Block> &block);
+    void putBlock(const std::unique_ptr<Block> &block);
 
     /*!
     \brief Достает последний записанный блок

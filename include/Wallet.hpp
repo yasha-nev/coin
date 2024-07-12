@@ -55,7 +55,7 @@ protected:
      \brief Подписать транзакцию
      \param [in] tx - адрес перевода
     */
-    void transactionSign(Transaction *tx);
+    void transactionSign(std::unique_ptr<Transaction> &tx);
     
     /*!
      \brief Создания хэша для проверки

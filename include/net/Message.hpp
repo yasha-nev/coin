@@ -44,7 +44,7 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) const = 0;
+    virtual std::unique_ptr<uint8_t[]> toByte(size_t &size) const = 0;
     
     /*!
      \brief Тип message
@@ -63,6 +63,11 @@ public:
      \return id
     */
     int getClientId();
+    
+    /*!
+     \brief Информация хронящаяся в сообщении
+     */
+    virtual void print() const = 0;
     
 protected:
     int m_clientId = -1; /*!< id клиента*/
@@ -118,7 +123,12 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) const override;
+    virtual std::unique_ptr<uint8_t[]> toByte(size_t &size) const override;
+    
+    /*!
+     \brief Информация хронящаяся в сообщении
+     */
+    virtual void print() const override;
     
     /*!
     \return список хэшей
@@ -184,7 +194,12 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) const override;
+    virtual std::unique_ptr<uint8_t[]> toByte(size_t &size) const override;
+    
+    /*!
+     \brief Информация хронящаяся в сообщении
+     */
+    virtual void print() const override;
     
     /*!
     \return список хэшей
@@ -252,7 +267,12 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) const override;
+    virtual std::unique_ptr<uint8_t[]> toByte(size_t &size) const override;
+    
+    /*!
+     \brief Информация хронящаяся в сообщении
+     */
+    virtual void print() const override;
     
     /*!
     \return список хэшей
@@ -293,7 +313,7 @@ public:
      \brief Конструктор с параметром
      \param [in] blocks - блок из цепи
     */
-    BlockMsg(Block *blocks);
+    BlockMsg(std::unique_ptr<Block> &blocks);
     
     /*!
      \brief Десериализация
@@ -307,7 +327,12 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) const override;
+    virtual std::unique_ptr<uint8_t[]> toByte(size_t &size) const override;
+    
+    /*!
+     \brief Информация хронящаяся в сообщении
+     */
+    virtual void print() const override;
     
     /*!
      \return блок из цепи
@@ -315,7 +340,7 @@ public:
     Block *getBlock();
 
 private:
-    Block *m_block; /*!< Блок из цепи */
+    std::unique_ptr<Block> m_block; /*!< Блок из цепи */
     
 };
 
@@ -340,16 +365,21 @@ public:
     
     TxMsg();
     
-    TxMsg(Transaction *tx);
+    TxMsg(std::unique_ptr<Transaction> &tx);
     
     virtual void parse(uint8_t *data, size_t size) override;
     
-    virtual uint8_t *toByte(size_t &size) const override;
+    virtual std::unique_ptr<uint8_t[]> toByte(size_t &size) const override;
+    
+    /*!
+     \brief Информация хронящаяся в сообщении
+     */
+    virtual void print() const override;
     
     Transaction *getTransaction();
 
 private:
-    Transaction *m_tx;
+    std::unique_ptr<Transaction> m_tx;
     
 };
 
@@ -385,7 +415,12 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual uint8_t *toByte(size_t &size) const override;
+    virtual std::unique_ptr<uint8_t[]> toByte(size_t &size) const override;
+    
+    /*!
+     \brief Информация хронящаяся в сообщении
+     */
+    virtual void print() const override;
 
 };
 

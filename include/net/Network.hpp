@@ -37,7 +37,7 @@ public:
     /*!
      \brief Отправить транзакцию в буффер
     */
-    void sendToMempool(Transaction *tx);
+    void sendToMempool(std::unique_ptr<Transaction> tx);
     
     /*!
      \brief Создать соединение

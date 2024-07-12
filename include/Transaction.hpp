@@ -198,24 +198,4 @@ private:
     
 };
 
-
-/*!
- \brief Вознограждение
- \param [in] id - id транзакции
- \param [in] address - адрес кошелька
-*/
-Transaction *coinBaseTrans(const uint64_t &id, const std::string &address);
-
-/*!
- \brief Создание обычной транзакции
-
- \param [in] id - id транзакции
- \param [in] from - публичный ключ отправителя
- \param [in] to - адрес получателя
- \param [in] value - сумма перевода
- \param [in] inputs - список выходов
- \param [in] rest - размер сдачи
-*/
-Transaction *realTransaction(const uint64_t &id, const std::string &from, const std::string &to, int value, std::list<TXInput> inputs, int rest);
-
 #endif /* Transaction_hpp */

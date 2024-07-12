@@ -34,10 +34,8 @@ int Client::getId(){
 
 void Client::sendData(Message *msg){
     size_t size;
-    uint8_t *enc = msg->toByte(size);
-    send(m_sock, enc, size, 0);
-    
-    delete[] enc;
+    auto enc = msg->toByte(size);
+    send(m_sock, enc.get(), size, 0);
 }
 
 Server::Server(int port, std::list<std::unique_ptr<Message>> *msgs, std::mutex *mtx){
@@ -78,7 +76,7 @@ void Server::start(){
     m_sock = socket(AF_INET, SOCK_STREAM, 0);
     
     if (m_sock == -1){
-        std::cout << "sock creation error\n";
+        std::cerr << "sock creation error\n";
         m_status = socket_status::sock_err;
         return;
     }
@@ -90,13 +88,13 @@ void Server::start(){
     m_servaddr.sin_port = htons(m_port);
     
     if (bind(m_sock, (sockaddr *) &m_servaddr, sizeof(sockaddr)) != 0) {
-        std::cout << "socket bind failed\n";
+        std::cerr << "socket bind failed\n";
         m_status = socket_status::bind_err;
         return;
     }
     
     if ((listen(m_sock, 5)) != 0) {
-        std::cout << "Socket listen failed \n";
+        std::cerr << "Socket listen failed \n";
         m_status = socket_status::listen_err;
         return;
     }
@@ -119,8 +117,8 @@ void Server::acceptClients(){
         int len = sizeof(sockaddr);
         
         clientSocket = accept(m_sock, (sockaddr *) &clientAddr, (socklen_t *) &len);
-        std::cout << "client conntect \n" << std::endl;
         if (clientSocket > 0){
+            
             auto cl = std::make_shared<Client>(clientSocket, clientAddr, m_ids, m_msgs);
             
             m_mtx.lock();
@@ -139,8 +137,6 @@ void Server::messageHandler(std::shared_ptr<Client>client){
         return;
     }
     
-    std::cout << "message handler start \n" << std::endl;
-    
     using namespace std::chrono_literals;
     
     int clientSocket = client->getSocket();
@@ -152,7 +148,6 @@ void Server::messageHandler(std::shared_ptr<Client>client){
         r = recv(clientSocket, buff, BUFLEN, 0);
         
         if (r > 0){
-            
             if (r < 16){
                 continue;
             }
@@ -208,7 +203,6 @@ int Server::connectTo(std::string host, int port){
     
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1){
-        std::cout << "sock creation error\n";
         return -1;
     }
     
@@ -219,7 +213,7 @@ int Server::connectTo(std::string host, int port){
     serverAddr.sin_port = htons(port);
     
     if (connect(serverSocket, (sockaddr *)&serverAddr, sizeof(sockaddr)) != 0) {
-        std::cout << "connection error\n";
+        std::cerr << "connection error\n";
         return -1;
     }
     m_mtx.lock();

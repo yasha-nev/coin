@@ -76,6 +76,12 @@ public:
           const std::array<uint32_t, 8> &hash,
           const int64_t &nonce);
     
+    /*!
+     \brief Конструктор копирования
+    */
+    Block(Block *block);
+    
+    
      /*!
       \brief Время создания блока
       \return значение в unix формате
@@ -149,10 +155,15 @@ public:
     
     /*!
      \brief Сериализация блока
-     \param [out] blockSize - размер блока
-     \return сериализованный массив байтов
+     \param [out] ptr - размер блока
     */
-    uint8_t *encode(size_t *blockSize);
+    void encode(uint8_t *ptr);
+    
+    /*!
+    Десериализация блока
+    \param [in] ptr массив байтов
+    */
+    void decode(uint8_t *ptr);
     
     friend BlockChain;
     
@@ -168,16 +179,7 @@ private:
     uint64_t m_nonce; /*!< случайное число*/
     
     friend ProofOfWork;
-    
-    friend Block *decode(uint8_t *dec);
 };
-
-/*!
-Десериализация блока
-\param [in] dec массив байтов
-\return блок
-*/
-Block *decode(uint8_t *dec);
 
 /*!
  \brief Перевод строку хэша в hex предстовление

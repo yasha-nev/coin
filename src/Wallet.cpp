@@ -54,16 +54,16 @@ void Wallet::createTransaction(const std::string &address, int value){
         std::cout << "not money" << std::endl;
         return;
     }
-    Transaction *tx = new RealTransaction(m_bc->getPastTransactionId() + 1, getAddres(), address, value, inputs, rest);
+    
+    std::unique_ptr<Transaction> tx = std::make_unique<RealTransaction>(m_bc->getPastTransactionId() + 1, getAddres(), address, value, inputs, rest);
     
     transactionSign(tx);
     
-    m_net->sendToMempool(tx);
+    m_net->sendToMempool(std::move(tx));
     
-    delete tx;
 }
 
-void Wallet::transactionSign(Transaction *tx){
+void Wallet::transactionSign(std::unique_ptr<Transaction> &tx){
     std::string signstr;
     for (size_t i = 0; i < tx->m_out.size(); i++){
         signstr += tx->m_out[i].m_address;

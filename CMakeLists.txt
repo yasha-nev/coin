@@ -59,9 +59,19 @@ add_compile_options(
     #-Wextra
     )
 
+
+#===========LIBRARY=================
 add_library(coin STATIC ${SRCS} ${HEADERS})
 
+#=============COIN==================
 add_executable(main main.cpp)
-
 target_link_libraries(main coin leveldb)
 
+
+#=============TESTS=================
+add_executable(block_test test/block_test.cpp)
+target_link_libraries(block_test coin)
+
+enable_testing()
+
+add_test(NAME Test1 COMMAND block_test)

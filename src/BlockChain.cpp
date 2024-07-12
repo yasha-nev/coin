@@ -38,7 +38,7 @@ BlockChain::BlockChain(){
     }
     else{
         m_db.connectIfexist();
-        auto block = std::unique_ptr<Block>(genesisBlock());
+        auto block = genesisBlock();
         m_cur_hash = block->getHash();
         
         m_db.putBlock(block);
@@ -119,7 +119,7 @@ std::unique_ptr<Block>BlockChain::newBlock(uint64_t time, const std::list<Transa
     
     ProofOfWork pow(block_n);
     pow.Run();
-    return std::unique_ptr<Block>(block_n);
+    return std::make_unique<Block>(block_n);
 }
 
 void BlockChain::putBlock(std::unique_ptr<Block> &block){
@@ -151,7 +151,6 @@ TXOutput *getOutputs(const std::string &from, int value, int *count){
 
 uint64_t BlockChain::getBalance(const std::string &pubkey, const std::string &address){
     int sum = 0;
-    
     std::array<uint32_t, 8> hash;
     
     struct outId{
@@ -165,7 +164,7 @@ uint64_t BlockChain::getBalance(const std::string &pubkey, const std::string &ad
     std::string blc;
     
     while (!checkFirstBlock(hash)){
-        auto block = std::unique_ptr<Block> (getBlock(hash));
+        auto block = getBlock(hash);
         hash = block->getPrevBlockHash();
         
         std::list<Transaction>txList = block->getTransaction();
@@ -229,7 +228,7 @@ std::list<TXInput> BlockChain::getInputs(const std::string &pubkey, const std::s
     std::string blc;
     
     while (!checkFirstBlock(hash)){
-        auto block = std::unique_ptr<Block> (getBlock(hash));
+        auto block = getBlock(hash);
         hash = block->getPrevBlockHash();
         
         std::list<Transaction> txList = block->getTransaction();

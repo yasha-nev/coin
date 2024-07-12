@@ -41,24 +41,18 @@ size_t Transaction::size(){
 }
 
 void Transaction::encode(uint8_t *ptr){
-    memcpy(ptr, &m_id, sizeof(uint64_t));
-    ptr += sizeof(uint64_t);
+    memcpy(ptr, &m_id, sizeof(uint64_t)); ptr += sizeof(uint64_t);
     
     size_t inCount = m_in.size();
     
-    memcpy(ptr, &inCount, sizeof(int));
-    ptr += sizeof(int);
+    memcpy(ptr, &inCount, sizeof(int)); ptr += sizeof(int);
     
     for (size_t i = 0; i < m_in.size(); i++){
-        memcpy(ptr, &m_in[i].m_tranId, sizeof(uint64_t));
-        ptr += sizeof(uint64_t);
-        
-        memcpy(ptr, &m_in[i].m_outIndex, sizeof(int));
-        ptr += sizeof(int);
+        memcpy(ptr, &m_in[i].m_tranId, sizeof(uint64_t));   ptr += sizeof(uint64_t);
+        memcpy(ptr, &m_in[i].m_outIndex, sizeof(int));      ptr += sizeof(int);
         
         size_t pubSize = m_in[i].m_pubkey.size();
-        memcpy(ptr, &pubSize, sizeof(size_t));
-        ptr += sizeof(size_t);
+        memcpy(ptr, &pubSize, sizeof(size_t)); ptr += sizeof(size_t);
         
         for (size_t j = 0; j < pubSize; j++){
             *ptr = m_in[i].m_pubkey[j];
@@ -94,19 +88,17 @@ void Transaction::encode(uint8_t *ptr){
 }
 
 void Transaction::decode(uint8_t *ptr){
-    
     m_in.clear();
     m_out.clear();
     
-    memcpy(&m_id, ptr, sizeof(uint64_t));
-    ptr += sizeof(uint64_t);
+    memcpy(&m_id, ptr, sizeof(uint64_t)); ptr += sizeof(uint64_t);
     
-    size_t inCount;
+    size_t inCount = 0;
     
-    memcpy(&inCount, ptr, sizeof(int));
-    ptr += sizeof(int);
+    memcpy(&inCount, ptr, sizeof(int)); ptr += sizeof(int);
     
     m_in.resize(inCount);
+    
     for (size_t i = 0; i < inCount; i++){
         memcpy(&m_in[i].m_tranId, ptr, sizeof(uint64_t));
         ptr += sizeof(uint64_t);
@@ -133,7 +125,7 @@ void Transaction::decode(uint8_t *ptr){
         }
     }
     
-    size_t outCount;
+    size_t outCount = 0;
     
     memcpy(&outCount, ptr, sizeof(int));
     ptr += sizeof(int);
