@@ -26,15 +26,7 @@ static bool checkFirstBlock(const std::array<uint32_t, 8> &hash){
 BlockChain::BlockChain(){
     if (file_exist(DBPATH)){
         m_db.connect();
-        std::string current_hash = m_db.getCurrentHash();
-        
-        uint32_t *ptr = (uint32_t *)current_hash.c_str();
-        
-        for (int i = 0; i < 8; i++){
-            m_cur_hash[i] = *ptr;
-            ptr++;
-        }
-        
+        m_cur_hash = m_db.getCurrentHash();
     }
     else{
         m_db.connectIfexist();
@@ -46,7 +38,7 @@ BlockChain::BlockChain(){
 }
 
 void BlockChain::createBlock(uint64_t time, const std::list<Transaction> &tx){
-    auto block_n = newBlock(static_cast<uint64_t>(std::time(nullptr)), tx, m_cur_hash);
+    auto block_n = newBlock(time, tx, m_cur_hash);
     
     m_db.putBlock(block_n);
     m_cur_hash = block_n->getHash();
@@ -146,6 +138,7 @@ uint64_t BlockChain::getPastTransactionId(){
 }
 
 TXOutput *getOutputs(const std::string &from, int value, int *count){
+    // toDO
     return nullptr;
 }
 
@@ -194,7 +187,7 @@ uint64_t BlockChain::getBalance(const std::string &pubkey, const std::string &ad
                 }
             }
             
-            for (int i = 0; i < tx.m_in.size(); i++){
+            for (size_t i = 0; i < tx.m_in.size(); i++){
                 if (tx.m_in[i].m_pubkey == pubkey){
                     
                     outId oi = {tx.m_in[i].m_tranId, tx.m_in[i].m_outIndex};
@@ -259,7 +252,7 @@ std::list<TXInput> BlockChain::getInputs(const std::string &pubkey, const std::s
                 }
             }
             
-            for (int i = 0; i < tx.m_in.size(); i++){
+            for (size_t i = 0; i < tx.m_in.size(); i++){
                 if (tx.m_in[i].m_pubkey == pubkey){
                     
                     outId oi = {tx.m_in[i].m_tranId, tx.m_in[i].m_outIndex};

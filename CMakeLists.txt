@@ -68,10 +68,26 @@ add_executable(main main.cpp)
 target_link_libraries(main coin leveldb)
 
 
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests)
+enable_testing()
+
 #=============TESTS=================
 add_executable(block_test test/block_test.cpp)
 target_link_libraries(block_test coin)
-
-enable_testing()
-
 add_test(NAME Test1 COMMAND block_test)
+
+add_executable(transaction_test test/transaction_test.cpp)
+target_link_libraries(transaction_test coin)
+add_test(NAME Test2 COMMAND transaction_test)
+
+add_executable(db_test test/db_test.cpp)
+target_link_libraries(db_test coin leveldb)
+add_test(NAME Test3 COMMAND db_test)
+
+install(TARGETS block_test transaction_test db_test
+        RUNTIME DESTINATION tests)
+
+
+
+

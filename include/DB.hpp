@@ -43,7 +43,7 @@ public:
     \brief Достает последний записанный блок
     \return хэш последнего блока
     */
-    std::string getCurrentHash();
+    std::array<uint32_t, 8> getCurrentHash();
     
     /*!
     \brief Достает id последнего блока
