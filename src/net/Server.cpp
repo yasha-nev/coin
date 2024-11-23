@@ -1,6 +1,7 @@
 #include "Server.hpp"
 
 #define BUFLEN 1024
+#define MAX_CLIENTS 10
 
 Client::Client(int socket, sockaddr_in addr, int id, std::list<std::unique_ptr<Message>> *msgs){
     m_sock = socket;
@@ -93,7 +94,7 @@ void Server::start(){
         return;
     }
     
-    if ((listen(m_sock, 5)) != 0) {
+    if ((listen(m_sock, MAX_CLIENTS)) != 0) {
         std::cerr << "Socket listen failed \n";
         m_status = socket_status::listen_err;
         return;
@@ -111,24 +112,112 @@ void Server::acceptClients(){
     
     using namespace std::chrono_literals;
     
-    while (m_run.load(std::memory_order_relaxed)){
-        int clientSocket;
-        sockaddr_in clientAddr;
-        int len = sizeof(sockaddr);
-        
-        clientSocket = accept(m_sock, (sockaddr *) &clientAddr, (socklen_t *) &len);
-        if (clientSocket > 0){
+    struct pollfd fds[MAX_CLIENTS + 1];
+    fds[0].fd = this->m_sock;
+    fds[0].events = POLLIN;
+
+    for (int i = 1; i <= MAX_CLIENTS; i++) {
+        fds[i].fd = -1;
+        fds[i].events = POLLIN;
+    }
+    
+    while (m_run.load(std::memory_order_relaxed)) {
+        int poll_result = poll(fds, MAX_CLIENTS + 1, -1);
+        if (poll_result == -1) {
+            break;
+        }
+
+        if (fds[0].revents & POLLIN) {
+            sockaddr_in clientAddr;
+            int len = sizeof(sockaddr);
             
-            auto cl = std::make_shared<Client>(clientSocket, clientAddr, m_ids, m_msgs);
-            
-            m_mtx.lock();
-            m_clients.push_back(cl);
-            m_messageThreads.push_back(std::make_unique<std::thread>(&Server::messageHandler, this, cl));
-            m_ids++;
-            m_mtx.unlock();
+            int clientSocket = accept(m_sock, (sockaddr *) &clientAddr, (socklen_t *) &len);
+            if (clientSocket == -1) {
+                continue;
+            }
+
+            bool client_registered = false;
+            for (int i = 1; i <= MAX_CLIENTS; i++) {
+                if (fds[i].fd == -1) {
+                    fds[i].fd = clientSocket;
+                    client_registered = true;
+                    
+                    auto cl = std::make_shared<Client>(clientSocket, clientAddr, i, m_msgs);
+                    
+                    m_mtx.lock();
+                    m_clients.push_back(cl);
+                    m_ids++;
+                    m_mtx.unlock();
+                    
+                    break;
+                }
+            }
+
+            if (!client_registered) {
+                close(clientSocket);
+            }
         }
         
-        std::this_thread::sleep_for(50ms);
+        for (int i = 1; i <= MAX_CLIENTS; i++) {
+            if (fds[i].fd != -1 && (fds[i].revents & POLLIN)){
+                messageHandle(m_clients[i - 1]);
+            }
+        }
+    }
+}
+
+void Server::messageHandle(const std::shared_ptr<Client> &client){
+    size_t r;
+    uint8_t buff[BUFLEN];
+    bzero(buff, BUFLEN);
+    
+    char buffer[1024];
+    int clientSocket = client->getSocket();
+    r = recv(clientSocket, buff, BUFLEN, 0);
+    
+    if (r > 0){
+        if (r < 16){
+            return;;
+        }
+        
+        uint8_t type = buff[9];
+        
+        std::unique_ptr<Message> msg;
+        
+        if (type == MsgTypes::gBlocks){
+            msg = std::make_unique<GetBlocksMsg>();
+        }
+        
+        else if (type == MsgTypes::Inv){
+            msg = std::make_unique<InvMsg>();
+        }
+        
+        else if (type == MsgTypes::gData){
+            msg = std::make_unique<GetDataMsg>();
+        }
+        
+        else if (type == MsgTypes::sBlock){
+            msg = std::make_unique<BlockMsg>();
+        }
+        
+        else if (type == MsgTypes::Tx){
+            msg = std::make_unique<TxMsg>();
+        }
+        
+        else if (type == MsgTypes::noFound){
+            msg = std::make_unique<NoFoundMsg>();
+        }
+        else{
+            return;
+        }
+        
+        msg->parse(buff, r);
+        
+        msg->setClientId(client->getId());
+        
+        m_msgMtx->lock();
+        m_msgs->push_back(std::move(msg));
+        m_msgMtx->unlock();
     }
 }
 
