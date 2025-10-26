@@ -17,6 +17,7 @@
 #include <list>
 #include <chrono>
 #include <mutex>
+#include <poll.h>
 #include "Message.hpp"
 
 
@@ -155,6 +156,8 @@ private:
     \param [in] client - указатель на клиента
     */
     void messageHandler(std::shared_ptr<Client> client);
+    
+    void messageHandle(const std::shared_ptr<Client> &client);
     
     int m_port; /*!< Порт */
     
