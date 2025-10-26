@@ -17,19 +17,19 @@ Client::~Client() {
     close(m_sock);
 }
 
-int Client::getSocket() {
+int Client::getSocket() const noexcept {
     return m_sock;
 }
 
-uint16_t Client::getPort() {
+uint16_t Client::getPort() const noexcept {
     return m_cliaddr.sin_port;
 }
 
-uint32_t Client::getHost() {
+uint32_t Client::getHost() const noexcept {
     return m_cliaddr.sin_addr.s_addr;
 }
 
-int Client::getId() {
+int Client::getId() const noexcept {
     return m_id;
 }
 
@@ -285,7 +285,7 @@ void Server::messageHandler(std::shared_ptr<Client> client) {
     }
 }
 
-int Server::connectTo(std::string host, int port) {
+int Server::connectTo(const std::string& host, int port) {
     int serverSocket;
     sockaddr_in serverAddr;
 

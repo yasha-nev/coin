@@ -65,25 +65,25 @@ public:
      \brief Вернуть соке
      \return unix сокет
     */
-    int getSocket();
+    int getSocket() const noexcept;
 
     /*!
      \brief id клиента
      \return id
     */
-    int getId();
+    int getId() const noexcept;
 
     /*!
      \brief порт для сервера
      \return порт
     */
-    uint16_t getPort();
+    uint16_t getPort() const noexcept;
 
     /*!
      \brief ip сервера
      \return ip в unix формате
     */
-    uint32_t getHost();
+    uint32_t getHost() const noexcept;
 
 private:
     int m_id; /*!< id клиента*/
@@ -131,7 +131,7 @@ public:
      \param [in] port порт клиента
      \return статус соединения
     */
-    int connectTo(std::string ip, int port);
+    int connectTo(const std::string& ip, int port);
 
     /*!
      \brief Отправить сообщение

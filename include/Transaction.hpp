@@ -150,7 +150,7 @@ public:
     /*!
     \brief Размер транзакции
     */
-    size_t size();
+    size_t size() const noexcept;
 
     /*!
     \brief Сериализация транзакции
@@ -167,7 +167,7 @@ public:
     /*!
     \brief Вывод информации о транзакции в консоль
     */
-    void print();
+    void print() const noexcept;
 };
 
 class CoinBaseTransaction: public Transaction {

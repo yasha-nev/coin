@@ -85,72 +85,72 @@ public:
      \brief Время создания блока
      \return значение в unix формате
    */
-    uint64_t getTimeStamp();
+    uint64_t getTimeStamp() const noexcept;
 
     /*!
      \brief Список транзакций
      \return Список указателей
     */
-    std::list<Transaction> getTransaction();
+    const std::list<Transaction>& getTransaction() const noexcept;
 
     /*!
      \brief Хэш предыдущего блока
      \return массив байт
     */
-    std::array<uint32_t, 8> getPrevBlockHash();
+    const std::array<uint32_t, 8>& getPrevBlockHash() const noexcept;
 
     /*!
      \brief Хэш блока
      \return Массив байт
     */
-    std::array<uint32_t, 8> getHash();
+    const std::array<uint32_t, 8>& getHash() const noexcept;
 
     /*!
      \brief Подобраное случайное число
      \return число
     */
-    uint64_t getNonce();
+    uint64_t getNonce() const noexcept;
 
     /*!
      \brief Задать время создания
      \param [in] timeStamp время создания
     */
-    void setTimeStamp(const int64_t& timeStamp);
+    void setTimeStamp(const int64_t& timeStamp) noexcept;
 
     /*!
      \brief Задать список транзакций
      \param [in] trans список транзакций
     */
-    void setTransaction(std::list<Transaction>& trans);
+    void setTransaction(const std::list<Transaction>& trans) noexcept;
 
     /*!
      \brief Задать случайное число
      \param [in] nonce случайное число
     */
-    void setNonce(const uint64_t& nonce);
+    void setNonce(const uint64_t& nonce) noexcept;
 
     /*!
      \brief Задать хэш предыдущего блока
      \param [in] hash хэш предыдущего блока
     */
-    void setPrevBlockHash(const std::array<uint32_t, 8>& hash);
+    void setPrevBlockHash(const std::array<uint32_t, 8>& hash) noexcept;
 
     /*!
      \brief Задать хэш блока
      \param [in] hash хэш блока
     */
-    void setHash(const std::array<uint32_t, 8>& hash);
+    void setHash(const std::array<uint32_t, 8>& hash) noexcept;
 
     /*!
      \brief Найти размер блока
      \return unix ssize_t
    */
-    size_t size();
+    size_t size() const noexcept;
 
     /*!
      \brief Вывести информацию о блоке в консоль
     */
-    void print();
+    void print() const noexcept;
 
     /*!
      \brief Сериализация блока

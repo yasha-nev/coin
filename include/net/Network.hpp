@@ -45,7 +45,7 @@ public:
      \param [in] host - ip адрес сервера
      \param [in] port - порт сервера
     */
-    void connectTo(std::string host, int port);
+    void connectTo(const std::string& host, int port);
 
     /*!
      \brief Получить транзакцию из буфера для создания блока

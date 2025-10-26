@@ -22,7 +22,7 @@ public:
     /*!
      \brief Вывод цепи блоков в консоль
     */
-    void printChain();
+    void printChain() const noexcept;
 
     /*!
      \brief Подожить блок в базе данных
@@ -41,39 +41,40 @@ public:
      \brief Получить id последней транзакции
      \return id транзакции
     */
-    uint64_t getPastTransactionId();
+    uint64_t getPastTransactionId() const noexcept;
 
     /*!
      \brief Сумма денег клиента в блокчейне
      \return Сумма
     */
-    uint64_t getBalance(const std::string& pubkey, const std::string& address);
+    uint64_t getBalance(const std::string& pubkey, const std::string& address) const noexcept;
 
     /*!
      \brief Получить блок по хэшу
      \param [in] hash - хэш блока
      \return блок
     */
-    std::unique_ptr<Block> getBlock(const std::array<uint32_t, 8>& hash);
+    std::unique_ptr<Block> getBlock(const std::array<uint32_t, 8>& hash) const noexcept;
 
     /*!
      \brief Получить последний записанный блок
      \return Блок
     */
-    std::unique_ptr<Block> getPastBlock();
+    std::unique_ptr<Block> getPastBlock() const noexcept;
 
     /*!
      \brief Получить хэш последнего блока
      \return хэш
     */
-    std::array<uint32_t, 8> getPastBlockHash();
+    const std::array<uint32_t, 8>& getPastBlockHash() const noexcept;
 
     /*!
      \brief Возвращает хэши блоков пока не дайдет до заданого, иначе все хэши
      \param [in] curHash - хэш блока
      \return список блоков
     */
-    std::list<std::array<uint32_t, 8>> getHashesBefore(std::array<uint32_t, 8> curHash);
+    std::list<std::array<uint32_t, 8>> getHashesBefore(
+        std::array<uint32_t, 8> curHash) const noexcept;
 
     /*!
      \brief Создание списка неиспользованных выходов
@@ -82,8 +83,11 @@ public:
      \param [in] rest - размер сдачи
      \return список входов
     */
-    std::list<TXInput>
-    getInputs(const std::string& pubkey, const std::string& address, int value, int* rest);
+    std::list<TXInput> getInputs(
+        const std::string& pubkey,
+        const std::string& address,
+        int value,
+        int* rest) const noexcept;
 
 private:
     /*!

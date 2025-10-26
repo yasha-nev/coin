@@ -71,7 +71,7 @@ void Network::sblock(std::list<std::array<uint32_t, 8>> hashes, int clientId) {
     }
 }
 
-void Network::connectTo(std::string host, int ip) {
+void Network::connectTo(const std::string& host, int ip) {
     int res = m_serv->connectTo(host, ip);
 
     if(res == -1) {

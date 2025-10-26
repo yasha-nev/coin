@@ -15,7 +15,7 @@ Transaction::Transaction(Transaction* tx) {
 Transaction::~Transaction() {
 }
 
-size_t Transaction::size() {
+size_t Transaction::size() const noexcept {
     size_t s = 0;
 
     s += sizeof(uint64_t);
@@ -172,7 +172,7 @@ std::string Transaction::toString() {
     return result;
 }
 
-void Transaction::print() {
+void Transaction::print() const noexcept {
     std::cout << "|transaction id: " << m_id << "\n";
     std::cout << "|" << std::setfill('_') << std::setw(39) << "TXINPUTS" << std::setfill('_')
               << std::setw(40) << "\n";

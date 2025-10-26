@@ -29,50 +29,50 @@ Block::Block(Block* block) {
 Block::~Block() {
 }
 
-uint64_t Block::getTimeStamp() {
+uint64_t Block::getTimeStamp() const noexcept {
     return m_timeStamp;
 }
 
-std::list<Transaction> Block::getTransaction() {
+const std::list<Transaction>& Block::getTransaction() const noexcept {
     return m_tx;
 }
 
-std::array<uint32_t, 8> Block::getPrevBlockHash() {
+const std::array<uint32_t, 8>& Block::getPrevBlockHash() const noexcept {
     return m_prevBlockHash;
 }
 
-std::array<uint32_t, 8> Block::getHash() {
+const std::array<uint32_t, 8>& Block::getHash() const noexcept {
     return m_hash;
 }
 
-uint64_t Block::getNonce() {
+uint64_t Block::getNonce() const noexcept {
     return m_nonce;
 }
 
-void Block::setTimeStamp(const int64_t& timeStamp) {
+void Block::setTimeStamp(const int64_t& timeStamp) noexcept {
     m_timeStamp = timeStamp;
 }
 
-void Block::setTransaction(std::list<Transaction>& tx) {
+void Block::setTransaction(const std::list<Transaction>& tx) noexcept {
     m_tx = tx;
 }
 
-void Block::setNonce(const uint64_t& nonce) {
+void Block::setNonce(const uint64_t& nonce) noexcept {
     m_nonce = nonce;
 }
 
-void Block::setPrevBlockHash(const std::array<uint32_t, 8>& hash) {
+void Block::setPrevBlockHash(const std::array<uint32_t, 8>& hash) noexcept {
     m_prevBlockHash = hash;
 }
 
-void Block::setHash(const std::array<uint32_t, 8>& hash) {
+void Block::setHash(const std::array<uint32_t, 8>& hash) noexcept {
     m_hash = hash;
 }
 
-size_t Block::size() {
+size_t Block::size() const noexcept {
 
     size_t txsize = 0;
-    for(auto& tx: m_tx) {
+    for(const auto& tx: m_tx) {
         txsize += tx.size();
     }
 
@@ -142,7 +142,7 @@ void Block::decode(uint8_t* ptr) {
     memcpy(&m_nonce, ptr, sizeof(uint64_t));
 }
 
-void Block::print() {
+void Block::print() const noexcept {
     std::cout << std::setfill('=') << std::setw(40) << "BLOCK" << std::setfill('=') << std::setw(40)
               << "\n";
     std::cout << "|time: " << m_timeStamp << "\n";
@@ -183,7 +183,7 @@ static int bigIntCmp(const std::array<uint32_t, 8>& left, const std::array<uint3
     return 0;
 }
 
-ProofOfWork::ProofOfWork(class Block* block) {
+ProofOfWork::ProofOfWork(Block* block) {
     m_nonce = 0;
     m_block = block;
     m_target[0] = 1 << 16;
