@@ -1,18 +1,18 @@
 #ifndef ripemd160_hpp
 #define ripemd160_hpp
 
+#include <array>
 #include <bit>
-#include <string>
+#include <inttypes.h>
 #include <iomanip>
 #include <sstream>
-#include <inttypes.h>
-#include <array>
+#include <string>
 
 /*!
     \brief реализация алгоритма RIPMD160
 */
 
-class RIPMD160{
+class RIPMD160 {
 public:
     /*!
      \brief Конструктор
@@ -23,7 +23,7 @@ public:
      \brief Процесс шифрования
      \return Результат хэширования массив 512 байт
     */
-    std::array<uint32_t, 5> Hash(const std::string &msg);
+    std::array<uint32_t, 5> Hash(const std::string& msg);
 
     /*!
      \brief Результат хэширования в hex формате
@@ -38,18 +38,18 @@ private:
      \param [out] block_count - количество блоков
      \return массив блоков
     */
-    uint32_t **CreateBlocks(const std::string &msg, uint64_t *block_count);
+    uint32_t** CreateBlocks(const std::string& msg, uint64_t* block_count);
 
     /*!
      \brief Процесс хэширования блока
      \param [in] block  - массив блоков
      \param [in] hash - исходные данные
     */
-    void HashBlock(uint32_t *block, uint32_t *hash);
+    void HashBlock(uint32_t* block, uint32_t* hash);
 
     uint32_t h0, h1, h2, h3, h4; /*!< Исходные данные */
 
-    std::array<uint32_t, 5> hash;  /*!< хэш */
+    std::array<uint32_t, 5> hash; /*!< хэш */
 };
 
 #endif /* ripemd160_hpp */

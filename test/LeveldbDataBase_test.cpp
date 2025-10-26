@@ -1,5 +1,5 @@
 #include "Transaction.hpp"
-#include "DB.hpp"
+#include "LeveldbDataBase.hpp"
 #include <list>
 #include <assert.h>
 #include <fstream>
@@ -95,7 +95,7 @@ static bool blocksCompire(std::unique_ptr<Block> &block1, std::unique_ptr<Block>
 
 
 int main(){
-    DB db = DB();
+    LeveldbDataBase db = LeveldbDataBase();
     
     if (file_exist(DBPATH)){
         std::remove(DBPATH);

@@ -25,7 +25,6 @@ set(SRCS
     src/BlockChain.cpp
     src/Transaction.cpp
     src/Mainer.cpp
-    src/db/IDataBase.cpp
     src/db/LeveldbDataBase.cpp
     src/crypto/sha256.cpp
     src/crypto/rsa.cpp
@@ -85,11 +84,11 @@ add_executable(transaction_test test/transaction_test.cpp)
 target_link_libraries(transaction_test coin)
 add_test(NAME Test2 COMMAND transaction_test)
 
-add_executable(db_test test/db_test.cpp)
-target_link_libraries(db_test coin leveldb)
-add_test(NAME Test3 COMMAND db_test)
+add_executable(leveldbDataBase_test test/LeveldbDataBase_test.cpp)
+target_link_libraries(leveldbDataBase_test coin leveldb)
+add_test(NAME Test3 COMMAND leveldbDataBase_test)
 
-install(TARGETS block_test transaction_test db_test
+install(TARGETS block_test transaction_test leveldbDataBase_test
         RUNTIME DESTINATION tests)
 
 

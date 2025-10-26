@@ -7,13 +7,13 @@
 /*!
     \brief реализация ключей RSA
 */
-class RSACryptor{
+class RSACryptor {
 public:
     /*!
      \brief Конструктор
     */
     RSACryptor();
-    
+
     /*!
      \brief Деструктор
     */
@@ -23,13 +23,13 @@ public:
      \brief Получить указатель на приватный ключю
      \return Класс ключа
     */
-    PrivateKey * getPrivateKey();
-    
+    PrivateKey* getPrivateKey();
+
     /*!
      \brief Получить указатель на  публичного ключа
      \return Класс ключ
     */
-    PublicKey * getPublicKey();
+    PublicKey* getPublicKey();
 
     /*!
      \brief Шифрование сообщения
@@ -37,21 +37,21 @@ public:
      \param [in] len - длина сообщения
      \return массив байт
     */
-    long* enc (char* msg, size_t len);
-    
+    long* enc(char* msg, size_t len);
+
     /*!
      \brief Расшифровка сообщения
      \param [in] enc - массив байт
      \param [in] len - размер сообщения
      \return расшифрованное сообщение
     */
-    char* dec(long * enc, size_t len);
+    char* dec(long* enc, size_t len);
 
 private:
-    PrivateKey *privKey; /*!< приватный ключ*/
-    
-    PublicKey *pubKey; /*!< публичный ключ*/
-    
+    PrivateKey* privKey; /*!< приватный ключ*/
+
+    PublicKey* pubKey; /*!< публичный ключ*/
+
     /*!
      \brief Создание ключей
     */
