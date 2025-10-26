@@ -3,63 +3,53 @@
 
 #include "Block.hpp"
 #include "leveldb/db.h"
+#include "IDataBase.hpp"
 #include <memory>
-
-#define DBPATH "./testdb"
 
 /*!
     \brief DAO для работы с базой данных leveldb
 */
-class DB {
+class LeveldbDataBase : public IDataBase{
 public:
-
-    /*!
-    \brief Конструктор
-    */
-    DB();
-    
-    /*!
-    \brief Диструктор
-    */
-    ~DB();
     
     /*!
     \brief Создание базы данных
     */
-    void connect();
+    void connect() override;
     
     /*!
      \brief Открытие базы данных
     */
-    void connectIfexist();
+    void connectIfexist() override;
     
     /*!
     \brief Запись блока в базу данных
     \param [in] block - блок данных
     */
-    void putBlock(const std::unique_ptr<Block> &block);
+    void putBlock(const std::unique_ptr<Block> &block) override;
 
     /*!
     \brief Достает последний записанный блок
     \return хэш последнего блока
     */
-    std::array<uint32_t, 8> getCurrentHash();
+    std::array<uint32_t, 8> getCurrentHash() override;
     
     /*!
     \brief Достает id последнего блока
     \param [in] hash - хэш блока
     \return id последнего блока
     */
-    uint64_t getCurrentId(const std::array<uint32_t, 8> &hash);
+    uint64_t getCurrentId(const std::array<uint32_t, 8> &hash) override;
     
     /*!
     \brief Достает блок по его хэшу
     \param [in] hash - хэш блока
     \return блок  данных
     */
-    std::unique_ptr<Block> getBlockByHash(const std::array<uint32_t, 8> &hash);
-    
-    leveldb::DB* m_db;  /*!< указатель на базу данных*/
+    std::unique_ptr<Block> getBlockByHash(const std::array<uint32_t, 8> &hash) override;
+
+private:
+    std::unique_ptr<leveldb::DB> m_db;  /*!< указатель на базу данных*/
 };
 
 #endif /* DB_hpp */

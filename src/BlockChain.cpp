@@ -23,24 +23,25 @@ static bool checkFirstBlock(const std::array<uint32_t, 8> &hash){
     return flag;
 }
 
-BlockChain::BlockChain(){
+BlockChain::BlockChain(std::unique_ptr<IDataBase> db) : 
+    m_db(std::move(db)) {
     if (file_exist(DBPATH)){
-        m_db.connect();
-        m_cur_hash = m_db.getCurrentHash();
+        m_db->connect();
+        m_cur_hash = m_db->getCurrentHash();
     }
     else{
-        m_db.connectIfexist();
+        m_db->connectIfexist();
         auto block = genesisBlock();
         m_cur_hash = block->getHash();
         
-        m_db.putBlock(block);
+        m_db->putBlock(block);
     }
 }
 
 void BlockChain::createBlock(uint64_t time, const std::list<Transaction> &tx){
     auto block_n = newBlock(time, tx, m_cur_hash);
     
-    m_db.putBlock(block_n);
+    m_db->putBlock(block_n);
     m_cur_hash = block_n->getHash();
 }
 
@@ -115,16 +116,16 @@ std::unique_ptr<Block>BlockChain::newBlock(uint64_t time, const std::list<Transa
 }
 
 void BlockChain::putBlock(std::unique_ptr<Block> &block){
-    m_db.putBlock(block);
+    m_db->putBlock(block);
     m_cur_hash = block->getHash();
 }
 
 std::unique_ptr<Block> BlockChain::getBlock(const std::array<uint32_t, 8> &hash){
-    return m_db.getBlockByHash(hash);
+    return m_db->getBlockByHash(hash);
 }
 
 std::unique_ptr<Block> BlockChain::getPastBlock(){
-    return m_db.getBlockByHash(m_cur_hash);
+    return m_db->getBlockByHash(m_cur_hash);
 }
 
 std::array<uint32_t, 8> BlockChain::getPastBlockHash(){
@@ -132,7 +133,7 @@ std::array<uint32_t, 8> BlockChain::getPastBlockHash(){
 }
 
 uint64_t BlockChain::getPastTransactionId(){
-    auto block = m_db.getBlockByHash(m_cur_hash);
+    auto block = m_db->getBlockByHash(m_cur_hash);
     
     return block->m_tx.back().m_id;
 }

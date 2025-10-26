@@ -10,8 +10,10 @@ include_directories(
     include
     include/Crypto
     include/net
+    include/db
     
     src
+    src/db
     src/crypto
     src/net
     leveldb/include
@@ -20,10 +22,11 @@ include_directories(
 set(SRCS
     src/Wallet.cpp
     src/Block.cpp
-    src/DB.cpp
     src/BlockChain.cpp
     src/Transaction.cpp
     src/Mainer.cpp
+    src/db/IDataBase.cpp
+    src/db/LeveldbDataBase.cpp
     src/crypto/sha256.cpp
     src/crypto/rsa.cpp
     src/crypto/publickey.cpp
@@ -38,10 +41,11 @@ set(SRCS
 set(HEADERS
     include/Wallet.hpp
     include/Block.hpp
-    include/DB.hpp
     include/BlockChain.hpp
     include/Transaction.hpp
     include/Mainer.hpp
+    include/db/IDataBase.hpp
+    include/db/LeveldbDataBase.hpp
     include/Crypto/sha256.hpp
     include/Crypto/rsa.hpp
     include/Crypto/publickey.hpp

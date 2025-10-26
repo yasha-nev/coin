@@ -1,27 +1,31 @@
-#include "DB.hpp"
+#include "LeveldbDataBase.hpp"
 
-DB::DB(){
-    m_db = nullptr;
-}
-
-DB::~DB(){
-    if (m_db){
-        delete m_db;
-    }
-}
-
-void DB::connect(){
-    leveldb::Options options;
-    leveldb::DB::Open(options, DBPATH, &m_db);
-}
-
-void DB::connectIfexist(){
+void LeveldbDataBase::connect(){
     leveldb::Options options;
     options.create_if_missing = true;
-    leveldb::DB::Open(options, DBPATH, &m_db);
+
+    leveldb::DB* rawDb = nullptr;
+    leveldb::Status status = leveldb::DB::Open(options, DBPATH, &rawDb);
+    if (!status.ok()) {
+        throw std::runtime_error("Failed to open/create LevelDB: " + status.ToString());
+    }
+
+    m_db = std::unique_ptr<leveldb::DB>(rawDb);
 }
 
-std::array<uint32_t, 8> DB::getCurrentHash(){
+void LeveldbDataBase::connectIfexist() {
+    leveldb::Options options;
+    options.create_if_missing = false;
+
+    leveldb::DB* rawDb = nullptr;
+    leveldb::Status status = leveldb::DB::Open(options, DBPATH, &rawDb);
+    if (!status.ok()) {
+        throw std::runtime_error("Failed to open existing LevelDB: " + status.ToString());
+    }
+
+    m_db = std::unique_ptr<leveldb::DB>(rawDb);
+}
+std::array<uint32_t, 8> LeveldbDataBase::getCurrentHash(){
     std::array<uint32_t, 8> res;
     std::string hash;
     
@@ -36,14 +40,14 @@ std::array<uint32_t, 8> DB::getCurrentHash(){
     return res;
 }
 
-uint64_t DB::getCurrentId(const std::array<uint32_t, 8> &hash){
+uint64_t LeveldbDataBase::getCurrentId(const std::array<uint32_t, 8> &hash){
     uint64_t id;
     auto block = getBlockByHash(hash);
     id = block->getTransaction().back().m_id;
     return id;
 }
 
-std::unique_ptr<Block> DB::getBlockByHash(const std::array<uint32_t, 8> &hash){
+std::unique_ptr<Block> LeveldbDataBase::getBlockByHash(const std::array<uint32_t, 8> &hash){
     std::string byteBlock;
     
     leveldb::Slice key((char *) hash.data(), hash.size() * sizeof(uint32_t));
@@ -56,7 +60,7 @@ std::unique_ptr<Block> DB::getBlockByHash(const std::array<uint32_t, 8> &hash){
     return std::make_unique<Block>(block);
 }
 
-void DB::putBlock(const std::unique_ptr<Block> &block){
+void LeveldbDataBase::putBlock(const std::unique_ptr<Block> &block){
     uint8_t encBlock[block->size()];
     
     block->encode(encBlock);

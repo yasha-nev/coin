@@ -2,6 +2,7 @@
 #include "Wallet.hpp"
 #include "Message.hpp"
 #include "Mainer.hpp"
+#include "LeveldbDataBase.hpp"
 
 void CLI(BlockChain &bc, Wallet wallet, Network &net){
     std::string command;
@@ -102,7 +103,8 @@ int main(int argc, const char * argv[]) {
     std::string res = argv[2];
     
     
-    BlockChain bc;
+    BlockChain bc(std::move(std::make_unique<LeveldbDataBase>()));
+
     Network net(std::list<std::pair<std::string, int>>(), port, &bc);
     if (res == "-w"){
         asWallet(bc, net);

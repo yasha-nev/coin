@@ -1,7 +1,7 @@
 #ifndef BlockChain_hpp
 #define BlockChain_hpp
 
-#include "DB.hpp"
+#include "IDataBase.hpp"
 #include "Block.hpp"
 #include <list>
 #include <array>
@@ -17,7 +17,7 @@ public:
     /*!
      \brief Конструктор
     */
-    BlockChain();
+    BlockChain(std::unique_ptr<IDataBase> db);
     
     /*!
      \brief Вывод цепи блоков в консоль
@@ -103,7 +103,7 @@ private:
     
     std::array<uint32_t, 8> m_cur_hash; /*!< хэш последнего блока*/
     
-    DB m_db; /*!< dao базы данных*/
+    std::unique_ptr<IDataBase> m_db; /*!< dao базы данных*/
 };
 /*!
  \brief Проверка файла на существования
