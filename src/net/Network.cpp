@@ -1,27 +1,22 @@
 #include "Network.hpp"
 
-#include <memory>
-
 using namespace std::literals::chrono_literals;
 
 Network::Network(std::list<std::pair<std::string, int>> clientIp, int port, BlockChain* bc) {
     m_clientsIp = clientIp;
-    m_port = port;
-    m_serv = std::make_unique<Server>(port, &m_msgs, &m_mtx);
+    m_serv = std::make_unique<Server>(port, 
+        [this](uint8_t *data, size_t len, long clientId) {
+            return this->messageHandler(data, len, clientId);
+        });
     m_bc = bc;
     m_serv->start();
 
     for(std::pair<std::string, int> host: m_clientsIp) {
         m_serv->connectTo(host.first, host.second);
     }
-
-    m_run.store(true, std::memory_order_relaxed);
-    m_procThr = std::thread(&Network::process, this);
 }
 
 Network::~Network() {
-    m_run.store(false, std::memory_order_relaxed);
-    m_procThr.join();
 }
 
 void Network::getBlocks() {
@@ -31,30 +26,45 @@ void Network::getBlocks() {
     std::array<uint32_t, 8> hash = m_bc->getPastBlockHash();
     lst.push_back(hash);
     GetBlocksMsg msg = GetBlocksMsg(lst);
-    m_serv->sendDataTo(id, &msg);
+
+    auto bytes = msg.toByte();
+
+    m_serv->sendDataTo(id, bytes.data(), bytes.size());
 }
 
 void Network::sendToMempool(std::unique_ptr<Transaction> tx) {
     std::list<int> clientsid = m_serv->getClientsId();
     int id = clientsid.front();
     TxMsg msg = TxMsg(tx);
-    m_serv->sendDataTo(id, &msg);
+
+    auto bytes = msg.toByte();
+
+    m_serv->sendDataTo(id, bytes.data(), bytes.size());
 }
 
 void Network::noFound(int clintId) {
     NoFoundMsg msg = NoFoundMsg();
-    m_serv->sendDataTo(clintId, &msg);
+
+    auto bytes = msg.toByte();
+
+    m_serv->sendDataTo(clintId, bytes.data(), bytes.size());
 }
 
 void Network::inv(std::array<uint32_t, 8> hash, int clientId) {
     std::list<std::array<uint32_t, 8>> lst = m_bc->getHashesBefore(hash);
     InvMsg msg = InvMsg(InvTypes::iBlock, lst);
-    m_serv->sendDataTo(clientId, &msg);
+
+    auto bytes = msg.toByte();
+
+    m_serv->sendDataTo(clientId, bytes.data(), bytes.size());
 }
 
 void Network::getData(std::list<std::array<uint32_t, 8>> hashes, int clientId) {
     GetDataMsg msg = GetDataMsg(DataTypes::dBlock, hashes);
-    m_serv->sendDataTo(clientId, &msg);
+
+    auto bytes = msg.toByte();
+
+    m_serv->sendDataTo(clientId, bytes.data(), bytes.size());
 }
 
 void Network::sblock(std::list<std::array<uint32_t, 8>> hashes, int clientId) {
@@ -66,7 +76,10 @@ void Network::sblock(std::list<std::array<uint32_t, 8>> hashes, int clientId) {
         }
 
         BlockMsg msg = BlockMsg(block);
-        m_serv->sendDataTo(clientId, &msg);
+
+        auto bytes = msg.toByte();
+
+        m_serv->sendDataTo(clientId, bytes.data(), bytes.size());
         std::this_thread::sleep_for(50ms);
     }
 }
@@ -82,51 +95,49 @@ void Network::connectTo(const std::string& host, int ip) {
     m_clientsIp.push_back(conn);
 }
 
-void Network::process() {
-    while(m_run.load(std::memory_order_relaxed)) {
-        if(m_msgs.size() == 0) {
-            std::this_thread::sleep_for(50ms);
-            continue;
-        }
+void Network::messageHandler(uint8_t *buffer, size_t n, long clientId) {
+    uint8_t type = buffer[9];
+
+    switch (type) {
+    case (MsgTypes::gBlocks): {
+        auto getBlockMsg = std::make_unique<GetBlocksMsg>();
+        getBlockMsg->parse(buffer, n);
+
+        std::list<std::array<uint32_t, 8>> hashes = getBlockMsg->getHashes();
+        std::array<uint32_t, 8> hash = hashes.front();
+        inv(hash, clientId);
+        break;
+
+    } case (MsgTypes::Inv): {
+        auto invMsg = std::make_unique<GetBlocksMsg>();
+        invMsg->parse(buffer, n);
+        getData(invMsg->getHashes(), clientId);
+        break;
+    
+    } case(MsgTypes::gData) : {
+        auto getDataMsg = std::make_unique<GetDataMsg>();
+        getDataMsg->parse(buffer, n);
+        sblock(getDataMsg->getHashes(), clientId);
+        break;
+
+    } case(MsgTypes::sBlock) : {
+        auto blockMsg = std::make_unique<BlockMsg>();
+        blockMsg->parse(buffer, n);
+        auto block = std::unique_ptr<Block>(blockMsg->getBlock());
+        m_bc->putBlock(block);
+        break;
+
+    } case (MsgTypes::Tx) : {
+        auto txMsg = std::make_unique<TxMsg>();
+        txMsg->parse(buffer, n);
 
         m_mtx.lock();
-        auto msg = std::move(m_msgs.front());
-        m_msgs.pop_front();
+        m_mempool.push_back(std::make_unique<Transaction>(txMsg->getTransaction()));
         m_mtx.unlock();
-
-        if(msg->getCommand() == MsgTypes::gBlocks) {
-            GetBlocksMsg* gdmsg = dynamic_cast<GetBlocksMsg*>(msg.get());
-            std::list<std::array<uint32_t, 8>> hashes = gdmsg->getHashes();
-            std::array<uint32_t, 8> hash = hashes.front();
-            inv(hash, msg->getClientId());
-        }
-
-        else if(msg->getCommand() == MsgTypes::Inv) {
-            InvMsg* invmsg = dynamic_cast<InvMsg*>(msg.get());
-            getData(invmsg->getHashes(), msg->getClientId());
-        }
-
-        else if(msg->getCommand() == MsgTypes::gData) {
-            GetDataMsg* gdatamsg = dynamic_cast<GetDataMsg*>(msg.get());
-            sblock(gdatamsg->getHashes(), gdatamsg->getClientId());
-        }
-
-        else if(msg->getCommand() == MsgTypes::sBlock) {
-            BlockMsg* blockmsg = dynamic_cast<BlockMsg*>(msg.get());
-            auto block = std::unique_ptr<Block>(new Block(blockmsg->getBlock()));
-            m_bc->putBlock(block);
-        }
-
-        else if(msg->getCommand() == MsgTypes::Tx) {
-            TxMsg* txmsg = dynamic_cast<TxMsg*>(msg.get());
-            m_mtx.lock();
-            m_mempool.push_back(std::make_unique<Transaction>(txmsg->getTransaction()));
-            m_mtx.unlock();
-        }
-
-        else if(msg->getCommand() == MsgTypes::noFound) {
-        }
-        std::this_thread::sleep_for(50ms);
+        break;
+    
+    } default:
+        break;
     }
 }
 

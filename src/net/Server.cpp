@@ -3,11 +3,10 @@
 #define BUFLEN 1024
 #define MAX_CLIENTS 10
 
-Client::Client(int socket, sockaddr_in addr, int id, std::list<std::unique_ptr<Message>>* msgs) {
+Client::Client(int socket, sockaddr_in addr, int id) {
     m_sock = socket;
     m_cliaddr = addr;
     m_id = id;
-    m_msgs = msgs;
 }
 
 Client::~Client() {
@@ -33,19 +32,16 @@ int Client::getId() const noexcept {
     return m_id;
 }
 
-void Client::sendData(Message* msg) {
-    size_t size;
-    auto enc = msg->toByte(size);
-    send(m_sock, enc.get(), size, 0);
+void Client::sendData(uint8_t *buffer, size_t n) {
+    send(m_sock, buffer, n, 0);
 }
 
-Server::Server(int port, std::list<std::unique_ptr<Message>>* msgs, std::mutex* mtx) {
-    m_status = socket_status::stop;
+Server::Server(int port, std::function<void(uint8_t*, size_t, long)> messageHandler) {
+    m_status = socket_status::DISACTIVE;
     m_sock = -1;
     m_port = port;
     m_ids = 0;
-    m_msgs = msgs;
-    m_msgMtx = mtx;
+    m_messageHandler = messageHandler;
 }
 
 Server::~Server() {
@@ -53,7 +49,7 @@ Server::~Server() {
 }
 
 void Server::stop() {
-    if(m_status == socket_status::stop) {
+    if(m_status == socket_status::DISACTIVE) {
         return;
     }
     close(m_sock);
@@ -66,19 +62,18 @@ void Server::stop() {
         m_acceptThread->join();
     }
 
-    m_status = socket_status::stop;
+    m_status = socket_status::DISACTIVE;
 }
 
 void Server::start() {
-    if(m_status == socket_status::start) {
+    if(m_status == socket_status::ACTIVE) {
         return;
     }
 
     m_sock = socket(AF_INET, SOCK_STREAM, 0);
 
     if(m_sock == -1) {
-        std::cerr << "sock creation error\n";
-        m_status = socket_status::sock_err;
+        throw std::runtime_error("Failed to create socket");
         return;
     }
 
@@ -89,24 +84,20 @@ void Server::start() {
     m_servaddr.sin_port = htons(m_port);
 
     if(bind(m_sock, (sockaddr*) &m_servaddr, sizeof(sockaddr)) != 0) {
-        std::cerr << "socket bind failed\n";
-        m_status = socket_status::bind_err;
-        return;
+        throw std::runtime_error("Failed to bind socket");
     }
 
     if((listen(m_sock, MAX_CLIENTS)) != 0) {
-        std::cerr << "Socket listen failed \n";
-        m_status = socket_status::listen_err;
-        return;
+        throw std::runtime_error("Failed to listen");
     }
 
-    m_status = socket_status::start;
+    m_status = socket_status::ACTIVE;
     m_run.store(true, std::memory_order_relaxed);
     m_acceptThread = std::make_unique<std::thread>(&Server::acceptClients, this);
 }
 
 void Server::acceptClients() {
-    if(m_status != socket_status::start) {
+    if(m_status != socket_status::ACTIVE) {
         return;
     }
 
@@ -141,11 +132,8 @@ void Server::acceptClients() {
                 if(fds[i].fd == -1) {
                     fds[i].fd = clientSocket;
                     client_registered = true;
-
-                    auto cl = std::make_shared<Client>(clientSocket, clientAddr, i, m_msgs);
-
                     m_mtx.lock();
-                    m_clients.push_back(cl);
+                    m_clients.push_back(std::move(std::make_unique<Client>(clientSocket, clientAddr, i)));
                     m_ids++;
                     m_mtx.unlock();
 
@@ -166,12 +154,11 @@ void Server::acceptClients() {
     }
 }
 
-void Server::messageHandle(const std::shared_ptr<Client>& client) {
+void Server::messageHandle(const std::unique_ptr<Client>& client) {
     size_t r;
     uint8_t buff[BUFLEN];
     bzero(buff, BUFLEN);
 
-    char buffer[1024];
     int clientSocket = client->getSocket();
     r = recv(clientSocket, buff, BUFLEN, 0);
 
@@ -180,49 +167,12 @@ void Server::messageHandle(const std::shared_ptr<Client>& client) {
             return;
             ;
         }
-
-        uint8_t type = buff[9];
-
-        std::unique_ptr<Message> msg;
-
-        if(type == MsgTypes::gBlocks) {
-            msg = std::make_unique<GetBlocksMsg>();
-        }
-
-        else if(type == MsgTypes::Inv) {
-            msg = std::make_unique<InvMsg>();
-        }
-
-        else if(type == MsgTypes::gData) {
-            msg = std::make_unique<GetDataMsg>();
-        }
-
-        else if(type == MsgTypes::sBlock) {
-            msg = std::make_unique<BlockMsg>();
-        }
-
-        else if(type == MsgTypes::Tx) {
-            msg = std::make_unique<TxMsg>();
-        }
-
-        else if(type == MsgTypes::noFound) {
-            msg = std::make_unique<NoFoundMsg>();
-        } else {
-            return;
-        }
-
-        msg->parse(buff, r);
-
-        msg->setClientId(client->getId());
-
-        m_msgMtx->lock();
-        m_msgs->push_back(std::move(msg));
-        m_msgMtx->unlock();
+        this->m_messageHandler(buff, r, client->getId());
     }
 }
 
-void Server::messageHandler(std::shared_ptr<Client> client) {
-    if(m_status != socket_status::start) {
+void Server::messageHandler(const std::unique_ptr<Client> &client) {
+    if(m_status != socket_status::ACTIVE) {
         return;
     }
 
@@ -241,43 +191,7 @@ void Server::messageHandler(std::shared_ptr<Client> client) {
                 continue;
             }
 
-            uint8_t type = buff[9];
-
-            std::unique_ptr<Message> msg;
-
-            if(type == MsgTypes::gBlocks) {
-                msg = std::make_unique<GetBlocksMsg>();
-            }
-
-            else if(type == MsgTypes::Inv) {
-                msg = std::make_unique<InvMsg>();
-            }
-
-            else if(type == MsgTypes::gData) {
-                msg = std::make_unique<GetDataMsg>();
-            }
-
-            else if(type == MsgTypes::sBlock) {
-                msg = std::make_unique<BlockMsg>();
-            }
-
-            else if(type == MsgTypes::Tx) {
-                msg = std::make_unique<TxMsg>();
-            }
-
-            else if(type == MsgTypes::noFound) {
-                msg = std::make_unique<NoFoundMsg>();
-            } else {
-                continue;
-            }
-
-            msg->parse(buff, r);
-
-            msg->setClientId(client->getId());
-
-            m_msgMtx->lock();
-            m_msgs->push_back(std::move(msg));
-            m_msgMtx->unlock();
+            this->m_messageHandler(buff, r, client->getId());
         }
 
         bzero(buff, BUFLEN);
@@ -291,7 +205,7 @@ int Server::connectTo(const std::string& host, int port) {
 
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if(serverSocket == -1) {
-        return -1;
+        std::runtime_error("Failed to create socket");
     }
 
     bzero(&serverAddr, sizeof(sockaddr));
@@ -301,23 +215,25 @@ int Server::connectTo(const std::string& host, int port) {
     serverAddr.sin_port = htons(port);
 
     if(connect(serverSocket, (sockaddr*) &serverAddr, sizeof(sockaddr)) != 0) {
-        std::cerr << "connection error\n";
-        return -1;
+        std::runtime_error("Failed to connect");
     }
     m_mtx.lock();
-    auto cl = std::make_shared<Client>(serverSocket, serverAddr, m_ids, m_msgs);
-    m_clients.push_back(cl);
-    m_messageThreads.push_back(std::make_unique<std::thread>(&Server::messageHandler, this, cl));
+    auto cl = std::make_unique<Client>(serverSocket, serverAddr, m_ids);
+    
+    // toDo это не будет работать
+    m_clients.push_back(std::move(cl));
+    m_messageThreads.push_back(std::make_unique<std::thread>(&Server::messageHandler, this, std::ref(cl)));
+    
     m_ids++;
     m_mtx.unlock();
 
     return 0;
 }
 
-void Server::sendDataTo(int id, Message* msg) {
-    for(int i = 0; i < m_clients.size(); i++) {
-        if(m_clients[i]->getId() == id) {
-            m_clients[i]->sendData(msg);
+void Server::sendDataTo(int id, uint8_t *buffer, size_t n) {
+    for (const auto &client : m_clients) {
+        if (client->getId() == id) {
+            client->sendData(buffer, n);
             break;
         }
     }
@@ -325,8 +241,8 @@ void Server::sendDataTo(int id, Message* msg) {
 
 std::list<int> Server::getClientsId() {
     std::list<int> ids;
-    for(size_t i = 0; i < m_clients.size(); i++) {
-        ids.push_back(m_clients[i]->getId());
+    for (const auto &client : m_clients) {
+        ids.push_back(client->getId());
     }
 
     return ids;

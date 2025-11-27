@@ -1,8 +1,6 @@
 #ifndef Server_hpp
 #define Server_hpp
 
-#include "Message.hpp"
-
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -12,6 +10,8 @@
 #include <chrono>
 #include <iostream>
 #include <list>
+#include <functional>
+#include <memory>
 #include <mutex>
 #include <netdb.h>
 #include <poll.h>
@@ -28,12 +28,8 @@
     оповещение о статусе соединения
 */
 enum socket_status {
-    sock_err,    /*!< Ошибка создания сокета*/
-    bind_err,    /*!< Ошибка bind сокета*/
-    listen_err,  /*!< Ошибка прослушивания сокета*/
-    connect_err, /*!< Ошибка установки соединения*/
-    start,       /*!< Сокет работает */
-    stop         /*!< Сокет закрыт*/
+    ACTIVE,
+    DISACTIVE
 };
 
 /*!
@@ -42,13 +38,12 @@ enum socket_status {
 class Client {
 public:
     /*!
-     \brief Конструктор
+    \brief Конструктор
     \param[in] socket - сокет
     \param[in] addr - unix адрес сокета
     \param[in] id - id клиета у сервера
-    \param[in] msgs - указатель на буффер сообщений
     */
-    Client(int socket, sockaddr_in addr, int id, std::list<std::unique_ptr<Message>>* msgs);
+    Client(int socket, sockaddr_in addr, int id);
 
     /*!
      \brief Диструктор
@@ -59,7 +54,7 @@ public:
      \brief Отправить сообщение
     \param [in] msg указатель на сообщение которое надо отправить
     */
-    void sendData(Message* msg);
+    void sendData(uint8_t *buffer, size_t n);
 
     /*!
      \brief Вернуть соке
@@ -93,8 +88,6 @@ private:
     socket_status m_status; /*!< Статус соединения*/
 
     struct sockaddr_in m_cliaddr; /*!< unix адрес*/
-
-    std::list<std::unique_ptr<Message>>* m_msgs; /*!< буффер сообщений*/
 };
 
 /*!
@@ -108,7 +101,7 @@ public:
      \param[in] msgs - буффер сообщений
      \param[in] mtx - мьютекс
     */
-    Server(int port, std::list<std::unique_ptr<Message>>* msgs, std::mutex* mtx);
+    Server(int port, std::function<void(uint8_t*, size_t, long)> messageHandler);
 
     /*!
      \brief Диструктор
@@ -135,10 +128,11 @@ public:
 
     /*!
      \brief Отправить сообщение
-     \param [in] id - id клиента
-     \param [in] msg - указатель на сообщение
+     \param [in] clientId - id клиента
+     \param [in] buffer - массив байтов сообщения
+     \param [in] n - размер сообщения
     */
-    void sendDataTo(int id, Message* msg);
+    void sendDataTo(int cliendId, uint8_t* buffer, size_t n);
 
     /*!
      \brief Получить список клиентов сервера
@@ -156,9 +150,9 @@ private:
      \brief Обработчик сообщений
     \param [in] client - указатель на клиента
     */
-    void messageHandler(std::shared_ptr<Client> client);
+    void messageHandler(const std::unique_ptr<Client> &client);
 
-    void messageHandle(const std::shared_ptr<Client>& client);
+    void messageHandle(const std::unique_ptr<Client>& client);
 
     int m_port; /*!< Порт */
 
@@ -172,9 +166,7 @@ private:
 
     std::atomic<bool> m_run; /*!< атомик для управления потоками*/
 
-    std::vector<std::shared_ptr<Client>> m_clients; /*!< список клиентов*/
-
-    std::list<std::unique_ptr<Message>>* m_msgs; /*!< буффер сообщений*/
+    std::vector<std::unique_ptr<Client>> m_clients; /*!< список клиентов*/
 
     std::unique_ptr<std::thread> m_acceptThread; /*!< поток для подключения клиентов */
 
@@ -183,7 +175,7 @@ private:
 
     std::mutex m_mtx; /*!< мьютекс для работы с потоками*/
 
-    std::mutex* m_msgMtx; /*!< Мьютекс для обработки сообщений*/
+    std::function<void(uint8_t*, size_t, long)> m_messageHandler;
 };
 
 #endif

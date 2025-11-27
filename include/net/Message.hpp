@@ -10,6 +10,7 @@
 #include <inttypes.h>
 #include <list>
 #include <string.h>
+#include <memory>
 
 /*!
     \brief Типы сообщений
@@ -45,7 +46,7 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const = 0;
+    virtual std::vector<uint8_t> toByte() const = 0;
 
     /*!
      \brief Тип message
@@ -124,7 +125,7 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -194,7 +195,7 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -262,7 +263,7 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -321,7 +322,7 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -361,7 +362,7 @@ public:
 
     virtual void parse(uint8_t* data, size_t size) override;
 
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -405,7 +406,7 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении

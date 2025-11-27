@@ -1,5 +1,6 @@
 #include "Transaction.hpp"
 #include <list>
+#include <memory>
 #include <assert.h>
 
 std::unique_ptr<Transaction> createTransaction(){

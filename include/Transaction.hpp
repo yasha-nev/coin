@@ -9,6 +9,8 @@
 #include <string.h>
 #include <string>
 
+#include <vector>
+
 #define REWARD 50
 
 /*!

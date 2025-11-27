@@ -58,16 +58,19 @@ void GetBlocksMsg::parse(uint8_t* data, size_t size) {
     }
 }
 
-std::unique_ptr<uint8_t[]> GetBlocksMsg::toByte(size_t& size) const {
+std::vector<uint8_t> GetBlocksMsg::toByte() const {
     size_t count = m_hashes.size() + 1;
     size_t payloadSize = sizeof(uint8_t) + sizeof(size_t) +
         sizeof(uint32_t) * 8 * (m_hashes.size() + 1);
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
         sizeof(uint32_t) * 8;
-    size = headerSize + payloadSize;
+    
+    size_t size = headerSize + payloadSize;
 
-    uint8_t* msg = new uint8_t[size];
+    std::vector<uint8_t> byteArray(size);
+    uint8_t* msg = byteArray.data();
     size_t ptr = 0;
+    
 
     // create header
 
@@ -108,7 +111,7 @@ std::unique_ptr<uint8_t[]> GetBlocksMsg::toByte(size_t& size) const {
     ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
     memcpy(msg + ptr, checksum.data(), sizeof(uint32_t) * 8);
 
-    return std::unique_ptr<uint8_t[]>(msg);
+    return byteArray;
 }
 
 void GetBlocksMsg::print() const {
@@ -160,15 +163,16 @@ void InvMsg::parse(uint8_t* data, size_t size) {
     }
 }
 
-std::unique_ptr<uint8_t[]> InvMsg::toByte(size_t& size) const {
+std::vector<uint8_t> InvMsg::toByte() const {
     size_t count = m_hashes.size() + 1;
     size_t payloadSize = sizeof(size_t) + sizeof(uint8_t) * (m_hashes.size()) +
         sizeof(uint32_t) * 8 * (m_hashes.size());
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
         sizeof(uint32_t) * 8;
-    size = headerSize + payloadSize;
+    size_t size = headerSize + payloadSize;
 
-    uint8_t* msg = new uint8_t[size];
+    std::vector<uint8_t> byteArray(size);
+    uint8_t* msg = byteArray.data();
     size_t ptr = 0;
 
     // create header
@@ -205,7 +209,7 @@ std::unique_ptr<uint8_t[]> InvMsg::toByte(size_t& size) const {
     ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
     memcpy(msg + ptr, checksum.data(), sizeof(uint32_t) * 8);
 
-    return std::unique_ptr<uint8_t[]>(msg);
+    return byteArray;
 }
 
 void InvMsg::print() const {
@@ -258,15 +262,16 @@ void GetDataMsg::parse(uint8_t* data, size_t size) {
     }
 }
 
-std::unique_ptr<uint8_t[]> GetDataMsg::toByte(size_t& size) const {
+std::vector<uint8_t> GetDataMsg::toByte() const {
     size_t count = m_hashes.size() + 1;
     size_t payloadSize = sizeof(size_t) + sizeof(uint8_t) * (m_hashes.size()) +
         sizeof(uint32_t) * 8 * (m_hashes.size());
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
         sizeof(uint32_t) * 8;
-    size = headerSize + payloadSize;
+    size_t size = headerSize + payloadSize;
 
-    uint8_t* msg = new uint8_t[size];
+    std::vector<uint8_t> byteArray(size);
+    uint8_t* msg = byteArray.data();
     size_t ptr = 0;
 
     // create header
@@ -303,7 +308,7 @@ std::unique_ptr<uint8_t[]> GetDataMsg::toByte(size_t& size) const {
     ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
     memcpy(msg + ptr, checksum.data(), sizeof(uint32_t) * 8);
 
-    return std::unique_ptr<uint8_t[]>(msg);
+    return byteArray;
 }
 
 void GetDataMsg::print() const {
@@ -322,7 +327,7 @@ BlockMsg::BlockMsg() {
 
 BlockMsg::BlockMsg(std::unique_ptr<Block>& block) {
     m_comm = MsgTypes::sBlock;
-    m_block = std::unique_ptr<Block>(new Block(block.get()));
+    m_block = std::make_unique<Block>(block.get());
 }
 
 Block* BlockMsg::getBlock() {
@@ -342,13 +347,14 @@ void BlockMsg::parse(uint8_t* data, size_t size) {
     m_block->decode(data + ptr);
 }
 
-std::unique_ptr<uint8_t[]> BlockMsg::toByte(size_t& size) const {
+std::vector<uint8_t> BlockMsg::toByte() const {
     size_t payloadSize = m_block->size();
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
         sizeof(uint32_t) * 8;
-    size = headerSize + payloadSize;
+    size_t size = headerSize + payloadSize;
 
-    uint8_t* msg = new uint8_t[size];
+    std::vector<uint8_t> byteArray(size);
+    uint8_t* msg = byteArray.data();
     size_t ptr = 0;
 
     // create header
@@ -375,7 +381,7 @@ std::unique_ptr<uint8_t[]> BlockMsg::toByte(size_t& size) const {
     ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
     memcpy(msg + ptr, checksum.data(), sizeof(uint32_t) * 8);
 
-    return std::unique_ptr<uint8_t[]>(msg);
+    return byteArray;
 }
 
 void BlockMsg::print() const {
@@ -391,7 +397,7 @@ TxMsg::TxMsg() {
 
 TxMsg::TxMsg(std::unique_ptr<Transaction>& tx) {
     m_comm = MsgTypes::Tx;
-    m_tx = std::make_unique<Transaction>(new Transaction(tx.get()));
+    m_tx = std::make_unique<Transaction>(tx.get());
 }
 
 Transaction* TxMsg::getTransaction() {
@@ -409,13 +415,14 @@ void TxMsg::parse(uint8_t* data, size_t size) {
     m_tx->decode(data + ptr);
 }
 
-std::unique_ptr<uint8_t[]> TxMsg::toByte(size_t& size) const {
+std::vector<uint8_t> TxMsg::toByte() const {
     size_t payloadSize = m_tx->size();
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
         sizeof(uint32_t) * 8;
-    size = headerSize + payloadSize;
+    size_t size = headerSize + payloadSize;
 
-    uint8_t* msg = new uint8_t[size];
+    std::vector<uint8_t> byteArray(size);
+    uint8_t* msg = byteArray.data();
     size_t ptr = 0;
 
     // create header
@@ -439,7 +446,7 @@ std::unique_ptr<uint8_t[]> TxMsg::toByte(size_t& size) const {
     ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
     memcpy(msg + ptr, checksum.data(), sizeof(uint32_t) * 8);
 
-    return std::unique_ptr<uint8_t[]>(msg);
+    return byteArray;
 }
 
 void TxMsg::print() const {
@@ -455,13 +462,14 @@ NoFoundMsg::NoFoundMsg() {
 void NoFoundMsg::parse(uint8_t* data, size_t size) {
 }
 
-std::unique_ptr<uint8_t[]> NoFoundMsg::toByte(size_t& size) const {
+std::vector<uint8_t> NoFoundMsg::toByte() const {
     size_t payloadSize = 0;
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
         sizeof(uint32_t) * 8;
-    size = headerSize + payloadSize;
+    size_t size = headerSize + payloadSize;
 
-    uint8_t* msg = new uint8_t[size];
+    std::vector<uint8_t> byteArray(size);
+    uint8_t* msg = byteArray.data();
     size_t ptr = 0;
 
     // create header
@@ -480,7 +488,7 @@ std::unique_ptr<uint8_t[]> NoFoundMsg::toByte(size_t& size) const {
     ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
     memcpy(msg + ptr, checksum.data(), sizeof(uint32_t) * 8);
 
-    return std::unique_ptr<uint8_t[]>(msg);
+    return byteArray;
 }
 
 void NoFoundMsg::print() const {

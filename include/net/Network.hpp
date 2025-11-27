@@ -54,10 +54,11 @@ public:
     std::unique_ptr<Transaction> getFromMempool();
 
 private:
+
     /*!
      \brief Обработчик сообщений
     */
-    void process();
+    void messageHandler(uint8_t *buffer, size_t n, long clientId);
 
     /*!
      \brief Послать сообщение noFound
@@ -90,19 +91,11 @@ private:
 
     BlockChain* m_bc; /*!< Локальный blockchain */
 
-    std::list<std::unique_ptr<Message>> m_msgs; /*!< Буффер сообщений*/
-
     std::list<std::pair<std::string, int>> m_clientsIp; /*!< список серверов*/
 
     std::list<std::unique_ptr<Transaction>> m_mempool; /*!< Буффер транзакций без блока */
 
-    std::atomic<bool> m_run; /*!< Атомик для управления потоками */
-
     std::mutex m_mtx; /*!< мьютекс для управления памятью*/
-
-    std::thread m_procThr; /*!< поток для обработки сообщений*/
-
-    int m_port; /*!< порт*/
 };
 
 #endif
