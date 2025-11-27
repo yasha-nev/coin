@@ -26,14 +26,15 @@ static bool checkFirstBlock(const std::array<uint32_t, 8>& hash) {
 
 BlockChain::BlockChain(std::unique_ptr<IDataBase> db):
     m_db(std::move(db)) {
-    if(file_exist(DBPATH)) {
-        m_db->connect();
+
+    bool exist = file_exist(DBPATH);
+
+    m_db->connect();
+    if(exist) { 
         m_cur_hash = m_db->getCurrentHash();
     } else {
-        m_db->connectIfexist();
         auto block = genesisBlock();
         m_cur_hash = block->getHash();
-
         m_db->putBlock(block);
     }
 }

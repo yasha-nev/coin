@@ -28,11 +28,10 @@ int main(){
     
     assert(array2String(block1.getHash()) == "000050147f3c6ccf100e8c4fff3782f4c48efa983fc48449c0b70e3738a8846c");
     
-    uint8_t enc[block1.size()];
-    
-    block1.encode(enc);
+    std::vector<uint8_t> enc(block1.size());
+    block1.encode(enc.data());
     Block block2;
-    block2.decode(enc);
+    block2.decode(enc.data());
     
     assert(block1.getTimeStamp() == block2.getTimeStamp());
     assert(block1.getNonce() == block2.getNonce());

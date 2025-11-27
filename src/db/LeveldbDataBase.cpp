@@ -13,19 +13,6 @@ void LeveldbDataBase::connect() {
     m_db = std::unique_ptr<leveldb::DB>(rawDb);
 }
 
-void LeveldbDataBase::connectIfexist() {
-    leveldb::Options options;
-    options.create_if_missing = false;
-
-    leveldb::DB* rawDb = nullptr;
-    leveldb::Status status = leveldb::DB::Open(options, DBPATH, &rawDb);
-    if(!status.ok()) {
-        throw std::runtime_error("Failed to open existing LevelDB: " + status.ToString());
-    }
-
-    m_db = std::unique_ptr<leveldb::DB>(rawDb);
-}
-
 std::array<uint32_t, 8> LeveldbDataBase::getCurrentHash() {
     std::array<uint32_t, 8> res;
     std::string hash;

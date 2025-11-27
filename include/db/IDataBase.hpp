@@ -13,8 +13,6 @@ public:
 
     virtual void connect() = 0;
 
-    virtual void connectIfexist() = 0;
-
     virtual void putBlock(const std::unique_ptr<Block>& block) = 0;
 
     virtual std::array<uint32_t, 8> getCurrentHash() = 0;

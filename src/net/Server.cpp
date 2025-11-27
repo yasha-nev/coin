@@ -113,7 +113,7 @@ void Server::acceptClients() {
     }
 
     while(m_run.load(std::memory_order_relaxed)) {
-        int poll_result = poll(fds, MAX_CLIENTS + 1, -1);
+        int poll_result = poll(fds, MAX_CLIENTS + 1, 100);
         if(poll_result == -1) {
             break;
         }
@@ -218,11 +218,9 @@ int Server::connectTo(const std::string& host, int port) {
         std::runtime_error("Failed to connect");
     }
     m_mtx.lock();
-    auto cl = std::make_unique<Client>(serverSocket, serverAddr, m_ids);
     
-    // toDo это не будет работать
-    m_clients.push_back(std::move(cl));
-    m_messageThreads.push_back(std::make_unique<std::thread>(&Server::messageHandler, this, std::ref(cl)));
+    m_clients.push_back(std::make_unique<Client>(serverSocket, serverAddr, m_ids));
+    m_messageThreads.push_back(std::make_unique<std::thread>(&Server::messageHandler, this, std::ref(m_clients[m_clients.size() - 1])));
     
     m_ids++;
     m_mtx.unlock();

@@ -86,14 +86,14 @@ int main(){
     auto tx1 = createTransaction();
     
     assert(transactionCompare(tx0, tx1) == false);
+
+    std::vector<uint8_t> enc(tx1->size());
     
-    uint8_t enc[tx1->size()];
-    
-    tx1->encode(enc);
+    tx1->encode(enc.data());
     
     auto tx2 = std::make_unique<Transaction>(0, 0, 0);
     
-    tx2->decode(enc);
+    tx2->decode(enc.data());
     
     assert(transactionCompare(tx1, tx2) == true);
 }

@@ -368,13 +368,12 @@ std::vector<uint8_t> BlockMsg::toByte() const {
 
     // create Payload
     ptr = headerSize;
-    uint8_t encBlock[m_block->size()];
-    m_block->encode(encBlock);
-    memcpy(msg + ptr, encBlock, m_block->size());
+    std::vector<uint8_t> encBlock(m_block->size());
+    m_block->encode(encBlock.data());
+    memcpy(msg + ptr, encBlock.data(), m_block->size());
     ptr += m_block->size();
 
     // create Checksum
-
     sha256 sha;
     std::array<uint32_t, 8> checksum = sha.Hash(
         std::string(reinterpret_cast<char*>(msg + headerSize), payloadSize));

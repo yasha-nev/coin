@@ -17,6 +17,7 @@ Network::Network(std::list<std::pair<std::string, int>> clientIp, int port, Bloc
 }
 
 Network::~Network() {
+    m_serv->stop();
 }
 
 void Network::getBlocks() {

@@ -101,7 +101,7 @@ int main(){
         std::remove(DBPATH);
     }
     
-    db.connectIfexist();
+    db.connect();
     
     auto block = createBlock();
     

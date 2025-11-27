@@ -1,10 +1,21 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 4.1.1)
 
 project(coin VERSION 1.0)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
 
-add_subdirectory(leveldb)
+include(FetchContent)
+
+set(LEVELDB_BUILD_TESTS OFF CACHE BOOL "Disable tests" FORCE)
+set(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "Disable benchmarks" FORCE)
+
+FetchContent_Declare(
+    leveldb
+    GIT_REPOSITORY https://github.com/google/leveldb.git
+    GIT_TAG 1.23
+)
+
+FetchContent_MakeAvailable(leveldb)
 
 include_directories(
     include
@@ -16,7 +27,6 @@ include_directories(
     src/db
     src/crypto
     src/net
-    leveldb/include
     )
 
 set(SRCS

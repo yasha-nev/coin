@@ -13,14 +13,9 @@
 class LeveldbDataBase: public IDataBase {
 public:
     /*!
-    \brief Создание базы данных
+    \brief Открытие базы данных
     */
     void connect() override;
-
-    /*!
-     \brief Открытие базы данных
-    */
-    void connectIfexist() override;
 
     /*!
     \brief Запись блока в базу данных
