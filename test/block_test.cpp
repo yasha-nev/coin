@@ -6,14 +6,14 @@
 
 
 Block createBlock(){
-    std::array<uint32_t, 8> zero_hash = {0, 0, 0, 0, 0, 0, 0, 0};
+    std::array<uint8_t, 32> zero_hash = {0};
     std::list<Transaction> txs;
     uint64_t id = 0;
     std::string address = "address";
     txs.push_back(CoinBaseTransaction(id, address));
     
     // generate simple block
-    Block block(static_cast<uint64_t>(0), txs, zero_hash, std::array<uint32_t, 8>(), 0);
+    Block block(static_cast<uint64_t>(0), txs, zero_hash, std::array<uint8_t, 32>(), 0);
     
     // generate block hash
     ProofOfWork pow(&block);
@@ -23,10 +23,10 @@ Block createBlock(){
 }
 
 int main(){
-    
+    CryptoppImpl cryptor;
     Block block1 = createBlock();
-    
-    assert(array2String(block1.getHash()) == "000050147f3c6ccf100e8c4fff3782f4c48efa983fc48449c0b70e3738a8846c");
+
+    assert(cryptor.sha256HashToString(block1.getHash()) == "0000a50fa6922fdf263171c43e8cb925e0af6a855195b3db29b404b1b7cb851c");
     
     std::vector<uint8_t> enc(block1.size());
     block1.encode(enc.data());

@@ -2,7 +2,6 @@
 #define Block_hpp
 
 #include "Transaction.hpp"
-#include "sha256.hpp"
 
 #include <array>
 #include <ctype.h>
@@ -12,6 +11,7 @@
 #include <sstream>
 #include <string.h>
 #include <string>
+#include <CryptoppImpl.hpp>
 
 #define MAXNONCE 1000000
 
@@ -38,7 +38,7 @@ public:
 private:
     std::string PrepareData(); /*!< Данные для хэширования*/
 
-    std::array<uint32_t, 8> m_target; /*!< Массив сравнения хэша*/
+    std::array<uint8_t, 32> m_target; /*!< Массив сравнения хэша*/
 
     Block* m_block; /*!< Блок для хэширования*/
 
@@ -72,8 +72,8 @@ public:
     Block(
         const int64_t& timeStamp,
         const std::list<Transaction>& tx,
-        const std::array<uint32_t, 8>& prevBlockHash,
-        const std::array<uint32_t, 8>& hash,
+        const std::array<uint8_t, 32>& prevBlockHash,
+        const std::array<uint8_t, 32>& hash,
         const int64_t& nonce);
 
     /*!
@@ -97,13 +97,13 @@ public:
      \brief Хэш предыдущего блока
      \return массив байт
     */
-    const std::array<uint32_t, 8>& getPrevBlockHash() const noexcept;
+    const std::array<uint8_t, 32>& getPrevBlockHash() const noexcept;
 
     /*!
      \brief Хэш блока
      \return Массив байт
     */
-    const std::array<uint32_t, 8>& getHash() const noexcept;
+    const std::array<uint8_t, 32>& getHash() const noexcept;
 
     /*!
      \brief Подобраное случайное число
@@ -133,13 +133,13 @@ public:
      \brief Задать хэш предыдущего блока
      \param [in] hash хэш предыдущего блока
     */
-    void setPrevBlockHash(const std::array<uint32_t, 8>& hash) noexcept;
+    void setPrevBlockHash(const std::array<uint8_t, 32>& hash) noexcept;
 
     /*!
      \brief Задать хэш блока
      \param [in] hash хэш блока
     */
-    void setHash(const std::array<uint32_t, 8>& hash) noexcept;
+    void setHash(const std::array<uint8_t, 32>& hash) noexcept;
 
     /*!
      \brief Найти размер блока
@@ -171,21 +171,14 @@ private:
 
     std::list<Transaction> m_tx; /*!< список транзакций*/
 
-    std::array<uint32_t, 8> m_prevBlockHash; /*!< хэш предыдущего блока*/
+    std::array<uint8_t, 32> m_prevBlockHash; /*!< хэш предыдущего блока*/
 
-    std::array<uint32_t, 8> m_hash; /*!< хэш блока*/
+    std::array<uint8_t, 32> m_hash; /*!< хэш блока*/
 
     uint64_t m_nonce; /*!< случайное число*/
 
     friend ProofOfWork;
 };
-
-/*!
- \brief Перевод строку хэша в hex предстовление
- \param [in] arr массив байтов
- \return hex строка
-*/
-std::string array2String(const std::array<uint32_t, 8>& arr);
 
 void printBigInt(uint32_t* bigint);
 

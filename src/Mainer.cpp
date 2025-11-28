@@ -2,7 +2,7 @@
 
 using namespace std::literals::chrono_literals;
 
-Mainer::Mainer(BlockChain* bc, Network* net):
+Mainer::Mainer(BlockChain &bc, Network &net):
     Wallet(bc, net) {
     m_run.store(true, std::memory_order_relaxed);
 
@@ -17,7 +17,7 @@ Mainer::~Mainer() {
 
 void Mainer::process() {
     while(m_run.load(std::memory_order_relaxed)) {
-        auto tx = m_net->getFromMempool();
+        auto tx = m_net.getFromMempool();
 
         if(!tx) {
             std::this_thread::sleep_for(50ms);
@@ -32,7 +32,7 @@ void Mainer::process() {
         std::string address = getAddres();
         txList.push_back(CoinBaseTransaction(txid, address));
 
-        m_bc->createBlock(static_cast<uint64_t>(std::time(nullptr)), txList);
+        m_bc.createBlock(static_cast<uint64_t>(std::time(nullptr)), txList);
 
         std::this_thread::sleep_for(50ms);
     }

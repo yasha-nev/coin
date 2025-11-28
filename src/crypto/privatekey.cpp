@@ -1,7 +1,5 @@
 #include "privatekey.hpp"
 
-#include <iostream>
-
 PrivateKey::PrivateKey(long _d, long _n) {
     d = _d;
     n = _n;

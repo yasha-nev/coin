@@ -15,20 +15,16 @@ static bool file_exist (std::string path) {
 }
 
 std::unique_ptr<Block> createBlock(){
-    std::array<uint32_t, 8> zero_hash = {0, 0, 0, 0, 0, 0, 0, 0};
+    std::array<uint8_t, 32> zero_hash = {0};
     std::list<Transaction> txs;
     uint64_t id = 0;
     std::string address = "address";
     txs.push_back(CoinBaseTransaction(id, address));
-    
-    // generate simple block
-    Block block = new Block(static_cast<uint64_t>(0), txs, zero_hash, std::array<uint32_t, 8>(), 0);
-    
-    // generate block hash
-    ProofOfWork pow(&block);
+    auto block = std::make_unique<Block>(static_cast<uint64_t>(0), txs, zero_hash, std::array<uint8_t, 32>(), 0);
+    ProofOfWork pow(block.get());
     pow.Run();
     
-    return std::make_unique<Block>(block);
+    return block;
 }
 
 static bool transactionCompare(std::list<Transaction> transaction1, std::list<Transaction> transaction2){
@@ -100,14 +96,14 @@ int main(){
     if (file_exist(DBPATH)){
         std::remove(DBPATH);
     }
-    
+
     db.connect();
-    
+
     auto block = createBlock();
-    
+
     db.putBlock(block);
-    
-    std::array<uint32_t, 8> curhash = db.getCurrentHash();
+
+    std::array<uint8_t, 32> curhash = db.getCurrentHash();
     
     assert(curhash == block->getHash());
     

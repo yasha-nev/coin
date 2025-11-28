@@ -1,4 +1,4 @@
-#include "rsa.hpp"
+#include "RSACryptor.hpp"
 
 static bool isPrime(long prime) {
     for(int i = 2; i <= sqrt(prime); i++) {

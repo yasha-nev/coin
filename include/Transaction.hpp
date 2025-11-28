@@ -53,6 +53,8 @@ public:
     */
     TXOutput& operator=(const TXOutput&& out);
 
+    bool operator == (const TXOutput &out) const;
+
     int m_value; /*!< количество монет */
 
     std::string m_address; /*!< адрес кошелька */
@@ -99,6 +101,8 @@ public:
      \brief Перегрузка = перемещения
     */
     TXInput& operator=(const TXInput&& in);
+
+    bool TXInput::operator == (const TXInput &in) const;
 
     uint64_t m_tranId; /*!< id транзакции */
 
@@ -170,7 +174,10 @@ public:
     \brief Вывод информации о транзакции в консоль
     */
     void print() const noexcept;
+
+    bool operator == (const Transaction &tx) const;
 };
+
 
 class CoinBaseTransaction: public Transaction {
 public:

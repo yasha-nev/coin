@@ -23,7 +23,7 @@ public:
      \param[in] port - порт
      \param[in] bc - локальная цепь блоков
     */
-    Network(std::list<std::pair<std::string, int>> clientIp, int port, BlockChain* bc);
+    Network(int port, BlockChain &bc);
 
     /*!
      \brief Деструктор
@@ -71,31 +71,31 @@ private:
      \param [in] hash - список хэшей
      \param [in] clientId - id клиента
     */
-    void inv(std::array<uint32_t, 8> hash, int clientId);
+    void inv(std::array<uint8_t, 32> hash, int clientId);
 
     /*!
      \brief Послать сообщение getData
      \param [in] hashes - список хэшей
      \param [in] clientId - id клиента
     */
-    void getData(std::list<std::array<uint32_t, 8>> hashes, int clientId);
+    void getData(std::list<std::array<uint8_t, 32>> hashes, int clientId);
 
     /*!
      \brief Послать сообщение sBlock
      \param [in] hashes - список хэшей блоков
      \param [in] clientId - id клиента
     */
-    void sblock(std::list<std::array<uint32_t, 8>> hashes, int clientId);
+    void sblock(std::list<std::array<uint8_t, 32>> hashes, int clientId);
 
-    std::unique_ptr<Server> m_serv; /*!< Сервер*/
+    std::unique_ptr<Server> m_serv;
 
-    BlockChain* m_bc; /*!< Локальный blockchain */
+    BlockChain &m_bc;
 
-    std::list<std::pair<std::string, int>> m_clientsIp; /*!< список серверов*/
+    std::list<std::pair<std::string, int>> m_clientsIp;
 
-    std::list<std::unique_ptr<Transaction>> m_mempool; /*!< Буффер транзакций без блока */
+    std::list<std::unique_ptr<Transaction>> m_mempool;
 
-    std::mutex m_mtx; /*!< мьютекс для управления памятью*/
+    std::mutex m_mtx;
 };
 
 #endif

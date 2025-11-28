@@ -3,8 +3,8 @@
 Block::Block(
     const int64_t& timeStamp,
     const std::list<Transaction>& tx,
-    const std::array<uint32_t, 8>& prevBlockHash,
-    const std::array<uint32_t, 8>& hash,
+    const std::array<uint8_t, 32>& prevBlockHash,
+    const std::array<uint8_t, 32>& hash,
     const int64_t& nonce) {
     m_timeStamp = timeStamp;
     m_tx = tx;
@@ -37,11 +37,11 @@ const std::list<Transaction>& Block::getTransaction() const noexcept {
     return m_tx;
 }
 
-const std::array<uint32_t, 8>& Block::getPrevBlockHash() const noexcept {
+const std::array<uint8_t, 32>& Block::getPrevBlockHash() const noexcept {
     return m_prevBlockHash;
 }
 
-const std::array<uint32_t, 8>& Block::getHash() const noexcept {
+const std::array<uint8_t, 32>& Block::getHash() const noexcept {
     return m_hash;
 }
 
@@ -61,11 +61,11 @@ void Block::setNonce(const uint64_t& nonce) noexcept {
     m_nonce = nonce;
 }
 
-void Block::setPrevBlockHash(const std::array<uint32_t, 8>& hash) noexcept {
+void Block::setPrevBlockHash(const std::array<uint8_t, 32>& hash) noexcept {
     m_prevBlockHash = hash;
 }
 
-void Block::setHash(const std::array<uint32_t, 8>& hash) noexcept {
+void Block::setHash(const std::array<uint8_t, 32>& hash) noexcept {
     m_hash = hash;
 }
 
@@ -94,11 +94,11 @@ void Block::encode(uint8_t* ptr) {
         ptr += tx.size();
     }
 
-    memcpy(ptr, m_prevBlockHash.data(), sizeof(uint32_t) * 8);
-    ptr += sizeof(uint32_t) * 8;
+    memcpy(ptr, m_prevBlockHash.data(), sizeof(uint8_t) * 32);
+    ptr += sizeof(uint8_t) * 32;
 
-    memcpy(ptr, m_hash.data(), sizeof(uint32_t) * 8);
-    ptr += sizeof(uint32_t) * 8;
+    memcpy(ptr, m_hash.data(), sizeof(uint8_t) * 32);
+    ptr += sizeof(uint8_t) * 32;
 
     memcpy(ptr, &m_nonce, sizeof(uint64_t));
 }
@@ -121,34 +121,28 @@ void Block::decode(uint8_t* ptr) {
         m_tx.push_back(tx);
         ptr += tx.size();
     }
-    uint32_t* ptr32 = (uint32_t*) ptr;
 
-    for(int i = 0; i < 8; i++) {
-        m_prevBlockHash[i] = *ptr32;
-        ptr32++;
+    for(int i = 0; i < 32; i++) {
+        m_prevBlockHash[i] = *ptr;
+        ptr++;
     }
 
-    ptr += sizeof(uint32_t) * 8;
-
-    ptr32 = (uint32_t*) ptr;
-
-    for(int i = 0; i < 8; i++) {
-        m_hash[i] = *ptr32;
-        ptr32++;
+    for(int i = 0; i < 32; i++) {
+        m_hash[i] = *ptr;
+        ptr++;
     }
-
-    ptr += sizeof(uint32_t) * 8;
 
     memcpy(&m_nonce, ptr, sizeof(uint64_t));
 }
 
 void Block::print() const noexcept {
+    CryptoppImpl cryptor;
     std::cout << std::setfill('=') << std::setw(40) << "BLOCK" << std::setfill('=') << std::setw(40)
               << "\n";
     std::cout << "|time: " << m_timeStamp << "\n";
     std::cout << "|Nonce: " << m_nonce << "\n";
-    std::cout << "|Hash: " << array2String(m_hash) << "\n";
-    std::cout << "|PrevHash: " << array2String(m_prevBlockHash) << "\n";
+    std::cout << "|Hash: " << cryptor.sha256HashToString(m_hash) << "\n";
+    std::cout << "|PrevHash: " << cryptor.sha256HashToString(m_prevBlockHash) << "\n";
 
     for(auto& tx: m_tx) {
         tx.print();
@@ -163,17 +157,8 @@ void printBigInt(uint32_t* bigint) {
     std::cout << "\n";
 }
 
-std::string array2String(const std::array<uint32_t, 8>& arr) {
-    std::stringstream s;
-
-    for(int i = 0; i < 8; i++) {
-        s << std::setfill('0') << std::setw(8) << std::hex << arr[i];
-    }
-    return s.str();
-}
-
-static int bigIntCmp(const std::array<uint32_t, 8>& left, const std::array<uint32_t, 8>& right) {
-    for(int i = 0; i < 8; i++) {
+static int bigIntCmp(const std::array<uint8_t, 32>& left, const std::array<uint8_t, 32>& right) {
+    for(int i = 0; i < 32; i++) {
         if(left[i] > right[i]) {
             return 1;
         } else if(left[i] < right[i]) {
@@ -186,30 +171,34 @@ static int bigIntCmp(const std::array<uint32_t, 8>& left, const std::array<uint3
 ProofOfWork::ProofOfWork(Block* block) {
     m_nonce = 0;
     m_block = block;
-    m_target[0] = 1 << 16;
+    m_target[0] = 0;
+    m_target[1] = 1 << 0;
+    m_target[2] = 0;
+    m_target[3] = 0;
 }
 
 std::string ProofOfWork::PrepareData() {
     std::string data;
+    CryptoppImpl cryptor;
     data += std::to_string(m_block->getTimeStamp());
 
     for(auto& tx: m_block->m_tx) {
         data += tx.toString();
     }
-    data += array2String(m_block->getPrevBlockHash());
+    data += cryptor.sha256HashToString(m_block->getPrevBlockHash());
     data += std::to_string(m_nonce);
     return data;
 }
 
 void ProofOfWork::Run() {
     m_nonce = 0;
-    std::array<uint32_t, 8> hash;
-    sha256 Crypto;
+    std::array<uint8_t, 32> hash;
+    CryptoppImpl Crypto;
     std::cout << "==============Block Hashing==============\n";
     while(m_nonce < MAXNONCE) {
         std::string data = PrepareData();
 
-        hash = Crypto.Hash(data);
+        hash = Crypto.sha256Hash(data);
 
         if(m_nonce % 100000 == 0) {
             std::cout << ">";
@@ -218,6 +207,7 @@ void ProofOfWork::Run() {
         if(bigIntCmp(hash, m_target) == -1) {
             m_block->setNonce(m_nonce);
             m_block->m_hash = hash;
+            break;
         }
         m_nonce += 1;
     }

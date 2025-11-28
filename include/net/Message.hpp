@@ -4,13 +4,13 @@
 #define STARTSTR "f9beb4d9"
 
 #include "Block.hpp"
-#include "sha256.hpp"
 
 #include <array>
 #include <inttypes.h>
 #include <list>
 #include <string.h>
 #include <memory>
+#include "CryptoppImpl.hpp"
 
 /*!
     \brief Типы сообщений
@@ -111,7 +111,7 @@ public:
      \brief Конструктор с параметрами
      \param hashes - хэши блоков
     */
-    GetBlocksMsg(std::list<std::array<uint32_t, 8>> hashes);
+    GetBlocksMsg(const std::list<std::array<uint8_t, 32>> &hashes);
 
     /*!
      \brief Десериализация
@@ -135,10 +135,10 @@ public:
     /*!
     \return список хэшей
     */
-    std::list<std::array<uint32_t, 8>> getHashes();
+    std::list<std::array<uint8_t, 32>> getHashes();
 
 private:
-    std::list<std::array<uint32_t, 8>> m_hashes; /*!< список хэшей */
+    std::list<std::array<uint8_t, 32>> m_hashes; /*!< список хэшей */
 };
 
 /*               Message Header
@@ -181,7 +181,7 @@ public:
      \param [in] type - тип сериализованных данных
      \param [in] hashes - список хэшей блоков
     */
-    InvMsg(InvTypes type, std::list<std::array<uint32_t, 8>> hashes);
+    InvMsg(InvTypes type, std::list<std::array<uint8_t, 32>> hashes);
 
     /*!
      \brief Десериализация
@@ -205,12 +205,12 @@ public:
     /*!
     \return список хэшей
     */
-    std::list<std::array<uint32_t, 8>> getHashes();
+    std::list<std::array<uint8_t, 32>> getHashes();
 
 private:
     uint8_t m_type; /*!< Тип хранимых данных */
 
-    std::list<std::array<uint32_t, 8>> m_hashes; /*!< список хэшей */
+    std::list<std::array<uint8_t, 32>> m_hashes; /*!< список хэшей */
 };
 
 /*               Message Header
@@ -249,7 +249,7 @@ public:
      \brief Конструктор с параметрами
     \param [in] type - тип сериализованный данных
     */
-    GetDataMsg(DataTypes type, std::list<std::array<uint32_t, 8>> hashes);
+    GetDataMsg(DataTypes type, std::list<std::array<uint8_t, 32>> hashes);
 
     /*!
      \brief Десериализация
@@ -273,12 +273,12 @@ public:
     /*!
     \return список хэшей
     */
-    std::list<std::array<uint32_t, 8>> getHashes();
+    std::list<std::array<uint8_t, 32>> getHashes();
 
 private:
     uint8_t m_type; /*!< тип хранимых данных */
 
-    std::list<std::array<uint32_t, 8>> m_hashes; /*!< список хэшей */
+    std::list<std::array<uint8_t, 32>> m_hashes; /*!< список хэшей */
 };
 
 /*               Message Header

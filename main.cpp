@@ -69,7 +69,7 @@ void CLI(BlockChain& bc, Wallet wallet, Network& net) {
 }
 
 void asWallet(BlockChain& bc, Network& net) {
-    Wallet wallet(&bc, &net);
+    Wallet wallet(bc, net);
     CLI(bc, wallet, net);
 }
 
@@ -105,7 +105,7 @@ int main(int argc, const char* argv[]) {
 
     BlockChain bc(std::move(db));
 
-    Network net(std::list<std::pair<std::string, int>>(), port, &bc);
+    Network net(port, bc);
     if(res == "-w") {
         asWallet(bc, net);
     } else if(res == "-m") {

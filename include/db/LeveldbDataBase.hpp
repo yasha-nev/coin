@@ -3,7 +3,7 @@
 
 #include "Block.hpp"
 #include "IDataBase.hpp"
-#include "leveldb/db.h"
+#include <leveldb/db.h>
 
 #include <memory>
 
@@ -27,21 +27,21 @@ public:
     \brief Достает последний записанный блок
     \return хэш последнего блока
     */
-    std::array<uint32_t, 8> getCurrentHash() override;
+    std::array<uint8_t, 32> getCurrentHash() override;
 
     /*!
     \brief Достает id последнего блока
     \param [in] hash - хэш блока
     \return id последнего блока
     */
-    uint64_t getCurrentId(const std::array<uint32_t, 8>& hash) override;
+    uint64_t getCurrentId(const std::array<uint8_t, 32>& hash) override;
 
     /*!
     \brief Достает блок по его хэшу
     \param [in] hash - хэш блока
     \return блок  данных
     */
-    std::unique_ptr<Block> getBlockByHash(const std::array<uint32_t, 8>& hash) override;
+    std::unique_ptr<Block> getBlockByHash(const std::array<uint8_t, 32>& hash) override;
 
 private:
     std::unique_ptr<leveldb::DB> m_db; /*!< указатель на базу данных*/

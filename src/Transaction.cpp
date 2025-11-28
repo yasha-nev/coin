@@ -261,6 +261,13 @@ TXOutput& TXOutput::operator=(const TXOutput&& out) {
     return *this;
 }
 
+bool TXOutput::operator==(const TXOutput &out) const {
+    bool flag = true;
+    flag &= (this->m_address == out.m_address);
+    flag &= (this->m_value == out.m_value);
+    return flag;
+}
+
 TXInput::TXInput(const uint64_t& transId, int outIndex, const std::string& pubkey) {
     m_tranId = transId;
     m_outIndex = outIndex;
@@ -303,4 +310,48 @@ TXInput& TXInput::operator=(const TXInput&& in) {
     m_sign = std::move(in.m_sign);
 
     return *this;
+}
+
+bool TXInput::operator == (const TXInput &in) const {
+    bool flag = true;
+    flag &= (this->m_outIndex == in.m_outIndex);
+    flag &= (this->m_sign == in.m_sign);
+    flag &= (this->m_pubkey == in.m_pubkey);
+    flag &= (this->m_pubkey == in.m_pubkey);
+    return flag;
+}
+
+bool Transaction::operator==(const Transaction &tx) const {
+    bool flag = true;
+    
+    flag &= (this->m_id == tx.m_id);
+    
+    auto tx1_in_itr = this->m_in.begin();
+    auto tx2_in_itr = tx.m_in.begin();
+    
+    while (tx1_in_itr != this->m_in.end() && tx2_in_itr != tx.m_in.end()){
+        flag &= (*tx1_in_itr == *tx2_in_itr);
+        ++tx1_in_itr;
+        ++tx2_in_itr;
+    }
+    
+    if (tx1_in_itr != this->m_in.end() || tx2_in_itr != tx.m_in.end()){
+        return false;
+    }
+    
+    auto tx1_out_itr = this->m_out.begin();
+    auto tx2_out_itr = tx.m_out.begin();
+    
+    while (tx1_out_itr != this->m_out.end() && tx2_out_itr != tx.m_out.end()){
+        flag &= (*tx1_out_itr == *tx2_out_itr);
+        
+        ++tx1_out_itr;
+        ++tx2_out_itr;
+    }
+    
+    if (tx1_out_itr != this->m_out.end() || tx2_out_itr != tx.m_out.end()){
+        return false;
+    }
+    
+    return flag;
 }

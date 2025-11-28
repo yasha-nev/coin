@@ -2,13 +2,13 @@
 
 using namespace std::literals::chrono_literals;
 
-Network::Network(std::list<std::pair<std::string, int>> clientIp, int port, BlockChain* bc) {
-    m_clientsIp = clientIp;
+Network::Network(int port, BlockChain &bc) : 
+    m_bc(bc)
+{
     m_serv = std::make_unique<Server>(port, 
         [this](uint8_t *data, size_t len, long clientId) {
             return this->messageHandler(data, len, clientId);
         });
-    m_bc = bc;
     m_serv->start();
 
     for(std::pair<std::string, int> host: m_clientsIp) {
@@ -23,8 +23,8 @@ Network::~Network() {
 void Network::getBlocks() {
     std::list<int> clientsid = m_serv->getClientsId();
     int id = clientsid.front();
-    std::list<std::array<uint32_t, 8>> lst;
-    std::array<uint32_t, 8> hash = m_bc->getPastBlockHash();
+    std::list<std::array<uint8_t, 32>> lst;
+    std::array<uint8_t, 32> hash = m_bc.getPastBlockHash();
     lst.push_back(hash);
     GetBlocksMsg msg = GetBlocksMsg(lst);
 
@@ -51,8 +51,8 @@ void Network::noFound(int clintId) {
     m_serv->sendDataTo(clintId, bytes.data(), bytes.size());
 }
 
-void Network::inv(std::array<uint32_t, 8> hash, int clientId) {
-    std::list<std::array<uint32_t, 8>> lst = m_bc->getHashesBefore(hash);
+void Network::inv(std::array<uint8_t, 32> hash, int clientId) {
+    std::list<std::array<uint8_t, 32>> lst = m_bc.getHashesBefore(hash);
     InvMsg msg = InvMsg(InvTypes::iBlock, lst);
 
     auto bytes = msg.toByte();
@@ -60,7 +60,7 @@ void Network::inv(std::array<uint32_t, 8> hash, int clientId) {
     m_serv->sendDataTo(clientId, bytes.data(), bytes.size());
 }
 
-void Network::getData(std::list<std::array<uint32_t, 8>> hashes, int clientId) {
+void Network::getData(std::list<std::array<uint8_t, 32>> hashes, int clientId) {
     GetDataMsg msg = GetDataMsg(DataTypes::dBlock, hashes);
 
     auto bytes = msg.toByte();
@@ -68,9 +68,9 @@ void Network::getData(std::list<std::array<uint32_t, 8>> hashes, int clientId) {
     m_serv->sendDataTo(clientId, bytes.data(), bytes.size());
 }
 
-void Network::sblock(std::list<std::array<uint32_t, 8>> hashes, int clientId) {
-    for(std::array<uint32_t, 8> hash: hashes) {
-        auto block = m_bc->getBlock(hash);
+void Network::sblock(std::list<std::array<uint8_t, 32>> hashes, int clientId) {
+    for(std::array<uint8_t, 32> hash: hashes) {
+        auto block = m_bc.getBlock(hash);
 
         if(!block) {
             continue;
@@ -104,8 +104,8 @@ void Network::messageHandler(uint8_t *buffer, size_t n, long clientId) {
         auto getBlockMsg = std::make_unique<GetBlocksMsg>();
         getBlockMsg->parse(buffer, n);
 
-        std::list<std::array<uint32_t, 8>> hashes = getBlockMsg->getHashes();
-        std::array<uint32_t, 8> hash = hashes.front();
+        std::list<std::array<uint8_t, 32>> hashes = getBlockMsg->getHashes();
+        std::array<uint8_t, 32> hash = hashes.front();
         inv(hash, clientId);
         break;
 
@@ -125,7 +125,7 @@ void Network::messageHandler(uint8_t *buffer, size_t n, long clientId) {
         auto blockMsg = std::make_unique<BlockMsg>();
         blockMsg->parse(buffer, n);
         auto block = std::unique_ptr<Block>(blockMsg->getBlock());
-        m_bc->putBlock(block);
+        m_bc.putBlock(block);
         break;
 
     } case (MsgTypes::Tx) : {
