@@ -58,34 +58,34 @@ private:
     /*!
      \brief Обработчик сообщений
     */
-    void messageHandler(uint8_t *buffer, size_t n, long clientId);
+    void messageHandler(uint8_t *buffer, size_t n, ClientID lientId);
 
     /*!
      \brief Послать сообщение noFound
      \param [in] clientId - id клиента
     */
-    void noFound(int clientId);
+    void noFound(ClientID clientId);
 
     /*!
      \brief Отправить сообщение inv
      \param [in] hash - список хэшей
      \param [in] clientId - id клиента
     */
-    void inv(std::array<uint8_t, 32> hash, int clientId);
+    void inv(std::array<uint8_t, 32> hash, ClientID clientId);
 
     /*!
      \brief Послать сообщение getData
      \param [in] hashes - список хэшей
      \param [in] clientId - id клиента
     */
-    void getData(std::list<std::array<uint8_t, 32>> hashes, int clientId);
+    void getData(std::list<std::array<uint8_t, 32>> hashes, ClientID clientId);
 
     /*!
      \brief Послать сообщение sBlock
      \param [in] hashes - список хэшей блоков
      \param [in] clientId - id клиента
     */
-    void sblock(std::list<std::array<uint8_t, 32>> hashes, int clientId);
+    void sblock(std::list<std::array<uint8_t, 32>> hashes, ClientID clientId);
 
     std::unique_ptr<Server> m_serv;
 

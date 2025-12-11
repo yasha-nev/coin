@@ -51,6 +51,7 @@ set(SRCS
     src/crypto/privatekey.cpp
     src/crypto/CryptoppImpl.cpp
     src/crypto/base58.cpp
+    src/net/Client.cpp
     src/net/Message.cpp
     src/net/Network.cpp
     src/net/Server.cpp
@@ -70,6 +71,7 @@ set(HEADERS
     include/Crypto/publickey.hpp
     include/Crypto/privatekey.hpp
     include/Crypto/base58.hpp
+    include/net/Client.hpp
     include/net/Message.hpp
     include/net/Network.hpp
     include/net/Server.hpp

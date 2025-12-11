@@ -312,7 +312,7 @@ TXInput& TXInput::operator=(const TXInput&& in) {
     return *this;
 }
 
-bool TXInput::operator == (const TXInput &in) const {
+bool TXInput::operator==(const TXInput &in) const {
     bool flag = true;
     flag &= (this->m_outIndex == in.m_outIndex);
     flag &= (this->m_sign == in.m_sign);

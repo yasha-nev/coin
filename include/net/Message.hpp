@@ -4,6 +4,7 @@
 #define STARTSTR "f9beb4d9"
 
 #include "Block.hpp"
+#include "Client.hpp"
 
 #include <array>
 #include <inttypes.h>
@@ -58,13 +59,13 @@ public:
      \brief Задать id клиента
      \param [in] id - id клиента
     */
-    void setClientId(int id);
+    void setClientId(ClientID id);
 
     /*!
      \brief id клиента получившего сообщение
      \return id
     */
-    int getClientId();
+    ClientID getClientId();
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -72,7 +73,7 @@ public:
     virtual void print() const = 0;
 
 protected:
-    int m_clientId = -1; /*!< id клиента*/
+    ClientID m_clientId = -1; /*!< id клиента*/
 
     uint8_t m_ver = 0; /*!< версия*/
 

@@ -1,47 +1,22 @@
 #include "Server.hpp"
 
 #define BUFLEN 1024
-#define MAX_CLIENTS 10
 
-Client::Client(int socket, sockaddr_in addr, int id) {
-    m_sock = socket;
-    m_cliaddr = addr;
-    m_id = id;
-}
+Server::Server(int port, std::function<void(uint8_t*, size_t, ClientID)> messageHandler) :
+    m_status(socket_status::DISACTIVE),
+    m_port(port),
+    m_sock(-1),
+    m_messageHandler(messageHandler)
+{
+    m_pollDescriptors.resize(DEFAULT_CLIENTS_COUNT);
 
-Client::~Client() {
-    if(m_sock == -1) {
-        return;
+    m_pollDescriptors[0].fd = this->m_sock;
+    m_pollDescriptors[0].events = POLLIN;
+
+    for(int i = 1; i <= DEFAULT_CLIENTS_COUNT; i++) {
+        m_pollDescriptors[i].fd = -1;
+        m_pollDescriptors[i].events = POLLIN;
     }
-    close(m_sock);
-}
-
-int Client::getSocket() const noexcept {
-    return m_sock;
-}
-
-uint16_t Client::getPort() const noexcept {
-    return m_cliaddr.sin_port;
-}
-
-uint32_t Client::getHost() const noexcept {
-    return m_cliaddr.sin_addr.s_addr;
-}
-
-int Client::getId() const noexcept {
-    return m_id;
-}
-
-void Client::sendData(uint8_t *buffer, size_t n) {
-    send(m_sock, buffer, n, 0);
-}
-
-Server::Server(int port, std::function<void(uint8_t*, size_t, long)> messageHandler) {
-    m_status = socket_status::DISACTIVE;
-    m_sock = -1;
-    m_port = port;
-    m_ids = 0;
-    m_messageHandler = messageHandler;
 }
 
 Server::~Server() {
@@ -53,12 +28,9 @@ void Server::stop() {
         return;
     }
     close(m_sock);
-    m_run.store(false, std::memory_order_relaxed);
 
-    if(m_acceptThread) {
-        for(int i = 0; i < m_messageThreads.size(); i++) {
-            m_messageThreads[i]->join();
-        }
+    if (m_run.load(std::memory_order_relaxed)) {
+        m_run.store(false, std::memory_order_relaxed);
         m_acceptThread->join();
     }
 
@@ -87,7 +59,7 @@ void Server::start() {
         throw std::runtime_error("Failed to bind socket");
     }
 
-    if((listen(m_sock, MAX_CLIENTS)) != 0) {
+    if((listen(m_sock, DEFAULT_CLIENTS_COUNT)) != 0) {
         throw std::runtime_error("Failed to listen");
     }
 
@@ -101,24 +73,13 @@ void Server::acceptClients() {
         return;
     }
 
-    using namespace std::chrono_literals;
-
-    struct pollfd fds[MAX_CLIENTS + 1];
-    fds[0].fd = this->m_sock;
-    fds[0].events = POLLIN;
-
-    for(int i = 1; i <= MAX_CLIENTS; i++) {
-        fds[i].fd = -1;
-        fds[i].events = POLLIN;
-    }
-
     while(m_run.load(std::memory_order_relaxed)) {
-        int poll_result = poll(fds, MAX_CLIENTS + 1, 100);
+        int poll_result = poll(m_pollDescriptors.data(), DEFAULT_CLIENTS_COUNT + 1, 100);
         if(poll_result == -1) {
             break;
         }
 
-        if(fds[0].revents & POLLIN) {
+        if(m_pollDescriptors[0].revents & POLLIN) {
             sockaddr_in clientAddr;
             int len = sizeof(sockaddr);
 
@@ -127,75 +88,53 @@ void Server::acceptClients() {
                 continue;
             }
 
-            bool client_registered = false;
-            for(int i = 1; i <= MAX_CLIENTS; i++) {
-                if(fds[i].fd == -1) {
-                    fds[i].fd = clientSocket;
-                    client_registered = true;
-                    m_mtx.lock();
-                    m_clients.push_back(std::move(std::make_unique<Client>(clientSocket, clientAddr, i)));
-                    m_ids++;
-                    m_mtx.unlock();
-
-                    break;
-                }
-            }
+            bool client_registered = addClient(clientSocket, clientAddr);
 
             if(!client_registered) {
                 close(clientSocket);
             }
         }
 
-        for(int i = 1; i <= MAX_CLIENTS; i++) {
-            if(fds[i].fd != -1 && (fds[i].revents & POLLIN)) {
-                messageHandle(m_clients[i - 1]);
-            }
-        }
+        readReceivedMessages();
     }
 }
 
-void Server::messageHandle(const std::unique_ptr<Client>& client) {
+bool Server::addClient(int clientSocket, sockaddr_in clientAddr) {
+    bool clientRegistered = false;
+
+    std::lock_guard<std::mutex> lock(m_mtx);
+    int id = 0;
+    for (size_t i = 0; i < m_pollDescriptors.size(); i++) {
+        if (m_pollDescriptors[i].fd == -1) {
+            m_pollDescriptors[i].fd = clientSocket;
+            m_clients.push_back(std::move(std::make_unique<Client>(clientSocket, clientAddr, id)));
+            clientRegistered = true;
+            break;
+        } else {
+            id++;
+        }
+    }
+
+    return clientRegistered;
+}
+
+void Server::readReceivedMessages() {
     size_t r;
     uint8_t buff[BUFLEN];
     bzero(buff, BUFLEN);
 
-    int clientSocket = client->getSocket();
-    r = recv(clientSocket, buff, BUFLEN, 0);
+    for(size_t i = 1; i <= m_pollDescriptors.size(); i++) {
+        if(m_pollDescriptors[i].fd != -1 && (m_pollDescriptors[i].revents & POLLIN)) {
+            const auto &client = m_clients[i - 1];
+            int clientSocket = client->getSocket();
+            r = recv(clientSocket, buff, BUFLEN, 0);
 
-    if(r > 0) {
-        if(r < 16) {
-            return;
-            ;
-        }
-        this->m_messageHandler(buff, r, client->getId());
-    }
-}
-
-void Server::messageHandler(const std::unique_ptr<Client> &client) {
-    if(m_status != socket_status::ACTIVE) {
-        return;
-    }
-
-    using namespace std::chrono_literals;
-
-    int clientSocket = client->getSocket();
-    size_t r;
-    uint8_t buff[BUFLEN];
-    bzero(buff, BUFLEN);
-
-    while(m_run.load(std::memory_order_relaxed)) {
-        r = recv(clientSocket, buff, BUFLEN, 0);
-
-        if(r > 0) {
             if(r < 16) {
                 continue;
             }
 
             this->m_messageHandler(buff, r, client->getId());
         }
-
-        bzero(buff, BUFLEN);
-        std::this_thread::sleep_for(50ms);
     }
 }
 
@@ -217,18 +156,13 @@ int Server::connectTo(const std::string& host, int port) {
     if(connect(serverSocket, (sockaddr*) &serverAddr, sizeof(sockaddr)) != 0) {
         std::runtime_error("Failed to connect");
     }
-    m_mtx.lock();
-    
-    m_clients.push_back(std::make_unique<Client>(serverSocket, serverAddr, m_ids));
-    m_messageThreads.push_back(std::make_unique<std::thread>(&Server::messageHandler, this, std::ref(m_clients[m_clients.size() - 1])));
-    
-    m_ids++;
-    m_mtx.unlock();
+
+    addClient(serverSocket, serverAddr);
 
     return 0;
 }
 
-void Server::sendDataTo(int id, uint8_t *buffer, size_t n) {
+void Server::sendDataTo(ClientID id, uint8_t *buffer, size_t n) {
     for (const auto &client : m_clients) {
         if (client->getId() == id) {
             client->sendData(buffer, n);
@@ -237,8 +171,8 @@ void Server::sendDataTo(int id, uint8_t *buffer, size_t n) {
     }
 }
 
-std::list<int> Server::getClientsId() {
-    std::list<int> ids;
+std::list<ClientID> Server::getClientsId() {
+    std::list<ClientID> ids;
     for (const auto &client : m_clients) {
         ids.push_back(client->getId());
     }

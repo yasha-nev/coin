@@ -21,8 +21,13 @@ Network::~Network() {
 }
 
 void Network::getBlocks() {
-    std::list<int> clientsid = m_serv->getClientsId();
-    int id = clientsid.front();
+    std::list<ClientID> clientIds = m_serv->getClientsId();
+
+    if(clientIds.empty()) {
+        return;
+    }
+
+    ClientID id = clientIds.front();
     std::list<std::array<uint8_t, 32>> lst;
     std::array<uint8_t, 32> hash = m_bc.getPastBlockHash();
     lst.push_back(hash);
@@ -34,8 +39,13 @@ void Network::getBlocks() {
 }
 
 void Network::sendToMempool(std::unique_ptr<Transaction> tx) {
-    std::list<int> clientsid = m_serv->getClientsId();
-    int id = clientsid.front();
+    std::list<ClientID> clientIds = m_serv->getClientsId();
+
+     if(clientIds.empty()) {
+        return;
+    }
+
+    ClientID id = clientIds.front();
     TxMsg msg = TxMsg(tx);
 
     auto bytes = msg.toByte();
@@ -43,7 +53,7 @@ void Network::sendToMempool(std::unique_ptr<Transaction> tx) {
     m_serv->sendDataTo(id, bytes.data(), bytes.size());
 }
 
-void Network::noFound(int clintId) {
+void Network::noFound(ClientID clintId) {
     NoFoundMsg msg = NoFoundMsg();
 
     auto bytes = msg.toByte();
@@ -51,7 +61,7 @@ void Network::noFound(int clintId) {
     m_serv->sendDataTo(clintId, bytes.data(), bytes.size());
 }
 
-void Network::inv(std::array<uint8_t, 32> hash, int clientId) {
+void Network::inv(std::array<uint8_t, 32> hash, ClientID clientId) {
     std::list<std::array<uint8_t, 32>> lst = m_bc.getHashesBefore(hash);
     InvMsg msg = InvMsg(InvTypes::iBlock, lst);
 
@@ -60,7 +70,7 @@ void Network::inv(std::array<uint8_t, 32> hash, int clientId) {
     m_serv->sendDataTo(clientId, bytes.data(), bytes.size());
 }
 
-void Network::getData(std::list<std::array<uint8_t, 32>> hashes, int clientId) {
+void Network::getData(std::list<std::array<uint8_t, 32>> hashes, ClientID clientId) {
     GetDataMsg msg = GetDataMsg(DataTypes::dBlock, hashes);
 
     auto bytes = msg.toByte();
@@ -68,7 +78,7 @@ void Network::getData(std::list<std::array<uint8_t, 32>> hashes, int clientId) {
     m_serv->sendDataTo(clientId, bytes.data(), bytes.size());
 }
 
-void Network::sblock(std::list<std::array<uint8_t, 32>> hashes, int clientId) {
+void Network::sblock(std::list<std::array<uint8_t, 32>> hashes, ClientID clientId) {
     for(std::array<uint8_t, 32> hash: hashes) {
         auto block = m_bc.getBlock(hash);
 
@@ -96,7 +106,7 @@ void Network::connectTo(const std::string& host, int ip) {
     m_clientsIp.push_back(conn);
 }
 
-void Network::messageHandler(uint8_t *buffer, size_t n, long clientId) {
+void Network::messageHandler(uint8_t *buffer, size_t n, ClientID clientId) {
     uint8_t type = buffer[9];
 
     switch (type) {

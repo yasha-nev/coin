@@ -72,7 +72,6 @@ std::unique_ptr<Block> createBlock(){
 
 void BlockMsgTest() {
     auto block1 = createBlock();
-
     auto blockMsg = BlockMsg(block1);
 
     std::vector<uint8_t> encodeMsg = blockMsg.toByte();
@@ -133,7 +132,7 @@ void txMsgTest() {
 
     assert(txMsg.getClientId() == txMsg2.getClientId());
     assert(txMsg.getCommand() == txMsg2.getCommand());
-    assert(txMsg.getTransaction() == txMsg2.getTransaction());
+    assert(*txMsg.getTransaction() == *txMsg2.getTransaction());
 }
 
 void noFoundMsgTest() {
@@ -149,11 +148,17 @@ void noFoundMsgTest() {
 
 
 int main(){
+    
     getBlockMsgTest();
+    
     invMsgTest();
+    
     getDataMsgTest();
+    
     BlockMsgTest();
+    
     txMsgTest();
+    
     noFoundMsgTest();
 
     return 0;

@@ -39,15 +39,17 @@ int main(){
     uint64_t id = 0;
     std::string address = "to";
     
-    auto tx1 = createTransaction();
+    std::unique_ptr<Transaction> tx1 = createTransaction();
 
     std::vector<uint8_t> enc(tx1->size());
     
     tx1->encode(enc.data());
     
-    auto tx2 = std::make_unique<Transaction>(0, 0, 0);
+    std::unique_ptr<Transaction> tx2 = std::make_unique<Transaction>(0, 0, 0);
     
     tx2->decode(enc.data());
+
+    std::cout << (*tx1 == *tx2) << std::endl;
     
     assert(tx1 == tx2);
 }

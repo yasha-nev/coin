@@ -102,7 +102,7 @@ public:
     */
     TXInput& operator=(const TXInput&& in);
 
-    bool TXInput::operator == (const TXInput &in) const;
+    bool operator== (const TXInput &in) const;
 
     uint64_t m_tranId; /*!< id транзакции */
 
@@ -175,7 +175,7 @@ public:
     */
     void print() const noexcept;
 
-    bool operator == (const Transaction &tx) const;
+    bool operator== (const Transaction &tx) const;
 };
 
 

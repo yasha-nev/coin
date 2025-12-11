@@ -74,7 +74,7 @@ void asWallet(BlockChain& bc, Network& net) {
 }
 
 void asMainer(BlockChain& bc, Network& net) {
-    Mainer mainer(&bc, &net);
+    Mainer mainer(bc, net);
     std::string command;
     std::cout << "quit      - exit from programm \n";
 

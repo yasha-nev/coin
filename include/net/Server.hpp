@@ -1,6 +1,8 @@
 #ifndef Server_hpp
 #define Server_hpp
 
+#include "Client.hpp"
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -22,6 +24,8 @@
 #include <unistd.h>
 #include <vector>
 
+#define DEFAULT_CLIENTS_COUNT 100
+
 /*!
     \brief состояния сокета
 
@@ -33,64 +37,6 @@ enum socket_status {
 };
 
 /*!
-    \brief Клиент
-*/
-class Client {
-public:
-    /*!
-    \brief Конструктор
-    \param[in] socket - сокет
-    \param[in] addr - unix адрес сокета
-    \param[in] id - id клиета у сервера
-    */
-    Client(int socket, sockaddr_in addr, int id);
-
-    /*!
-     \brief Диструктор
-    */
-    ~Client();
-
-    /*!
-     \brief Отправить сообщение
-    \param [in] msg указатель на сообщение которое надо отправить
-    */
-    void sendData(uint8_t *buffer, size_t n);
-
-    /*!
-     \brief Вернуть соке
-     \return unix сокет
-    */
-    int getSocket() const noexcept;
-
-    /*!
-     \brief id клиента
-     \return id
-    */
-    int getId() const noexcept;
-
-    /*!
-     \brief порт для сервера
-     \return порт
-    */
-    uint16_t getPort() const noexcept;
-
-    /*!
-     \brief ip сервера
-     \return ip в unix формате
-    */
-    uint32_t getHost() const noexcept;
-
-private:
-    int m_id; /*!< id клиента*/
-
-    int m_sock; /*!< Сокет*/
-
-    socket_status m_status; /*!< Статус соединения*/
-
-    struct sockaddr_in m_cliaddr; /*!< unix адрес*/
-};
-
-/*!
     \brief Сервер
 */
 class Server {
@@ -99,9 +45,8 @@ public:
      \brief Конструктор
      \param[in] port - порт
      \param[in] msgs - буффер сообщений
-     \param[in] mtx - мьютекс
     */
-    Server(int port, std::function<void(uint8_t*, size_t, long)> messageHandler);
+    Server(int port, std::function<void(uint8_t*, size_t, ClientID)> messageHandler);
 
     /*!
      \brief Диструктор
@@ -132,46 +77,37 @@ public:
      \param [in] buffer - массив байтов сообщения
      \param [in] n - размер сообщения
     */
-    void sendDataTo(int cliendId, uint8_t* buffer, size_t n);
+    void sendDataTo(ClientID cliendId, uint8_t* buffer, size_t n);
 
     /*!
      \brief Получить список клиентов сервера
      \return список клиентов
     */
-    std::list<int> getClientsId();
+    std::list<ClientID> getClientsId();
 
 private:
-    /*!
-     \brief Обработчик соединения с клиентами
-    */
+
     void acceptClients();
 
-    /*!
-     \brief Обработчик сообщений
-    \param [in] client - указатель на клиента
-    */
-    void messageHandler(const std::unique_ptr<Client> &client);
+    void readReceivedMessages();
 
-    void messageHandle(const std::unique_ptr<Client>& client);
+    bool addClient(int clientSocket, sockaddr_in clientAddr);
 
-    int m_port; /*!< Порт */
+    socket_status m_status;
 
-    int m_sock; /*!< Сокет*/
+    int m_port;
 
-    int m_ids; /*!< Последний id*/
+    int m_sock;
 
-    struct sockaddr_in m_servaddr; /*!< unix адрес*/
+    struct sockaddr_in m_servaddr;
 
-    socket_status m_status; /*!< Состояние соединения*/
+    std::vector<struct pollfd> m_pollDescriptors;
 
     std::atomic<bool> m_run; /*!< атомик для управления потоками*/
 
     std::vector<std::unique_ptr<Client>> m_clients; /*!< список клиентов*/
 
     std::unique_ptr<std::thread> m_acceptThread; /*!< поток для подключения клиентов */
-
-    std::vector<std::unique_ptr<std::thread>>
-        m_messageThreads; /*!< мьютекс для работы пересылки сообщений */
 
     std::mutex m_mtx; /*!< мьютекс для работы с потоками*/
 

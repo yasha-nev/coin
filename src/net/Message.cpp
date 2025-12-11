@@ -9,11 +9,11 @@ uint8_t Message::getCommand() {
     return m_comm;
 }
 
-void Message::setClientId(int id) {
+void Message::setClientId(ClientID id) {
     m_clientId = id;
 }
 
-int Message::getClientId() {
+ClientID Message::getClientId() {
     return m_clientId;
 }
 
