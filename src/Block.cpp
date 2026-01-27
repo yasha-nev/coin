@@ -105,7 +105,7 @@ std::vector<std::byte> Block::encode() const {
     return std::vector<std::byte>();
 }
 
-void Block::decode(const std::vector<std::byte> &data) {
+void Block::decode(const std::vector<std::byte>& data) {
     /*m_timeStamp = 0;
 
     memcpy(&m_timeStamp, ptr, sizeof(uint64_t));

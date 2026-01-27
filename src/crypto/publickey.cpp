@@ -76,9 +76,9 @@ std::string PublicKey::getKey() {
 }
 
 std::string PublicKey::hash() {
-    //sha256 sha;
-    //RIPMD160 rip;
-    
+    // sha256 sha;
+    // RIPMD160 rip;
+
     CryptoppImpl cryptor;
 
     auto sha256 = cryptor.sha256Hash(getKey());

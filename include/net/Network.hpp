@@ -23,7 +23,7 @@ public:
      \param[in] port - порт
      \param[in] bc - локальная цепь блоков
     */
-    Network(int port, BlockChain &bc);
+    Network(int port, BlockChain& bc);
 
     /*!
      \brief Деструктор
@@ -54,11 +54,10 @@ public:
     std::unique_ptr<Transaction> getFromMempool();
 
 private:
-
     /*!
      \brief Обработчик сообщений
     */
-    void messageHandler(uint8_t *buffer, size_t n, ClientID lientId);
+    void messageHandler(uint8_t* buffer, size_t n, ClientID lientId);
 
     /*!
      \brief Послать сообщение noFound
@@ -89,7 +88,7 @@ private:
 
     std::unique_ptr<Server> m_serv;
 
-    BlockChain &m_bc;
+    BlockChain& m_bc;
 
     std::list<std::pair<std::string, int>> m_clientsIp;
 

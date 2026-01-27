@@ -10,9 +10,9 @@
 
 #include <atomic>
 #include <chrono>
+#include <functional>
 #include <iostream>
 #include <list>
-#include <functional>
 #include <memory>
 #include <mutex>
 #include <netdb.h>
@@ -31,10 +31,7 @@
 
     оповещение о статусе соединения
 */
-enum socket_status {
-    ACTIVE,
-    DISACTIVE
-};
+enum socket_status { ACTIVE, DISACTIVE };
 
 /*!
     \brief Сервер
@@ -86,7 +83,6 @@ public:
     std::list<ClientID> getClientsId();
 
 private:
-
     void acceptClients();
 
     void readReceivedMessages();

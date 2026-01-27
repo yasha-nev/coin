@@ -2,13 +2,13 @@
 #define Wallet_hpp
 
 #include "BlockChain.hpp"
+#include "CryptoppImpl.hpp"
 #include "Network.hpp"
+#include "RSACryptor.hpp"
 #include "Transaction.hpp"
 #include "base58.hpp"
 #include "privatekey.hpp"
 #include "publickey.hpp"
-#include "RSACryptor.hpp"
-#include "CryptoppImpl.hpp"
 
 /*!
     \brief Кошелек
@@ -23,7 +23,7 @@ public:
      \param [in] bc - локальная цепь блоков
      \param [in] net - p2p сеть
     */
-    Wallet(BlockChain &bc, Network &net);
+    Wallet(BlockChain& bc, Network& net);
 
     /*!
      \brief Диструктор
@@ -67,9 +67,9 @@ protected:
 
     PublicKey m_pubkey; /*!< Публичный ключ*/
 
-    BlockChain &m_bc; /*!< Локальная цепь блоков*/
+    BlockChain& m_bc; /*!< Локальная цепь блоков*/
 
-    Network &m_net; /*!<  экземпляр p2p сети*/
+    Network& m_net; /*!<  экземпляр p2p сети*/
 };
 
 #endif /* Wallet_hpp */

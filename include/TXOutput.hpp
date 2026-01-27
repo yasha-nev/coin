@@ -1,19 +1,19 @@
 #ifndef TXOutput_hpp
 #define TXOutput_hpp
 
-#include <vector>
-#include <string>
-
-#include "serialization/ByteWriter.hpp"
 #include "serialization/ByteReader.hpp"
+#include "serialization/ByteWriter.hpp"
 #include "serialization/Serializer.hpp"
+
+#include <string>
+#include <vector>
 
 /*!
     \brief Выход транзакции
 
      Хранит информацию куда был сделал перевод
 */
-class TXOutput : public Serializer {
+class TXOutput: public Serializer {
 public:
     /*!
      \brief Конструктор
@@ -39,29 +39,51 @@ public:
     TXOutput(int value, const std::string& pubkey);
 
     /*!
-     \brief Перегрузка оператора  =
+     \brief Количество монет на выходе транзакции
+     \return целое безнаковое число
+    */
+    int getValue() const noexcept;
+
+    /*!
+     \brief Адрес получателя
+     \return Адрес в виде строки
+    */
+    const std::string& getAddress() const noexcept;
+
+    /*!
+     \brief Возвращает количество байт занимаемое выходом транзакции
+     \return Количество байт
+    */
+    size_t size() const noexcept;
+
+    /*!
+     \brief Сериализация выхода унаследованная от Serializer
+     \return выход транзакции преобразованный в массив байт
+    */
+    std::vector<std::byte> encode() const override;
+
+    /*!
+     \brief Десериализация выхода унаследованная от Serializer
+     \param [in] data - массив байт, сериализованный выход транзакции
+    */
+    void decode(const std::vector<std::byte>& data) override;
+
+    /*!
+     \brief Перегрузка оператора присваивания
     */
     TXOutput& operator=(const TXOutput& out);
 
     /*!
-     \brief Перегрузка оператора  = перемещения
+     \brief Перегрузка оператора перемещения
     */
     TXOutput& operator=(const TXOutput&& out);
 
-    bool operator == (const TXOutput &out) const;
-
-    std::vector<std::byte> encode() const override;
-
-    void decode(const std::vector<std::byte> &data) override;
-
-    size_t size() const noexcept;
-
-    int getValue() const noexcept;
-
-    const std::string &getAddress() const noexcept;
+    /*!
+     \brief Перегрузка оператора сравнения
+    */
+    bool operator==(const TXOutput& out) const;
 
 private:
-
     int m_value; /*!< количество монет */
 
     std::string m_address; /*!< адрес кошелька */

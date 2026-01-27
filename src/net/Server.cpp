@@ -2,12 +2,11 @@
 
 #define BUFLEN 1024
 
-Server::Server(int port, std::function<void(uint8_t*, size_t, ClientID)> messageHandler) :
+Server::Server(int port, std::function<void(uint8_t*, size_t, ClientID)> messageHandler):
     m_status(socket_status::DISACTIVE),
     m_port(port),
     m_sock(-1),
-    m_messageHandler(messageHandler)
-{
+    m_messageHandler(messageHandler) {
     m_pollDescriptors.resize(DEFAULT_CLIENTS_COUNT);
 
     m_pollDescriptors[0].fd = this->m_sock;
@@ -29,7 +28,7 @@ void Server::stop() {
     }
     close(m_sock);
 
-    if (m_run.load(std::memory_order_relaxed)) {
+    if(m_run.load(std::memory_order_relaxed)) {
         m_run.store(false, std::memory_order_relaxed);
         m_acceptThread->join();
     }
@@ -104,8 +103,8 @@ bool Server::addClient(int clientSocket, sockaddr_in clientAddr) {
 
     std::lock_guard<std::mutex> lock(m_mtx);
     int id = 0;
-    for (size_t i = 0; i < m_pollDescriptors.size(); i++) {
-        if (m_pollDescriptors[i].fd == -1) {
+    for(size_t i = 0; i < m_pollDescriptors.size(); i++) {
+        if(m_pollDescriptors[i].fd == -1) {
             m_pollDescriptors[i].fd = clientSocket;
             m_clients.push_back(std::move(std::make_unique<Client>(clientSocket, clientAddr, id)));
             clientRegistered = true;
@@ -125,7 +124,7 @@ void Server::readReceivedMessages() {
 
     for(size_t i = 1; i <= m_pollDescriptors.size(); i++) {
         if(m_pollDescriptors[i].fd != -1 && (m_pollDescriptors[i].revents & POLLIN)) {
-            const auto &client = m_clients[i - 1];
+            const auto& client = m_clients[i - 1];
             int clientSocket = client->getSocket();
             r = recv(clientSocket, buff, BUFLEN, 0);
 
@@ -162,9 +161,9 @@ int Server::connectTo(const std::string& host, int port) {
     return 0;
 }
 
-void Server::sendDataTo(ClientID id, uint8_t *buffer, size_t n) {
-    for (const auto &client : m_clients) {
-        if (client->getId() == id) {
+void Server::sendDataTo(ClientID id, uint8_t* buffer, size_t n) {
+    for(const auto& client: m_clients) {
+        if(client->getId() == id) {
             client->sendData(buffer, n);
             break;
         }
@@ -173,7 +172,7 @@ void Server::sendDataTo(ClientID id, uint8_t *buffer, size_t n) {
 
 std::list<ClientID> Server::getClientsId() {
     std::list<ClientID> ids;
-    for (const auto &client : m_clients) {
+    for(const auto& client: m_clients) {
         ids.push_back(client->getId());
     }
 

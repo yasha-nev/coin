@@ -2,11 +2,11 @@
 #define Block_hpp
 
 #include "Transaction.hpp"
-#include "serialization/ByteWriter.hpp"
 #include "serialization/ByteReader.hpp"
+#include "serialization/ByteWriter.hpp"
 #include "serialization/Serializer.hpp"
 
-
+#include <Crypto/CryptoppImpl.hpp>
 #include <array>
 #include <ctype.h>
 #include <inttypes.h>
@@ -15,7 +15,6 @@
 #include <sstream>
 #include <string.h>
 #include <string>
-#include <Crypto/CryptoppImpl.hpp>
 
 #define MAXNONCE 1000000
 
@@ -54,7 +53,7 @@ private:
 
     Блок в цепи
 */
-class Block : public Serializer {
+class Block: public Serializer {
 public:
     /*!
      \brief Диструктор
@@ -166,20 +165,20 @@ public:
     Десериализация блока
     \param [in] ptr массив байтов
     */
-    void decode(const std::vector<std::byte> &data) override;
+    void decode(const std::vector<std::byte>& data) override;
 
     friend BlockChain;
 
 private:
-    int64_t m_timeStamp; /*!< время создания*/
+    int64_t m_timeStamp;
 
-    std::list<Transaction> m_tx; /*!< список транзакций*/
+    std::list<Transaction> m_tx;
 
-    std::array<uint8_t, 32> m_prevBlockHash; /*!< хэш предыдущего блока*/
+    std::array<uint8_t, 32> m_prevBlockHash;
 
-    std::array<uint8_t, 32> m_hash; /*!< хэш блока*/
+    std::array<uint8_t, 32> m_hash;
 
-    uint64_t m_nonce; /*!< случайное число*/
+    uint64_t m_nonce;
 
     friend ProofOfWork;
 };

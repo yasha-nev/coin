@@ -2,7 +2,7 @@
 
 using namespace std::literals::chrono_literals;
 
-Mainer::Mainer(BlockChain &bc, Network &net):
+Mainer::Mainer(BlockChain& bc, Network& net):
     Wallet(bc, net) {
     m_run.store(true, std::memory_order_relaxed);
 

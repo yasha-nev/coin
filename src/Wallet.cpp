@@ -1,9 +1,8 @@
 #include "Wallet.hpp"
 
-Wallet::Wallet(BlockChain &bc, Network &net) :
+Wallet::Wallet(BlockChain& bc, Network& net):
     m_bc(bc),
-    m_net(net)
-{
+    m_net(net) {
     if(!file_exist("./priv.rem") || !file_exist("./pub.rem")) {
         RSACryptor rsa;
         m_pubkey = PublicKey(*rsa.getPublicKey());

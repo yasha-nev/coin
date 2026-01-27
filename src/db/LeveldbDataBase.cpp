@@ -43,7 +43,7 @@ std::unique_ptr<Block> LeveldbDataBase::getBlockByHash(const std::array<uint8_t,
 
     auto block = std::make_unique<Block>();
 
-    //block->decode((uint8_t*)byteBlock.c_str());
+    // block->decode((uint8_t*)byteBlock.c_str());
 
     return std::move(block);
 }
@@ -51,13 +51,12 @@ std::unique_ptr<Block> LeveldbDataBase::getBlockByHash(const std::array<uint8_t,
 void LeveldbDataBase::putBlock(const std::unique_ptr<Block>& block) {
     std::vector<uint8_t> encBlock(block->size());
 
-    //block->encode(encBlock.data());
+    // block->encode(encBlock.data());
 
     leveldb::Slice key((char*) block->getHash().data(), block->getHash().size());
 
     leveldb::Slice value((char*) encBlock.data(), block->size());
-    leveldb::Slice value_hash(
-        (char*) block->getHash().data(), block->getHash().size());
+    leveldb::Slice value_hash((char*) block->getHash().data(), block->getHash().size());
 
     m_db->Put(leveldb::WriteOptions(), key, value);
     m_db->Put(leveldb::WriteOptions(), "l", value_hash);

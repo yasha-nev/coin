@@ -3,6 +3,7 @@
 
 #include "Block.hpp"
 #include "IDataBase.hpp"
+
 #include <leveldb/db.h>
 
 #include <memory>

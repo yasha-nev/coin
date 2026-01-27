@@ -1,7 +1,7 @@
 #include "TXOutput.hpp"
 
-int main(){
-    
+int main() {
+
     int value = 15;
     std::string address = "address";
     TXOutput input1 = TXOutput(0, address);

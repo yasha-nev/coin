@@ -1,12 +1,12 @@
 #ifndef ByteWriter_hpp
 #define ByteWriter_hpp
 
-#include <vector>
-#include <cstddef>
-#include <utility>
-#include <stdexcept>
 #include <cassert>
+#include <cstddef>
 #include <cstring>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 class ByteWriter {
 public:
@@ -24,7 +24,9 @@ public:
         std::memcpy(data.data() + old, ptr, size);
     }
 
-    std::vector<std::byte> bytes() const { return data; }
+    std::vector<std::byte> bytes() const {
+        return data;
+    }
 
 private:
     std::vector<std::byte> data;

@@ -1,8 +1,8 @@
 
 #include "TXInput.hpp"
 
-int main(){
-    
+int main() {
+
     uint64_t transId = 0;
     std::string pubkey = "pubkey_1";
     TXInput input1 = TXInput(transId, -1, pubkey);

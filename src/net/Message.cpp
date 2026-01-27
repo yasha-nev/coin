@@ -22,7 +22,7 @@ GetBlocksMsg::GetBlocksMsg() {
     m_ver = 0;
 }
 
-GetBlocksMsg::GetBlocksMsg(const std::list<std::array<uint8_t, 32>> &hashes) {
+GetBlocksMsg::GetBlocksMsg(const std::list<std::array<uint8_t, 32>>& hashes) {
     m_comm = MsgTypes::gBlocks;
     m_ver = 0;
     m_hashes = hashes;
@@ -64,13 +64,12 @@ std::vector<uint8_t> GetBlocksMsg::toByte() const {
         sizeof(uint32_t) * 8 * (m_hashes.size() + 1);
     size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
         sizeof(uint32_t) * 8;
-    
+
     size_t size = headerSize + payloadSize;
 
     std::vector<uint8_t> byteArray(size);
     uint8_t* msg = byteArray.data();
     size_t ptr = 0;
-    
 
     // create header
 
@@ -99,7 +98,7 @@ std::vector<uint8_t> GetBlocksMsg::toByte() const {
         ptr += sizeof(uint32_t) * 8;
     }
 
-    uint8_t zerohash[32] = {0};
+    uint8_t zerohash[32] = { 0 };
     memcpy(msg + ptr, zerohash, sizeof(uint8_t) * 32);
     ptr += sizeof(uint8_t) * 32;
 
@@ -347,7 +346,7 @@ void BlockMsg::parse(uint8_t* data, size_t size) {
 
     m_block.release();
     m_block.reset(new Block());
-    //m_block->decode(data + ptr);
+    // m_block->decode(data + ptr);
 }
 
 std::vector<uint8_t> BlockMsg::toByte() const {
@@ -372,7 +371,7 @@ std::vector<uint8_t> BlockMsg::toByte() const {
     // create Payload
     ptr = headerSize;
     std::vector<uint8_t> encBlock(m_block->size());
-    //m_block->encode(encBlock.data());
+    // m_block->encode(encBlock.data());
     memcpy(msg + ptr, encBlock.data(), m_block->size());
     ptr += m_block->size();
 
@@ -380,7 +379,7 @@ std::vector<uint8_t> BlockMsg::toByte() const {
 
     CryptoppImpl cryptor;
     std::array<uint8_t, 32> checksum = cryptor.sha256Hash(
-    std::string(reinterpret_cast<char*>(msg + headerSize), payloadSize));
+        std::string(reinterpret_cast<char*>(msg + headerSize), payloadSize));
     ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
     memcpy(msg + ptr, checksum.data(), sizeof(uint8_t) * 32);
 
@@ -415,7 +414,7 @@ void TxMsg::parse(uint8_t* data, size_t size) {
     size_t ptr = headerSize;
     m_tx.release();
     m_tx.reset(new Transaction(0, 0, 0));
-    //m_tx->decode(data + ptr);
+    // m_tx->decode(data + ptr);
 }
 
 std::vector<uint8_t> TxMsg::toByte() const {
@@ -439,11 +438,12 @@ std::vector<uint8_t> TxMsg::toByte() const {
 
     // create Payload
     ptr = headerSize;
-    //m_tx->encode(msg + ptr);
+    // m_tx->encode(msg + ptr);
 
     // create Checksum
 
-    CryptoppImpl cryptor;;
+    CryptoppImpl cryptor;
+    ;
     std::array<uint8_t, 32> checksum = cryptor.sha256Hash(
         std::string(reinterpret_cast<char*>(msg + headerSize), payloadSize));
     ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);

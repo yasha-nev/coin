@@ -1,9 +1,10 @@
 #ifndef rsa_hpp
 #define rsa_hpp
 
-#include <ctime>
 #include "privatekey.hpp"
 #include "publickey.hpp"
+
+#include <ctime>
 
 /*!
     \brief реализация ключей RSA

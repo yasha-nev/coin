@@ -15,43 +15,55 @@ Transaction::Transaction(Transaction* tx) {
 Transaction::~Transaction() {
 }
 
+uint64_t Transaction::getId() const noexcept {
+    return m_id;
+}
+
+const std::vector<TXInput>& Transaction::getInputs() const noexcept {
+    return m_in;
+}
+
+const std::vector<TXOutput>& Transaction::getOutputs() const noexcept {
+    return m_out;
+}
+
 size_t Transaction::size() const noexcept {
     size_t s = 0;
 
     s += sizeof(uint64_t);
 
     s += sizeof(size_t);
-    for (const auto &in : m_in) {
+    for(const auto& in: m_in) {
         s += in.size();
     }
 
     s += sizeof(size_t);
-    for (const auto &out : m_out) {
+    for(const auto& out: m_out) {
         s += out.size();
     }
 
     return s;
 }
 
-std::vector<std::byte> Transaction::encode() const{
+std::vector<std::byte> Transaction::encode() const {
     ByteWriter byteWriter;
 
     byteWriter.write<uint64_t>(m_id);
 
     byteWriter.write<size_t>(m_in.size());
-    for (const auto &in : m_in) {
+    for(const auto& in: m_in) {
         auto encodeIn = in.encode();
         byteWriter.write_bytes(encodeIn.data(), encodeIn.size());
     }
 
     byteWriter.write<size_t>(m_out.size());
-    for (const auto &out : m_out) {
+    for(const auto& out: m_out) {
         auto encodeOut = out.encode();
         byteWriter.write_bytes(encodeOut.data(), encodeOut.size());
     }
 }
 
-void Transaction::decode(const std::vector<std::byte> &data) {
+void Transaction::decode(const std::vector<std::byte>& data) {
     /*m_in.clear();
     m_out.clear();
 
@@ -116,14 +128,14 @@ std::string Transaction::toString() {
     std::string result;
     result += std::to_string(m_id);
     result += std::to_string(m_in.size());
-    for (const auto &in : m_in) {
+    for(const auto& in: m_in) {
         result += std::to_string(in.getTransactionId());
         result += std::to_string(in.getOutIndex());
         result += in.getPublicKey();
         result += in.getSignature();
     }
     result += std::to_string(m_out.size());
-    for (const auto &out : m_out) {
+    for(const auto& out: m_out) {
         result += std::to_string(out.getValue());
         result += out.getAddress();
     }
@@ -136,7 +148,7 @@ void Transaction::print() const noexcept {
     std::cout << "|" << std::setfill('_') << std::setw(39) << "TXINPUTS" << std::setfill('_')
               << std::setw(40) << "\n";
 
-    for (const auto &in : m_in) {
+    for(const auto& in: m_in) {
         std::cout << "|output id : " << in.getTransactionId() << "\n";
         std::cout << "|index: " << in.getOutIndex() << "\n";
         std::cout << "|pubkey from: " << in.getPublicKey() << "\n";
@@ -145,38 +157,61 @@ void Transaction::print() const noexcept {
     }
     std::cout << "|" << std::setfill('_') << std::setw(39) << "TXOUTPUTS" << std::setfill('_')
               << std::setw(40) << "\n";
-    for (const auto &out : m_out) {
+    for(const auto& out: m_out) {
         std::cout << "|value: " << out.getValue() << "\n";
         std::cout << "|address to: " << out.getAddress() << "\n";
         std::cout << "|" << std::setfill('-') << std::setw(79) << "\n";
     }
 }
 
-uint64_t Transaction::getId() const noexcept {
-    return m_id;
-}
-
-const std::vector<TXInput> &Transaction::getInputs() const noexcept {
-    return m_in;
-}
-
-const std::vector<TXOutput> &Transaction::getOutputs() const noexcept {
-    return m_out;
-}
-
 void Transaction::sign() {
     std::string signstr;
 
-    for (const auto &out : m_out) {
+    for(const auto& out: m_out) {
         signstr += out.getAddress();
     }
 
-    for (auto &in : m_in) {
+    for(auto& in: m_in) {
         CryptoppImpl cryptor;
         std::string key = in.getPublicKey() + signstr;
         auto hash = cryptor.sha256Hash(key);
         in.setSignarure(cryptor.sha256HashToString(hash));
     }
+}
+
+bool Transaction::operator==(const Transaction& tx) const {
+    bool flag = true;
+
+    flag &= (this->m_id == tx.m_id);
+
+    auto tx1_in_itr = this->m_in.begin();
+    auto tx2_in_itr = tx.m_in.begin();
+
+    while(tx1_in_itr != this->m_in.end() && tx2_in_itr != tx.m_in.end()) {
+        flag &= (*tx1_in_itr == *tx2_in_itr);
+        ++tx1_in_itr;
+        ++tx2_in_itr;
+    }
+
+    if(tx1_in_itr != this->m_in.end() || tx2_in_itr != tx.m_in.end()) {
+        return false;
+    }
+
+    auto tx1_out_itr = this->m_out.begin();
+    auto tx2_out_itr = tx.m_out.begin();
+
+    while(tx1_out_itr != this->m_out.end() && tx2_out_itr != tx.m_out.end()) {
+        flag &= (*tx1_out_itr == *tx2_out_itr);
+
+        ++tx1_out_itr;
+        ++tx2_out_itr;
+    }
+
+    if(tx1_out_itr != this->m_out.end() || tx2_out_itr != tx.m_out.end()) {
+        return false;
+    }
+
+    return flag;
 }
 
 CoinBaseTransaction::CoinBaseTransaction(uint64_t& id, std::string& pubkey):
@@ -210,39 +245,4 @@ RealTransaction::RealTransaction(
     if(rest > 0) {
         m_out.push_back(TXOutput(rest, from));
     }
-}
-
-bool Transaction::operator==(const Transaction &tx) const {
-    bool flag = true;
-    
-    flag &= (this->m_id == tx.m_id);
-    
-    auto tx1_in_itr = this->m_in.begin();
-    auto tx2_in_itr = tx.m_in.begin();
-    
-    while (tx1_in_itr != this->m_in.end() && tx2_in_itr != tx.m_in.end()){
-        flag &= (*tx1_in_itr == *tx2_in_itr);
-        ++tx1_in_itr;
-        ++tx2_in_itr;
-    }
-    
-    if (tx1_in_itr != this->m_in.end() || tx2_in_itr != tx.m_in.end()){
-        return false;
-    }
-    
-    auto tx1_out_itr = this->m_out.begin();
-    auto tx2_out_itr = tx.m_out.begin();
-    
-    while (tx1_out_itr != this->m_out.end() && tx2_out_itr != tx.m_out.end()){
-        flag &= (*tx1_out_itr == *tx2_out_itr);
-        
-        ++tx1_out_itr;
-        ++tx2_out_itr;
-    }
-    
-    if (tx1_out_itr != this->m_out.end() || tx2_out_itr != tx.m_out.end()){
-        return false;
-    }
-    
-    return flag;
 }

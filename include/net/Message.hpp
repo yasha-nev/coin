@@ -5,13 +5,13 @@
 
 #include "Block.hpp"
 #include "Client.hpp"
+#include "CryptoppImpl.hpp"
 
 #include <array>
 #include <inttypes.h>
 #include <list>
-#include <string.h>
 #include <memory>
-#include "CryptoppImpl.hpp"
+#include <string.h>
 
 /*!
     \brief Типы сообщений
@@ -112,7 +112,7 @@ public:
      \brief Конструктор с параметрами
      \param hashes - хэши блоков
     */
-    GetBlocksMsg(const std::list<std::array<uint8_t, 32>> &hashes);
+    GetBlocksMsg(const std::list<std::array<uint8_t, 32>>& hashes);
 
     /*!
      \brief Десериализация

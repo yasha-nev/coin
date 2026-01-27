@@ -133,9 +133,9 @@ const std::array<uint8_t, 32>& BlockChain::getPastBlockHash() const noexcept {
 uint64_t BlockChain::getPastTransactionId() const noexcept {
     auto block = m_db->getBlockByHash(m_cur_hash);
 
-    const std::list<Transaction> &transactions = block->getTransactions();
+    const std::list<Transaction>& transactions = block->getTransactions();
 
-    if (transactions.empty()) {
+    if(transactions.empty()) {
         return -1;
     }
 
@@ -167,7 +167,7 @@ uint64_t BlockChain::getBalance(const std::string& pubkey, const std::string& ad
         hash = block->getPrevBlockHash();
 
         std::list<Transaction> txList = block->getTransactions();
-        
+
         for(auto& tx: txList) {
 
             std::vector<outId> sup;
@@ -175,8 +175,8 @@ uint64_t BlockChain::getBalance(const std::string& pubkey, const std::string& ad
             sup.insert(outIds.begin(), outIds.end(), outIds.end());
 
             int i = 0;
-            for (const auto &out : tx.getOutputs()) {
-                if (out.getAddress() != address) {
+            for(const auto& out: tx.getOutputs()) {
+                if(out.getAddress() != address) {
                     i++;
                     continue;
                 }
@@ -194,11 +194,11 @@ uint64_t BlockChain::getBalance(const std::string& pubkey, const std::string& ad
                 i++;
             }
 
-            for (const auto &in : tx.getInputs()) {
-                if (in.getPublicKey() != pubkey) {
+            for(const auto& in: tx.getInputs()) {
+                if(in.getPublicKey() != pubkey) {
                     continue;
                 }
-                
+
                 outId oi = { in.getTransactionId(), in.getOutIndex() };
                 outIds.push_back(oi);
             }
@@ -243,7 +243,7 @@ std::list<TXInput> BlockChain::getInputs(
             sup.insert(outIds.begin(), outIds.end(), outIds.end());
 
             int i = 0;
-            for (const auto &out : tx.getOutputs()) {
+            for(const auto& out: tx.getOutputs()) {
                 if(out.getAddress() != address) {
                     i++;
                     continue;
@@ -264,7 +264,7 @@ std::list<TXInput> BlockChain::getInputs(
                 i++;
             }
 
-            for (const auto &in : tx.getInputs()) {
+            for(const auto& in: tx.getInputs()) {
                 if(in.getPublicKey() == pubkey) {
                     outId oi = { in.getTransactionId(), in.getOutIndex() };
                     outIds.push_back(oi);
