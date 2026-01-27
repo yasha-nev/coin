@@ -15,21 +15,15 @@ TXOutput::TXOutput(const TXOutput&& out) {
     m_value = std::move(out.m_value);
 }
 
-std::vector<std::byte> TXOutput::encode() const {
-    ByteWriter byteWriter;
-
+void TXOutput::encode(ByteWriter& byteWriter) const {
     byteWriter.write<int>(m_value);
     byteWriter.write<size_t>(m_address.size());
     for(size_t i = 0; i < m_address.size(); i++) {
         byteWriter.write<char>(m_address[i]);
     }
-
-    return byteWriter.bytes();
 }
 
-void TXOutput::decode(const std::vector<std::byte>& data) {
-    ByteReader byteReader(data);
-
+void TXOutput::decode(ByteReader& byteReader) {
     m_value = byteReader.read<int>();
     size_t addressSize = byteReader.read<size_t>();
     m_address.resize(addressSize);

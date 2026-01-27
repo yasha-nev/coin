@@ -4,7 +4,7 @@
 #include <list>
 #include <memory>
 
-std::unique_ptr<Transaction> createTransaction() {
+Transaction createTransaction() {
 
     std::list<TXInput> inputs;
 
@@ -32,7 +32,7 @@ std::unique_ptr<Transaction> createTransaction() {
     std::string from = "from";
     std::string to = "to";
 
-    return std::make_unique<RealTransaction>(id, from, to, 0, inputs, 0);
+    return TransactionFactory::createSimple(id, from, to, 0, inputs, 0);
 }
 
 int main() {
@@ -40,15 +40,16 @@ int main() {
     uint64_t id = 0;
     std::string address = "to";
 
-    std::unique_ptr<Transaction> tx1 = createTransaction();
+    Transaction tx1 = createTransaction();
 
-    std::vector<std::byte> enc = tx1->encode();
+    ByteWriter byteWriter;
+    tx1.encode(byteWriter);
 
-    std::unique_ptr<Transaction> tx2 = std::make_unique<Transaction>(0, 0, 0);
+    Transaction tx2 = Transaction();
 
-    tx2->decode(enc);
-
-    std::cout << (*tx1 == *tx2) << std::endl;
+    const auto& bytes = byteWriter.bytes();
+    ByteReader byteReader(as_bytes(bytes.data(), bytes.size()));
+    tx2.decode(byteReader);
 
     assert(tx1 == tx2);
 }

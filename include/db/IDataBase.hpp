@@ -4,6 +4,7 @@
 #include "Block.hpp"
 
 #include <memory>
+#include <optional>
 
 #define DBPATH "./testdb"
 
@@ -13,13 +14,13 @@ public:
 
     virtual void connect() = 0;
 
-    virtual void putBlock(const std::unique_ptr<Block>& block) = 0;
+    virtual void putBlock(const Block& block) = 0;
 
     virtual std::array<uint8_t, 32> getCurrentHash() = 0;
 
     virtual uint64_t getCurrentId(const std::array<uint8_t, 32>& hash) = 0;
 
-    virtual std::unique_ptr<Block> getBlockByHash(const std::array<uint8_t, 32>& hash) = 0;
+    virtual std::optional<Block> getBlockByHash(const std::array<uint8_t, 32>& hash) = 0;
 };
 
 #endif

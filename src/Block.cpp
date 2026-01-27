@@ -2,28 +2,21 @@
 
 Block::Block(
     const int64_t& timeStamp,
-    const std::list<Transaction>& tx,
+    const std::list<Transaction>& txs,
     const std::array<uint8_t, 32>& prevBlockHash,
     const std::array<uint8_t, 32>& hash,
     const int64_t& nonce) {
     m_timeStamp = timeStamp;
-    m_tx = tx;
     m_prevBlockHash = prevBlockHash;
     m_hash = hash;
     m_nonce = nonce;
+
+    m_tx = txs;
 }
 
 Block::Block() {
     m_timeStamp = 0;
     m_nonce = 0;
-}
-
-Block::Block(Block* block) {
-    m_timeStamp = block->m_timeStamp;
-    m_tx = block->m_tx;
-    m_prevBlockHash = block->m_prevBlockHash;
-    m_hash = block->m_hash;
-    m_nonce = block->m_nonce;
 }
 
 Block::~Block() {
@@ -53,8 +46,8 @@ void Block::setTimeStamp(const int64_t& timeStamp) noexcept {
     m_timeStamp = timeStamp;
 }
 
-void Block::setTransaction(const std::list<Transaction>& tx) noexcept {
-    m_tx = tx;
+void Block::setTransaction(const std::list<Transaction>& txs) {
+    m_tx = txs;
 }
 
 void Block::setNonce(const uint64_t& nonce) noexcept {
@@ -80,61 +73,44 @@ size_t Block::size() const noexcept {
         sizeof(uint32_t) * 8 + sizeof(uint64_t);
 }
 
-std::vector<std::byte> Block::encode() const {
-    /*memcpy(ptr, &m_timeStamp, sizeof(uint64_t));
-    ptr += sizeof(uint64_t);
+void Block::encode(ByteWriter& byteWriter) const {
+    byteWriter.write<uint64_t>(m_timeStamp);
+    byteWriter.write<size_t>(m_tx.size());
 
-    size_t txnum = m_tx.size();
-
-    memcpy(ptr, &txnum, sizeof(size_t));
-    ptr += sizeof(size_t);
-
-    for(auto& tx: m_tx) {
-        tx.encode(ptr);
-        ptr += tx.size();
+    for(const auto& tx: m_tx) {
+        tx.encode(byteWriter);
     }
 
-    memcpy(ptr, m_prevBlockHash.data(), sizeof(uint8_t) * 32);
-    ptr += sizeof(uint8_t) * 32;
+    byteWriter.write_bytes(as_bytes(m_prevBlockHash));
+    byteWriter.write_bytes(as_bytes(m_hash));
 
-    memcpy(ptr, m_hash.data(), sizeof(uint8_t) * 32);
-    ptr += sizeof(uint8_t) * 32;
-
-    memcpy(ptr, &m_nonce, sizeof(uint64_t));*/
-
-    return std::vector<std::byte>();
+    byteWriter.write<uint64_t>(m_nonce);
 }
 
-void Block::decode(const std::vector<std::byte>& data) {
-    /*m_timeStamp = 0;
+void convertVectorToArray(std::span<const std::byte> vec, std::array<uint8_t, 32>& arr) {
+    if(vec.size() != 32) {
+        throw std::runtime_error("Размер вектора должен быть равен 32 элементам");
+    }
 
-    memcpy(&m_timeStamp, ptr, sizeof(uint64_t));
-    ptr += sizeof(uint64_t);
+    for(size_t i = 0; i < 32; ++i) {
+        arr[i] = static_cast<uint8_t>(vec[i]);
+    }
+}
 
-    size_t txnum = 0;
-    memcpy(&txnum, ptr, sizeof(size_t));
-    ptr += sizeof(size_t);
+void Block::decode(ByteReader& byteReader) {
+    m_timeStamp = byteReader.read<uint64_t>();
+    size_t txSize = byteReader.read<size_t>();
 
-    m_tx.clear();
-    for(size_t i = 0; i < txnum; i++) {
-        Transaction tx = Transaction(0, 0, 0);
-        tx.decode(ptr);
-
+    for(int i = 0; i < txSize; i++) {
+        Transaction tx;
+        tx.decode(byteReader);
         m_tx.push_back(tx);
-        ptr += tx.size();
     }
 
-    for(int i = 0; i < 32; i++) {
-        m_prevBlockHash[i] = *ptr;
-        ptr++;
-    }
+    convertVectorToArray(byteReader.read_bytes(sizeof(uint8_t) * 32), m_prevBlockHash);
+    convertVectorToArray(byteReader.read_bytes(sizeof(uint8_t) * 32), m_hash);
 
-    for(int i = 0; i < 32; i++) {
-        m_hash[i] = *ptr;
-        ptr++;
-    }
-
-    memcpy(&m_nonce, ptr, sizeof(uint64_t));*/
+    m_nonce = byteReader.read<uint64_t>();
 }
 
 void Block::print() const noexcept {
@@ -146,7 +122,7 @@ void Block::print() const noexcept {
     std::cout << "|Hash: " << cryptor.sha256HashToString(m_hash) << "\n";
     std::cout << "|PrevHash: " << cryptor.sha256HashToString(m_prevBlockHash) << "\n";
 
-    for(auto& tx: m_tx) {
+    for(const auto& tx: m_tx) {
         tx.print();
     }
     std::cout << std::setfill('=') << std::setw(80) << "\n" << std::endl;

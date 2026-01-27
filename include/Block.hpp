@@ -12,6 +12,7 @@
 #include <inttypes.h>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string.h>
 #include <string>
@@ -74,15 +75,10 @@ public:
     */
     Block(
         const int64_t& timeStamp,
-        const std::list<Transaction>& tx,
+        const std::list<Transaction>& txs,
         const std::array<uint8_t, 32>& prevBlockHash,
         const std::array<uint8_t, 32>& hash,
         const int64_t& nonce);
-
-    /*!
-     \brief Конструктор копирования
-    */
-    Block(Block* block);
 
     /*!
      \brief Время создания блока
@@ -124,7 +120,7 @@ public:
      \brief Задать список транзакций
      \param [in] trans список транзакций
     */
-    void setTransaction(const std::list<Transaction>& trans) noexcept;
+    void setTransaction(const std::list<Transaction>& trans);
 
     /*!
      \brief Задать случайное число
@@ -159,13 +155,13 @@ public:
      \brief Сериализация блока
      \param [out] ptr - размер блока
     */
-    std::vector<std::byte> encode() const override;
+    void encode(ByteWriter& writer) const override;
 
     /*!
     Десериализация блока
     \param [in] ptr массив байтов
     */
-    void decode(const std::vector<std::byte>& data) override;
+    void decode(ByteReader& reader) override;
 
     friend BlockChain;
 

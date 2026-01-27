@@ -1,15 +1,13 @@
 #include "Transaction.hpp"
 
+Transaction::Transaction() {
+    m_id = 0;
+}
+
 Transaction::Transaction(uint64_t id, int inCount, int outCount) {
     m_id = id;
     m_in = std::vector<TXInput>(inCount);
     m_out = std::vector<TXOutput>(outCount);
-}
-
-Transaction::Transaction(Transaction* tx) {
-    m_id = tx->m_id;
-    m_in = tx->m_in;
-    m_out = tx->m_out;
 }
 
 Transaction::~Transaction() {
@@ -45,83 +43,37 @@ size_t Transaction::size() const noexcept {
     return s;
 }
 
-std::vector<std::byte> Transaction::encode() const {
-    ByteWriter byteWriter;
+void Transaction::encode(ByteWriter& byteWriter) const {
 
     byteWriter.write<uint64_t>(m_id);
 
     byteWriter.write<size_t>(m_in.size());
     for(const auto& in: m_in) {
-        auto encodeIn = in.encode();
-        byteWriter.write_bytes(encodeIn.data(), encodeIn.size());
+        in.encode(byteWriter);
     }
 
     byteWriter.write<size_t>(m_out.size());
     for(const auto& out: m_out) {
-        auto encodeOut = out.encode();
-        byteWriter.write_bytes(encodeOut.data(), encodeOut.size());
+        out.encode(byteWriter);
     }
 }
 
-void Transaction::decode(const std::vector<std::byte>& data) {
-    /*m_in.clear();
-    m_out.clear();
-
-    ByteReader byteReader(data);
+void Transaction::decode(ByteReader& byteReader) {
 
     m_id = byteReader.read<uint64_t>();
 
     size_t inCount = byteReader.read<size_t>();
-
-    m_in.resize(inCount);
-
-    for(size_t i = 0; i < inCount; i++) {
-        auto decodeIn = byteReader.read_bytes()
-        m_in[i].decode()
-        memcpy(&m_in[i].m_tranId, ptr, sizeof(uint64_t));
-        ptr += sizeof(uint64_t);
-
-        memcpy(&m_in[i].m_outIndex, ptr, sizeof(int));
-        ptr += sizeof(int);
-
-        size_t pubSize = 0;
-        memcpy(&pubSize, ptr, sizeof(size_t));
-        ptr += sizeof(size_t);
-
-        for(size_t j = 0; j < pubSize; j++) {
-            m_in[i].m_pubkey += *ptr;
-            ptr += sizeof(char);
-        }
-
-        size_t sigSize = 0;
-        memcpy(&sigSize, ptr, sizeof(size_t));
-        ptr += sizeof(size_t);
-
-        for(size_t j = 0; j < sigSize; j++) {
-            m_in[i].m_sign += *ptr;
-            ptr += sizeof(char);
-        }
+    for(int i = 0; i < inCount; i++) {
+        TXInput input;
+        input.decode(byteReader);
+        m_in.emplace_back(input);
     }
-
-    size_t outCount = 0;
-
-    memcpy(&outCount, ptr, sizeof(int));
-    ptr += sizeof(int);
-
-    m_out.resize(outCount);
-    for(size_t i = 0; i < outCount; i++) {
-        memcpy(&m_out[i].m_value, ptr, sizeof(int));
-        ptr += sizeof(int);
-
-        size_t pubSize = 0;
-        memcpy(&pubSize, ptr, sizeof(size_t));
-        ptr += sizeof(size_t);
-
-        for(size_t j = 0; j < pubSize; j++) {
-            m_out[i].m_address += *ptr;
-            ptr += sizeof(char);
-        }
-    }*/
+    size_t outCount = byteReader.read<size_t>();
+    for(int i = 0; i < outCount; i++) {
+        TXOutput output;
+        output.decode(byteReader);
+        m_out.push_back(output);
+    }
 }
 
 std::string Transaction::toString() {
@@ -214,35 +166,39 @@ bool Transaction::operator==(const Transaction& tx) const {
     return flag;
 }
 
-CoinBaseTransaction::CoinBaseTransaction(uint64_t& id, std::string& pubkey):
-    Transaction(id, 0, 1),
-    m_address(pubkey) {
-    m_out.push_back(TXOutput(REWARD, pubkey));
+Transaction TransactionFactory::createCoinBase(const uint64_t& id, const std::string& pubkey) {
+    Transaction transaction(id, 0, 1);
+    transaction.m_out.push_back(TXOutput(REWARD, pubkey));
+
+    transaction.sign();
+
+    return transaction;
 }
 
-RealTransaction::RealTransaction(
+Transaction TransactionFactory::createSimple(
     const uint64_t& id,
     const std::string& from,
     const std::string& to,
     int value,
     std::list<TXInput>& inputs,
-    int rest):
-    Transaction(id, (int) inputs.size(), 0),
-    m_from(from),
-    m_to(to),
-    m_value(value),
-    m_rest(rest) {
+    int rest) {
+
+    Transaction transaction(id, (int) inputs.size(), 0);
 
     int i = 0;
     std::list<TXInput>::iterator it;
     for(it = inputs.begin(); it != inputs.end(); it++) {
-        m_in[i] = *it;
+        transaction.m_in[i] = *it;
         i++;
     }
 
-    m_out.push_back(TXOutput(value, to));
+    transaction.m_out.push_back(TXOutput(value, to));
 
     if(rest > 0) {
-        m_out.push_back(TXOutput(rest, from));
+        transaction.m_out.push_back(TXOutput(rest, from));
     }
+
+    transaction.sign();
+
+    return transaction;
 }

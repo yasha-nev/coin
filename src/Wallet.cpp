@@ -53,10 +53,8 @@ void Wallet::createTransaction(const std::string& address, int value) {
         return;
     }
 
-    std::unique_ptr<Transaction> tx = std::make_unique<RealTransaction>(
+    Transaction tx = TransactionFactory::createSimple(
         m_bc.getPastTransactionId() + 1, getAddres(), address, value, inputs, rest);
 
-    tx->sign();
-
-    m_net.sendToMempool(std::move(tx));
+    m_net.sendToMempool(tx);
 }

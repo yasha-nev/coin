@@ -60,13 +60,13 @@ public:
      \brief Сериализация выхода унаследованная от Serializer
      \return выход транзакции преобразованный в массив байт
     */
-    std::vector<std::byte> encode() const override;
+    void encode(ByteWriter& writer) const override;
 
     /*!
      \brief Десериализация выхода унаследованная от Serializer
      \param [in] data - массив байт, сериализованный выход транзакции
     */
-    void decode(const std::vector<std::byte>& data) override;
+    void decode(ByteReader& reader) override;
 
     /*!
      \brief Перегрузка оператора присваивания

@@ -40,8 +40,7 @@ void TXInput::setSignarure(const std::string& signature) {
     m_sign = signature;
 }
 
-std::vector<std::byte> TXInput::encode() const {
-    ByteWriter byteWriter;
+void TXInput::encode(ByteWriter& byteWriter) const {
 
     byteWriter.write<uint64_t>(m_tranId);
     byteWriter.write<int>(m_outIndex);
@@ -55,12 +54,9 @@ std::vector<std::byte> TXInput::encode() const {
     for(size_t i = 0; i < m_sign.size(); i++) {
         byteWriter.write<char>(m_sign[i]);
     }
-
-    return byteWriter.bytes();
 }
 
-void TXInput::decode(const std::vector<std::byte>& data) {
-    ByteReader byteReader(data);
+void TXInput::decode(ByteReader& byteReader) {
 
     m_tranId = byteReader.read<uint64_t>();
     m_outIndex = byteReader.read<int>();

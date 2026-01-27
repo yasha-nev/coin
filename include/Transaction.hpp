@@ -27,6 +27,8 @@
 */
 class Transaction: public Serializer {
 public:
+    Transaction();
+
     /*!
     \brief Конструктор с параметрами
     \param [in] id - id транзакции
@@ -34,11 +36,6 @@ public:
     \param [in] out_count - количество выходов
     */
     Transaction(uint64_t id, int in_cout, int out_count);
-
-    /*!
-    \brief Конструктор копирования
-    */
-    Transaction(Transaction* tx);
 
     /*!
     \brief Диструктор
@@ -65,13 +62,13 @@ public:
     \brief Сериализация транзакции
     \return - массив байт для записи
     */
-    std::vector<std::byte> encode() const override;
+    void encode(ByteWriter& writer) const override;
 
     /*!
     \brief Десериализация транзакции
     \param [in] data - массив байт для чтения
     */
-    void decode(const std::vector<std::byte>& data) override;
+    void decode(ByteReader& reader) override;
 
     /*!
     \brief Подписать транзакцию
@@ -94,19 +91,13 @@ protected:
     std::vector<TXInput> m_in; /*!< Массив Входом */
 
     std::vector<TXOutput> m_out; /*!< Массив Выходов */
+
+    friend class TransactionFactory;
 };
 
-class CoinBaseTransaction: public Transaction {
+class TransactionFactory {
 public:
-    CoinBaseTransaction(uint64_t& id, std::string& address);
-
-private:
-    std::string m_address; /*!< Адресс майнера */
-};
-
-class RealTransaction: public Transaction {
-public:
-    RealTransaction(
+    static Transaction createSimple(
         const uint64_t& id,
         const std::string& from,
         const std::string& to,
@@ -114,14 +105,7 @@ public:
         std::list<TXInput>& inputs,
         int rest);
 
-private:
-    std::string m_from; /*!< Адресс отправителя */
-
-    std::string m_to; /*!< Адресс получателя */
-
-    int m_value; /*!< количество отправленных монет */
-
-    int m_rest; /*!< Разница (сдача) */
+    static Transaction createCoinBase(const uint64_t& id, const std::string& address);
 };
 
 #endif /* Transaction_hpp */

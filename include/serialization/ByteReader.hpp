@@ -2,19 +2,19 @@
 #define ByteReader_hpp
 
 #include <cstring>
+#include <span>
 #include <stdexcept>
-#include <vector>
 
 class ByteReader {
 public:
-    explicit ByteReader(const std::vector<std::byte>& buffer):
+    explicit ByteReader(std::span<const std::byte> buffer):
         m_data(buffer),
         m_position(0) {
     }
 
     template<typename T>
     T read() {
-        static_assert(std::is_trivial_v<T>, "Type must be trivial");
+        static_assert(std::is_trivially_copyable_v<T>, "Type must be trivially copyable");
 
         if(m_position + sizeof(T) > m_data.size()) {
             throw std::runtime_error("Not enough data to read.");
@@ -26,17 +26,14 @@ public:
         return result;
     }
 
-    std::vector<std::byte> read_bytes(size_t count) {
+    std::span<const std::byte> read_bytes(size_t count) {
         if(m_position + count > m_data.size()) {
-            throw std::runtime_error("Not enough data to read.");
+            throw std::runtime_error("Not enough data to read bytes");
         }
 
-        std::vector<std::byte> bytes(count);
-
-        std::memcpy(bytes.data(), m_data.data() + m_position, count);
+        auto result = m_data.subspan(m_position, count);
         m_position += count;
-
-        return bytes;
+        return result;
     }
 
     size_t remaining_size() const {
@@ -44,7 +41,7 @@ public:
     }
 
 private:
-    std::vector<std::byte> m_data;
+    std::span<const std::byte> m_data;
     size_t m_position;
 };
 

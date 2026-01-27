@@ -14,8 +14,13 @@ int main() {
     TXOutput input4(input1);
     assert(input1 == input4);
 
-    auto data = input1.encode();
+    ByteWriter byteWriter;
+    input1.encode(byteWriter);
+
+    const auto& bytes = byteWriter.bytes();
+    ByteReader byteReader(as_bytes(bytes.data(), bytes.size()));
+
     TXOutput input5;
-    input5.decode(data);
+    input5.decode(byteReader);
     assert(input1 == input5);
 }

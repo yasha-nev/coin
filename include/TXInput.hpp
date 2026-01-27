@@ -74,13 +74,13 @@ public:
      \brief Сериализация входа унаследованная от Serializer
      \return Вход транзакции преобразованный в массив байт
     */
-    std::vector<std::byte> encode() const override;
+    void encode(ByteWriter& writer) const override;
 
     /*!
      \brief Десериализация входа унаследованная от Serializer
      \param [in] data - массив байт, сериализованный вход транзакции
     */
-    void decode(const std::vector<std::byte>& data) override;
+    void decode(ByteReader& reader) override;
 
     /*!
      \brief Возвращает количество байт занимаемое входом

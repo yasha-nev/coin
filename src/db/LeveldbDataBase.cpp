@@ -29,34 +29,43 @@ std::array<uint8_t, 32> LeveldbDataBase::getCurrentHash() {
 }
 
 uint64_t LeveldbDataBase::getCurrentId(const std::array<uint8_t, 32>& hash) {
-    uint64_t id;
     auto block = getBlockByHash(hash);
-    id = block->getTransactions().back().getId();
+
+    const auto& transactions = block->getTransactions();
+
+    if(transactions.empty()) {
+        return -1;
+    }
+
+    const auto& lastTransaction = transactions.back();
+    uint64_t id = lastTransaction.getId();
     return id;
 }
 
-std::unique_ptr<Block> LeveldbDataBase::getBlockByHash(const std::array<uint8_t, 32>& hash) {
+std::optional<Block> LeveldbDataBase::getBlockByHash(const std::array<uint8_t, 32>& hash) {
     std::string byteBlock;
 
     leveldb::Slice key((char*) hash.data(), hash.size());
     m_db->Get(leveldb::ReadOptions(), key, &byteBlock);
 
-    auto block = std::make_unique<Block>();
+    Block block = Block();
 
-    // block->decode((uint8_t*)byteBlock.c_str());
+    ByteReader byteReader(as_bytes(byteBlock.data(), byteBlock.size()));
+    block.decode(byteReader);
 
-    return std::move(block);
+    return block;
 }
 
-void LeveldbDataBase::putBlock(const std::unique_ptr<Block>& block) {
-    std::vector<uint8_t> encBlock(block->size());
+void LeveldbDataBase::putBlock(const Block& block) {
+    ByteWriter bytewriter;
+    block.encode(bytewriter);
 
-    // block->encode(encBlock.data());
+    const auto& bytes = bytewriter.bytes();
 
-    leveldb::Slice key((char*) block->getHash().data(), block->getHash().size());
+    leveldb::Slice key((char*) block.getHash().data(), block.getHash().size());
 
-    leveldb::Slice value((char*) encBlock.data(), block->size());
-    leveldb::Slice value_hash((char*) block->getHash().data(), block->getHash().size());
+    leveldb::Slice value((char*) bytes.data(), bytes.size());
+    leveldb::Slice value_hash((char*) block.getHash().data(), block.getHash().size());
 
     m_db->Put(leveldb::WriteOptions(), key, value);
     m_db->Put(leveldb::WriteOptions(), "l", value_hash);

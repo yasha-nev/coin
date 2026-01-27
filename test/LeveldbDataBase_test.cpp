@@ -15,29 +15,27 @@ static bool file_exist(std::string path) {
     }
 }
 
-std::unique_ptr<Block> createBlock() {
+Block createBlock() {
     std::array<uint8_t, 32> zero_hash = { 0 };
     std::list<Transaction> txs;
     uint64_t id = 0;
     std::string address = "address";
-    txs.push_back(CoinBaseTransaction(id, address));
-    auto block = std::make_unique<Block>(
-        static_cast<uint64_t>(0), txs, zero_hash, std::array<uint8_t, 32>(), 0);
-    ProofOfWork pow(block.get());
+    txs.push_back(TransactionFactory::createCoinBase(id, address));
+    Block block = Block(static_cast<uint64_t>(0), txs, zero_hash, std::array<uint8_t, 32>(), 0);
+    ProofOfWork pow(&block);
     pow.Run();
 
     return block;
 }
 
-static bool blocksCompire(std::unique_ptr<Block>& block1, std::unique_ptr<Block>& block2) {
+static bool blocksCompire(Block& block1, Block& block2) {
     bool flag = true;
 
-    flag &= (block1->getHash() == block2->getHash());
-    flag &= (block1->getNonce() == block2->getNonce());
-    flag &= (block1->getPrevBlockHash() == block2->getPrevBlockHash());
-    flag &= (block1->getTimeStamp() == block2->getTimeStamp());
-
-    flag &= (block1->getTransactions() == block2->getTransactions());
+    flag &= (block1.getHash() == block2.getHash());
+    flag &= (block1.getNonce() == block2.getNonce());
+    flag &= (block1.getPrevBlockHash() == block2.getPrevBlockHash());
+    flag &= (block1.getTimeStamp() == block2.getTimeStamp());
+    flag &= (block1.getTransactions() == block2.getTransactions());
 
     return flag;
 }
@@ -51,17 +49,19 @@ int main() {
 
     db.connect();
 
-    auto block = createBlock();
+    Block block = createBlock();
 
     db.putBlock(block);
 
     std::array<uint8_t, 32> curhash = db.getCurrentHash();
 
-    assert(curhash == block->getHash());
+    assert(curhash == block.getHash());
 
-    auto block2 = db.getBlockByHash(curhash);
+    std::optional<Block> block2 = db.getBlockByHash(curhash);
 
-    assert(blocksCompire(block, block2));
+    assert(block2.has_value());
+
+    assert(blocksCompire(block, *block2));
 
     assert(0 == db.getCurrentId(curhash));
 }

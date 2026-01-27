@@ -57,15 +57,14 @@ void getDataMsgTest() {
     assert(getDataMsg.getHashes() == getDataMsg2.getHashes());
 }
 
-std::unique_ptr<Block> createBlock() {
+Block createBlock() {
     std::array<uint8_t, 32> zero_hash = { 0 };
     std::list<Transaction> txs;
     uint64_t id = 0;
     std::string address = "address";
-    txs.push_back(CoinBaseTransaction(id, address));
-    auto block = std::make_unique<Block>(
-        static_cast<uint64_t>(0), txs, zero_hash, std::array<uint8_t, 32>(), 0);
-    ProofOfWork pow(block.get());
+    txs.push_back(TransactionFactory::createCoinBase(id, address));
+    auto block = Block(static_cast<uint64_t>(0), txs, zero_hash, std::array<uint8_t, 32>(), 0);
+    ProofOfWork pow(&block);
     pow.Run();
 
     return block;
@@ -82,15 +81,15 @@ void BlockMsgTest() {
     assert(blockMsg.getClientId() == blockMsg2.getClientId());
     assert(blockMsg.getCommand() == blockMsg2.getCommand());
 
-    auto block2 = blockMsg2.getBlock();
+    Block block2 = blockMsg2.getBlock();
 
-    assert(block1->getTimeStamp() == block2->getTimeStamp());
-    assert(block1->getNonce() == block2->getNonce());
-    assert(block1->getHash() == block2->getHash());
-    assert(block1->getPrevBlockHash() == block2->getPrevBlockHash());
+    assert(block1.getTimeStamp() == block2.getTimeStamp());
+    assert(block1.getNonce() == block2.getNonce());
+    assert(block1.getHash() == block2.getHash());
+    assert(block1.getPrevBlockHash() == block2.getPrevBlockHash());
 }
 
-std::unique_ptr<Transaction> createTransaction() {
+Transaction createTransaction() {
 
     std::list<TXInput> inputs;
 
@@ -118,7 +117,7 @@ std::unique_ptr<Transaction> createTransaction() {
     std::string from = "from";
     std::string to = "to";
 
-    return std::make_unique<RealTransaction>(id, from, to, 0, inputs, 0);
+    return TransactionFactory::createSimple(id, from, to, 0, inputs, 0);
 }
 
 void txMsgTest() {
@@ -133,7 +132,7 @@ void txMsgTest() {
 
     assert(txMsg.getClientId() == txMsg2.getClientId());
     assert(txMsg.getCommand() == txMsg2.getCommand());
-    assert(*txMsg.getTransaction() == *txMsg2.getTransaction());
+    assert(txMsg.getTransaction() == txMsg2.getTransaction());
 }
 
 void noFoundMsgTest() {
