@@ -33,7 +33,7 @@ uint64_t Block::getTimeStamp() const noexcept {
     return m_timeStamp;
 }
 
-const std::list<Transaction>& Block::getTransaction() const noexcept {
+const std::list<Transaction>& Block::getTransactions() const noexcept {
     return m_tx;
 }
 
@@ -80,8 +80,8 @@ size_t Block::size() const noexcept {
         sizeof(uint32_t) * 8 + sizeof(uint64_t);
 }
 
-void Block::encode(uint8_t* ptr) {
-    memcpy(ptr, &m_timeStamp, sizeof(uint64_t));
+std::vector<std::byte> Block::encode() const {
+    /*memcpy(ptr, &m_timeStamp, sizeof(uint64_t));
     ptr += sizeof(uint64_t);
 
     size_t txnum = m_tx.size();
@@ -100,11 +100,13 @@ void Block::encode(uint8_t* ptr) {
     memcpy(ptr, m_hash.data(), sizeof(uint8_t) * 32);
     ptr += sizeof(uint8_t) * 32;
 
-    memcpy(ptr, &m_nonce, sizeof(uint64_t));
+    memcpy(ptr, &m_nonce, sizeof(uint64_t));*/
+
+    return std::vector<std::byte>();
 }
 
-void Block::decode(uint8_t* ptr) {
-    m_timeStamp = 0;
+void Block::decode(const std::vector<std::byte> &data) {
+    /*m_timeStamp = 0;
 
     memcpy(&m_timeStamp, ptr, sizeof(uint64_t));
     ptr += sizeof(uint64_t);
@@ -132,7 +134,7 @@ void Block::decode(uint8_t* ptr) {
         ptr++;
     }
 
-    memcpy(&m_nonce, ptr, sizeof(uint64_t));
+    memcpy(&m_nonce, ptr, sizeof(uint64_t));*/
 }
 
 void Block::print() const noexcept {

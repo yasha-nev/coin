@@ -57,23 +57,7 @@ void Wallet::createTransaction(const std::string& address, int value) {
     std::unique_ptr<Transaction> tx = std::make_unique<RealTransaction>(
         m_bc.getPastTransactionId() + 1, getAddres(), address, value, inputs, rest);
 
-    transactionSign(tx);
+    tx->sign();
 
     m_net.sendToMempool(std::move(tx));
-}
-
-void Wallet::transactionSign(std::unique_ptr<Transaction>& tx) {
-    std::string signstr;
-    for(size_t i = 0; i < tx->m_out.size(); i++) {
-        signstr += tx->m_out[i].m_address;
-    }
-
-    for(size_t i = 0; i < tx->m_in.size(); i++) {
-        CryptoppImpl cryptor;
-        std::string key = tx->m_in[i].m_pubkey + signstr;
-        auto hash = cryptor.sha256Hash(key);
-        tx->m_in[i].m_sign = cryptor.sha256HashToString(hash);
-    }
-    
-    return;
 }

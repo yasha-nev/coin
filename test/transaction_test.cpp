@@ -40,14 +40,12 @@ int main(){
     std::string address = "to";
     
     std::unique_ptr<Transaction> tx1 = createTransaction();
-
-    std::vector<uint8_t> enc(tx1->size());
     
-    tx1->encode(enc.data());
+    std::vector<std::byte> enc = tx1->encode();
     
     std::unique_ptr<Transaction> tx2 = std::make_unique<Transaction>(0, 0, 0);
     
-    tx2->decode(enc.data());
+    tx2->decode(enc);
 
     std::cout << (*tx1 == *tx2) << std::endl;
     

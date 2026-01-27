@@ -24,11 +24,11 @@ void Mainer::process() {
             continue;
         }
 
-        std::list<Transaction> txList;
+        std::list<std::unique_ptr<Transaction>> txList;
 
         txList.push_back(tx.get());
 
-        uint64_t txid = tx->m_id + 1;
+        uint64_t txid = tx->getId() + 1;
         std::string address = getAddres();
         txList.push_back(CoinBaseTransaction(txid, address));
 

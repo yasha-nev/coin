@@ -32,6 +32,7 @@ include_directories(
     include/Crypto
     include/net
     include/db
+    include/serialization
     
     src
     src/db
@@ -44,6 +45,8 @@ set(SRCS
     src/Block.cpp
     src/BlockChain.cpp
     src/Transaction.cpp
+    src/TXInput.cpp
+    src/TXOutput.cpp
     src/Mainer.cpp
     src/db/LeveldbDataBase.cpp
     src/crypto/RSACryptor.cpp
@@ -62,6 +65,8 @@ set(HEADERS
     include/Block.hpp
     include/BlockChain.hpp
     include/Transaction.hpp
+    include/TXInput.hpp
+    include/TXOutput.hpp
     include/Mainer.hpp
     include/db/IDataBase.hpp
     include/db/LeveldbDataBase.hpp
@@ -75,6 +80,9 @@ set(HEADERS
     include/net/Message.hpp
     include/net/Network.hpp
     include/net/Server.hpp
+    include/serialization/ByteReader.hpp
+    include/serialization/ByteWriter.hpp
+    include/serialization/Serializer.hpp
     )
 
 
@@ -105,6 +113,14 @@ enable_testing()
 add_executable(block_test test/block_test.cpp)
 target_link_libraries(block_test coin)
 add_test(NAME coin-block COMMAND block_test)
+
+add_executable(txinput_test test/txinput_test.cpp)
+target_link_libraries(txinput_test coin)
+add_test(NAME coin-txinput COMMAND txinput_test)
+
+add_executable(txoutput_test test/txoutput_test.cpp)
+target_link_libraries(txoutput_test coin)
+add_test(NAME coin-txoutput COMMAND txoutput_test)
 
 add_executable(transaction_test test/transaction_test.cpp)
 target_link_libraries(transaction_test coin)

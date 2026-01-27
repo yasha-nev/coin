@@ -2,6 +2,10 @@
 #define Block_hpp
 
 #include "Transaction.hpp"
+#include "serialization/ByteWriter.hpp"
+#include "serialization/ByteReader.hpp"
+#include "serialization/Serializer.hpp"
+
 
 #include <array>
 #include <ctype.h>
@@ -11,7 +15,7 @@
 #include <sstream>
 #include <string.h>
 #include <string>
-#include <CryptoppImpl.hpp>
+#include <Crypto/CryptoppImpl.hpp>
 
 #define MAXNONCE 1000000
 
@@ -50,7 +54,7 @@ private:
 
     Блок в цепи
 */
-class Block {
+class Block : public Serializer {
 public:
     /*!
      \brief Диструктор
@@ -91,7 +95,7 @@ public:
      \brief Список транзакций
      \return Список указателей
     */
-    const std::list<Transaction>& getTransaction() const noexcept;
+    const std::list<Transaction>& getTransactions() const noexcept;
 
     /*!
      \brief Хэш предыдущего блока
@@ -156,13 +160,13 @@ public:
      \brief Сериализация блока
      \param [out] ptr - размер блока
     */
-    void encode(uint8_t* ptr);
+    std::vector<std::byte> encode() const override;
 
     /*!
     Десериализация блока
     \param [in] ptr массив байтов
     */
-    void decode(uint8_t* ptr);
+    void decode(const std::vector<std::byte> &data) override;
 
     friend BlockChain;
 

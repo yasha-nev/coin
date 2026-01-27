@@ -28,10 +28,9 @@ int main(){
 
     assert(cryptor.sha256HashToString(block1.getHash()) == "0000a50fa6922fdf263171c43e8cb925e0af6a855195b3db29b404b1b7cb851c");
     
-    std::vector<uint8_t> enc(block1.size());
-    block1.encode(enc.data());
+    std::vector<std::byte> enc = block1.encode();
     Block block2;
-    block2.decode(enc.data());
+    block2.decode(enc);
     
     assert(block1.getTimeStamp() == block2.getTimeStamp());
     assert(block1.getNonce() == block2.getNonce());

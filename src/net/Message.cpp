@@ -347,7 +347,7 @@ void BlockMsg::parse(uint8_t* data, size_t size) {
 
     m_block.release();
     m_block.reset(new Block());
-    m_block->decode(data + ptr);
+    //m_block->decode(data + ptr);
 }
 
 std::vector<uint8_t> BlockMsg::toByte() const {
@@ -372,7 +372,7 @@ std::vector<uint8_t> BlockMsg::toByte() const {
     // create Payload
     ptr = headerSize;
     std::vector<uint8_t> encBlock(m_block->size());
-    m_block->encode(encBlock.data());
+    //m_block->encode(encBlock.data());
     memcpy(msg + ptr, encBlock.data(), m_block->size());
     ptr += m_block->size();
 
@@ -415,7 +415,7 @@ void TxMsg::parse(uint8_t* data, size_t size) {
     size_t ptr = headerSize;
     m_tx.release();
     m_tx.reset(new Transaction(0, 0, 0));
-    m_tx->decode(data + ptr);
+    //m_tx->decode(data + ptr);
 }
 
 std::vector<uint8_t> TxMsg::toByte() const {
@@ -439,7 +439,7 @@ std::vector<uint8_t> TxMsg::toByte() const {
 
     // create Payload
     ptr = headerSize;
-    m_tx->encode(msg + ptr);
+    //m_tx->encode(msg + ptr);
 
     // create Checksum
 

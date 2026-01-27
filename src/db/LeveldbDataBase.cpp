@@ -31,7 +31,7 @@ std::array<uint8_t, 32> LeveldbDataBase::getCurrentHash() {
 uint64_t LeveldbDataBase::getCurrentId(const std::array<uint8_t, 32>& hash) {
     uint64_t id;
     auto block = getBlockByHash(hash);
-    id = block->getTransaction().back().m_id;
+    id = block->getTransactions().back().getId();
     return id;
 }
 
@@ -42,7 +42,8 @@ std::unique_ptr<Block> LeveldbDataBase::getBlockByHash(const std::array<uint8_t,
     m_db->Get(leveldb::ReadOptions(), key, &byteBlock);
 
     auto block = std::make_unique<Block>();
-    block->decode((uint8_t*)byteBlock.c_str());
+
+    //block->decode((uint8_t*)byteBlock.c_str());
 
     return std::move(block);
 }
@@ -50,7 +51,7 @@ std::unique_ptr<Block> LeveldbDataBase::getBlockByHash(const std::array<uint8_t,
 void LeveldbDataBase::putBlock(const std::unique_ptr<Block>& block) {
     std::vector<uint8_t> encBlock(block->size());
 
-    block->encode(encBlock.data());
+    //block->encode(encBlock.data());
 
     leveldb::Slice key((char*) block->getHash().data(), block->getHash().size());
 

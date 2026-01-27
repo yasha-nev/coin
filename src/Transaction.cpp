@@ -20,93 +20,52 @@ size_t Transaction::size() const noexcept {
 
     s += sizeof(uint64_t);
 
-    s += sizeof(int);
-    for(int i = 0; i < m_in.size(); i++) {
-        s += sizeof(uint64_t);
-        s += sizeof(int);
-        s += sizeof(size_t);
-        s += sizeof(char) * m_in[i].m_pubkey.size();
-        s += sizeof(size_t);
-        s += sizeof(char) * m_in[i].m_sign.size();
+    s += sizeof(size_t);
+    for (const auto &in : m_in) {
+        s += in.size();
     }
 
-    s += sizeof(int);
-    for(int i = 0; i < m_out.size(); i++) {
-        s += sizeof(int);
-        s += sizeof(size_t);
-        s += sizeof(char) * m_out[i].m_address.size();
+    s += sizeof(size_t);
+    for (const auto &out : m_out) {
+        s += out.size();
     }
 
     return s;
 }
 
-void Transaction::encode(uint8_t* ptr) {
-    memcpy(ptr, &m_id, sizeof(uint64_t));
-    ptr += sizeof(uint64_t);
+std::vector<std::byte> Transaction::encode() const{
+    ByteWriter byteWriter;
 
-    size_t inCount = m_in.size();
+    byteWriter.write<uint64_t>(m_id);
 
-    memcpy(ptr, &inCount, sizeof(int));
-    ptr += sizeof(int);
-
-    for(size_t i = 0; i < m_in.size(); i++) {
-        memcpy(ptr, &m_in[i].m_tranId, sizeof(uint64_t));
-        ptr += sizeof(uint64_t);
-        memcpy(ptr, &m_in[i].m_outIndex, sizeof(int));
-        ptr += sizeof(int);
-
-        size_t pubSize = m_in[i].m_pubkey.size();
-        memcpy(ptr, &pubSize, sizeof(size_t));
-        ptr += sizeof(size_t);
-
-        for(size_t j = 0; j < pubSize; j++) {
-            *ptr = m_in[i].m_pubkey[j];
-            ptr += sizeof(char);
-        }
-
-        size_t sigSize = m_in[i].m_sign.size();
-        memcpy(ptr, &sigSize, sizeof(size_t));
-        ptr += sizeof(size_t);
-
-        for(size_t j = 0; j < sigSize; j++) {
-            *ptr = m_in[i].m_sign[j];
-            ptr += sizeof(char);
-        }
+    byteWriter.write<size_t>(m_in.size());
+    for (const auto &in : m_in) {
+        auto encodeIn = in.encode();
+        byteWriter.write_bytes(encodeIn.data(), encodeIn.size());
     }
-    size_t outCount = m_out.size();
-    memcpy(ptr, &outCount, sizeof(int));
-    ptr += sizeof(int);
 
-    for(size_t i = 0; i < m_out.size(); i++) {
-        memcpy(ptr, &m_out[i].m_value, sizeof(int));
-        ptr += sizeof(int);
-        size_t pubSize = m_out[i].m_address.size();
-
-        memcpy(ptr, &pubSize, sizeof(size_t));
-        ptr += sizeof(size_t);
-
-        for(size_t j = 0; j < pubSize; j++) {
-            *ptr = m_out[i].m_address[j];
-            ptr += sizeof(char);
-        }
+    byteWriter.write<size_t>(m_out.size());
+    for (const auto &out : m_out) {
+        auto encodeOut = out.encode();
+        byteWriter.write_bytes(encodeOut.data(), encodeOut.size());
     }
 }
 
-void Transaction::decode(uint8_t* ptr) {
-    m_in.clear();
+void Transaction::decode(const std::vector<std::byte> &data) {
+    /*m_in.clear();
     m_out.clear();
 
-    memcpy(&m_id, ptr, sizeof(uint64_t));
-    ptr += sizeof(uint64_t);
+    ByteReader byteReader(data);
 
-    size_t inCount = 0;
+    m_id = byteReader.read<uint64_t>();
 
-    memcpy(&inCount, ptr, sizeof(int));
-    ptr += sizeof(int);
+    size_t inCount = byteReader.read<size_t>();
 
     m_in.resize(inCount);
 
     for(size_t i = 0; i < inCount; i++) {
+        auto decodeIn = byteReader.read_bytes()
+        m_in[i].decode()
         memcpy(&m_in[i].m_tranId, ptr, sizeof(uint64_t));
         ptr += sizeof(uint64_t);
 
@@ -150,23 +109,23 @@ void Transaction::decode(uint8_t* ptr) {
             m_out[i].m_address += *ptr;
             ptr += sizeof(char);
         }
-    }
+    }*/
 }
 
 std::string Transaction::toString() {
     std::string result;
     result += std::to_string(m_id);
     result += std::to_string(m_in.size());
-    for(size_t i = 0; i < m_in.size(); i++) {
-        result += std::to_string(m_in[i].m_tranId);
-        result += std::to_string(m_in[i].m_outIndex);
-        result += m_in[i].m_pubkey;
-        result += m_in[i].m_sign;
+    for (const auto &in : m_in) {
+        result += std::to_string(in.getTransactionId());
+        result += std::to_string(in.getOutIndex());
+        result += in.getPublicKey();
+        result += in.getSignature();
     }
     result += std::to_string(m_out.size());
-    for(size_t i = 0; i < m_out.size(); i++) {
-        result += std::to_string(m_out[i].m_value);
-        result += m_out[i].m_address;
+    for (const auto &out : m_out) {
+        result += std::to_string(out.getValue());
+        result += out.getAddress();
     }
 
     return result;
@@ -177,19 +136,46 @@ void Transaction::print() const noexcept {
     std::cout << "|" << std::setfill('_') << std::setw(39) << "TXINPUTS" << std::setfill('_')
               << std::setw(40) << "\n";
 
-    for(size_t i = 0; i < m_in.size(); i++) {
-        std::cout << "|output id : " << m_in[i].m_tranId << "\n";
-        std::cout << "|index: " << m_in[i].m_outIndex << "\n";
-        std::cout << "|pubkey from: " << m_in[i].m_pubkey << "\n";
-        std::cout << "|sign: " << m_in[i].m_sign << "\n";
+    for (const auto &in : m_in) {
+        std::cout << "|output id : " << in.getTransactionId() << "\n";
+        std::cout << "|index: " << in.getOutIndex() << "\n";
+        std::cout << "|pubkey from: " << in.getPublicKey() << "\n";
+        std::cout << "|sign: " << in.getSignature() << "\n";
         std::cout << "|" << std::setfill('-') << std::setw(79) << "\n";
     }
     std::cout << "|" << std::setfill('_') << std::setw(39) << "TXOUTPUTS" << std::setfill('_')
               << std::setw(40) << "\n";
-    for(size_t i = 0; i < m_out.size(); i++) {
-        std::cout << "|value: " << m_out[i].m_value << "\n";
-        std::cout << "|address to: " << m_out[i].m_address << "\n";
+    for (const auto &out : m_out) {
+        std::cout << "|value: " << out.getValue() << "\n";
+        std::cout << "|address to: " << out.getAddress() << "\n";
         std::cout << "|" << std::setfill('-') << std::setw(79) << "\n";
+    }
+}
+
+uint64_t Transaction::getId() const noexcept {
+    return m_id;
+}
+
+const std::vector<TXInput> &Transaction::getInputs() const noexcept {
+    return m_in;
+}
+
+const std::vector<TXOutput> &Transaction::getOutputs() const noexcept {
+    return m_out;
+}
+
+void Transaction::sign() {
+    std::string signstr;
+
+    for (const auto &out : m_out) {
+        signstr += out.getAddress();
+    }
+
+    for (auto &in : m_in) {
+        CryptoppImpl cryptor;
+        std::string key = in.getPublicKey() + signstr;
+        auto hash = cryptor.sha256Hash(key);
+        in.setSignarure(cryptor.sha256HashToString(hash));
     }
 }
 
@@ -224,101 +210,6 @@ RealTransaction::RealTransaction(
     if(rest > 0) {
         m_out.push_back(TXOutput(rest, from));
     }
-}
-
-TXOutput::TXOutput(int value, const std::string& address) {
-    m_value = value;
-    m_address = address;
-}
-
-TXOutput::TXOutput(const TXOutput& out) {
-    m_value = out.m_value;
-    m_address = out.m_address;
-}
-
-TXOutput::TXOutput(const TXOutput&& out) {
-    m_address = std::move(out.m_address);
-    m_value = std::move(out.m_value);
-}
-
-TXOutput& TXOutput::operator=(const TXOutput& out) {
-    if(this == &out) {
-        return *this;
-    }
-    m_value = out.m_value;
-    m_address = out.m_address;
-    return *this;
-}
-
-TXOutput& TXOutput::operator=(const TXOutput&& out) {
-    if(this == &out) {
-        return *this;
-    }
-
-    m_value = std::move(out.m_value);
-    m_address = std::move(out.m_address);
-
-    return *this;
-}
-
-bool TXOutput::operator==(const TXOutput &out) const {
-    bool flag = true;
-    flag &= (this->m_address == out.m_address);
-    flag &= (this->m_value == out.m_value);
-    return flag;
-}
-
-TXInput::TXInput(const uint64_t& transId, int outIndex, const std::string& pubkey) {
-    m_tranId = transId;
-    m_outIndex = outIndex;
-    m_pubkey = pubkey;
-}
-
-TXInput::TXInput(const TXInput& in) {
-    m_tranId = in.m_tranId;
-    m_outIndex = in.m_outIndex;
-    m_pubkey = in.m_pubkey;
-    m_sign = in.m_sign;
-}
-
-TXInput::TXInput(const TXInput&& in) {
-    m_tranId = std::move(in.m_tranId);
-    m_outIndex = std::move(in.m_outIndex);
-    m_pubkey = std::move(in.m_pubkey);
-    m_sign = std::move(in.m_sign);
-}
-
-TXInput& TXInput::operator=(const TXInput& in) {
-    if(this == &in) {
-        return *this;
-    }
-    m_tranId = in.m_tranId;
-    m_outIndex = in.m_outIndex;
-    m_pubkey = in.m_pubkey;
-    m_sign = in.m_sign;
-    return *this;
-}
-
-TXInput& TXInput::operator=(const TXInput&& in) {
-    if(this == &in) {
-        return *this;
-    }
-
-    m_tranId = std::move(in.m_tranId);
-    m_outIndex = std::move(in.m_outIndex);
-    m_pubkey = std::move(in.m_pubkey);
-    m_sign = std::move(in.m_sign);
-
-    return *this;
-}
-
-bool TXInput::operator==(const TXInput &in) const {
-    bool flag = true;
-    flag &= (this->m_outIndex == in.m_outIndex);
-    flag &= (this->m_sign == in.m_sign);
-    flag &= (this->m_pubkey == in.m_pubkey);
-    flag &= (this->m_pubkey == in.m_pubkey);
-    return flag;
 }
 
 bool Transaction::operator==(const Transaction &tx) const {

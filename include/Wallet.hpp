@@ -51,12 +51,6 @@ public:
 
 protected:
     /*!
-     \brief Подписать транзакцию
-     \param [in] tx - адрес перевода
-    */
-    void transactionSign(std::unique_ptr<Transaction>& tx);
-
-    /*!
      \brief Создания хэша для проверки
      \param [in] payload ресурс хэширования
      \return строка хэша в hex формате
