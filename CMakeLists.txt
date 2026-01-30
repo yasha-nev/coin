@@ -29,7 +29,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(
     include
-    include/Crypto
+    include/crypto
     include/net
     include/db
     include/serialization
@@ -49,6 +49,7 @@ set(SRCS
     src/TXOutput.cpp
     src/Mainer.cpp
     src/db/LeveldbDataBase.cpp
+    src/crypto/Hash.cpp
     src/crypto/RSACryptor.cpp
     src/crypto/publickey.cpp
     src/crypto/privatekey.cpp
@@ -70,12 +71,13 @@ set(HEADERS
     include/Mainer.hpp
     include/db/IDataBase.hpp
     include/db/LeveldbDataBase.hpp
-    include/Crypto/ICrypto.hpp
-    include/Crypto/CryptoppImpl.hpp
-    include/Crypto/RSACryptor.hpp
-    include/Crypto/publickey.hpp
-    include/Crypto/privatekey.hpp
-    include/Crypto/base58.hpp
+    include/crypto/Hash.hpp
+    include/crypto/ICrypto.hpp
+    include/crypto/CryptoppImpl.hpp
+    include/crypto/RSACryptor.hpp
+    include/crypto/publickey.hpp
+    include/crypto/privatekey.hpp
+    include/crypto/base58.hpp
     include/net/Client.hpp
     include/net/Message.hpp
     include/net/Network.hpp
@@ -87,8 +89,8 @@ set(HEADERS
 
 
 add_compile_options(
-    #-Wall
-    #-Wextra
+    -Wall
+    -Wextra
     )
 
 
@@ -110,6 +112,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests)
 enable_testing()
 
 #=============TESTS=================
+
+# Hash Test
+add_executable(hash_test test/hash_test.cpp)
+target_link_libraries(hash_test coin)
+add_test(NAME coin-hash COMMAND hash_test)
 
 # Transaction Input Test
 add_executable(txinput_test test/txinput_test.cpp)

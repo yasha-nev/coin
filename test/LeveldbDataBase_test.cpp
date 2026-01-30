@@ -16,13 +16,13 @@ static bool file_exist(std::string path) {
 }
 
 Block createBlock() {
-    std::array<uint8_t, 32> zero_hash = { 0 };
+    Hash zero_hash = createZeroHash();
     std::list<Transaction> txs;
     uint64_t id = 0;
     std::string address = "address";
     txs.push_back(TransactionFactory::createCoinBase(id, address));
-    Block block = Block(static_cast<uint64_t>(0), txs, zero_hash, std::array<uint8_t, 32>(), 0);
-    ProofOfWork pow(&block);
+    Block block = Block(static_cast<uint64_t>(0), txs, zero_hash, Hash(), 0);
+    ProofOfWork pow(block);
     pow.Run();
 
     return block;
@@ -53,15 +53,17 @@ int main() {
 
     db.putBlock(block);
 
-    std::array<uint8_t, 32> curhash = db.getCurrentHash();
+    std::optional<Hash> curhash = db.getCurrentHash();
 
-    assert(curhash == block.getHash());
+    assert(curhash.has_value());
 
-    std::optional<Block> block2 = db.getBlockByHash(curhash);
+    assert(*curhash == block.getHash());
+
+    std::optional<Block> block2 = db.getBlockByHash(*curhash);
 
     assert(block2.has_value());
 
     assert(blocksCompire(block, *block2));
 
-    assert(0 == db.getCurrentId(curhash));
+    assert(0 == db.getCurrentId(*curhash));
 }

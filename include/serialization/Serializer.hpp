@@ -1,6 +1,9 @@
 #ifndef Serializer_hpp
 #define Serializer_hpp
 
+#include "ByteReader.hpp"
+#include "ByteWriter.hpp"
+
 #include <span>
 #include <vector>
 

@@ -6,17 +6,17 @@
 #include <list>
 
 Block createBlock() {
-    std::array<uint8_t, 32> zero_hash = { 0 };
+    Hash zero_hash = createZeroHash();
     std::list<Transaction> txs;
     uint64_t id = 0;
     std::string address = "address";
     txs.push_back(TransactionFactory::createCoinBase(id, address));
 
     // generate simple block
-    Block block = Block(static_cast<uint64_t>(0), txs, zero_hash, std::array<uint8_t, 32>(), 0);
+    Block block = Block(static_cast<uint64_t>(0), txs, zero_hash, Hash(), 0);
 
     // generate block hash
-    ProofOfWork pow(&block);
+    ProofOfWork pow(block);
     pow.Run();
 
     return block;

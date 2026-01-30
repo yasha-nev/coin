@@ -3,14 +3,13 @@
 Block::Block(
     const int64_t& timeStamp,
     const std::list<Transaction>& txs,
-    const std::array<uint8_t, 32>& prevBlockHash,
-    const std::array<uint8_t, 32>& hash,
+    const Hash& prevBlockHash,
+    const Hash& hash,
     const int64_t& nonce) {
     m_timeStamp = timeStamp;
     m_prevBlockHash = prevBlockHash;
     m_hash = hash;
     m_nonce = nonce;
-
     m_tx = txs;
 }
 
@@ -30,11 +29,11 @@ const std::list<Transaction>& Block::getTransactions() const noexcept {
     return m_tx;
 }
 
-const std::array<uint8_t, 32>& Block::getPrevBlockHash() const noexcept {
+const Hash& Block::getPrevBlockHash() const noexcept {
     return m_prevBlockHash;
 }
 
-const std::array<uint8_t, 32>& Block::getHash() const noexcept {
+const Hash& Block::getHash() const noexcept {
     return m_hash;
 }
 
@@ -54,11 +53,11 @@ void Block::setNonce(const uint64_t& nonce) noexcept {
     m_nonce = nonce;
 }
 
-void Block::setPrevBlockHash(const std::array<uint8_t, 32>& hash) noexcept {
+void Block::setPrevBlockHash(const Hash& hash) noexcept {
     m_prevBlockHash = hash;
 }
 
-void Block::setHash(const std::array<uint8_t, 32>& hash) noexcept {
+void Block::setHash(const Hash& hash) noexcept {
     m_hash = hash;
 }
 
@@ -81,34 +80,23 @@ void Block::encode(ByteWriter& byteWriter) const {
         tx.encode(byteWriter);
     }
 
-    byteWriter.write_bytes(as_bytes(m_prevBlockHash));
-    byteWriter.write_bytes(as_bytes(m_hash));
-
+    m_prevBlockHash.encode(byteWriter);
+    m_hash.encode(byteWriter);
     byteWriter.write<uint64_t>(m_nonce);
-}
-
-void convertVectorToArray(std::span<const std::byte> vec, std::array<uint8_t, 32>& arr) {
-    if(vec.size() != 32) {
-        throw std::runtime_error("Размер вектора должен быть равен 32 элементам");
-    }
-
-    for(size_t i = 0; i < 32; ++i) {
-        arr[i] = static_cast<uint8_t>(vec[i]);
-    }
 }
 
 void Block::decode(ByteReader& byteReader) {
     m_timeStamp = byteReader.read<uint64_t>();
     size_t txSize = byteReader.read<size_t>();
 
-    for(int i = 0; i < txSize; i++) {
+    for(size_t i = 0; i < txSize; i++) {
         Transaction tx;
         tx.decode(byteReader);
         m_tx.push_back(tx);
     }
 
-    convertVectorToArray(byteReader.read_bytes(sizeof(uint8_t) * 32), m_prevBlockHash);
-    convertVectorToArray(byteReader.read_bytes(sizeof(uint8_t) * 32), m_hash);
+    m_prevBlockHash.decode(byteReader);
+    m_hash.decode(byteReader);
 
     m_nonce = byteReader.read<uint64_t>();
 }
@@ -128,49 +116,27 @@ void Block::print() const noexcept {
     std::cout << std::setfill('=') << std::setw(80) << "\n" << std::endl;
 }
 
-void printBigInt(uint32_t* bigint) {
-    for(int i = 0; i < 8; i++) {
-        std::cout << std::setfill('0') << std::setw(8) << std::hex << bigint[i];
-    }
-    std::cout << "\n";
-}
-
-static int bigIntCmp(const std::array<uint8_t, 32>& left, const std::array<uint8_t, 32>& right) {
-    for(int i = 0; i < 32; i++) {
-        if(left[i] > right[i]) {
-            return 1;
-        } else if(left[i] < right[i]) {
-            return -1;
-        }
-    }
-    return 0;
-}
-
-ProofOfWork::ProofOfWork(Block* block) {
+ProofOfWork::ProofOfWork(Block& block):
+    m_block(block) {
     m_nonce = 0;
-    m_block = block;
-    m_target[0] = 0;
-    m_target[1] = 1 << 0;
-    m_target[2] = 0;
-    m_target[3] = 0;
 }
 
 std::string ProofOfWork::PrepareData() {
     std::string data;
     CryptoppImpl cryptor;
-    data += std::to_string(m_block->getTimeStamp());
+    data += std::to_string(m_block.getTimeStamp());
 
-    for(auto& tx: m_block->m_tx) {
+    for(const auto& tx: m_block.getTransactions()) {
         data += tx.toString();
     }
-    data += cryptor.sha256HashToString(m_block->getPrevBlockHash());
+    data += cryptor.sha256HashToString(m_block.getPrevBlockHash());
     data += std::to_string(m_nonce);
     return data;
 }
 
 void ProofOfWork::Run() {
     m_nonce = 0;
-    std::array<uint8_t, 32> hash;
+    Hash hash;
     CryptoppImpl Crypto;
     std::cout << "==============Block Hashing==============\n";
     while(m_nonce < MAXNONCE) {
@@ -182,13 +148,25 @@ void ProofOfWork::Run() {
             std::cout << ">";
         }
 
-        if(bigIntCmp(hash, m_target) == -1) {
-            m_block->setNonce(m_nonce);
-            m_block->m_hash = hash;
+        if(hashIsValid(hash)) {
+            m_block.setNonce(m_nonce);
+            m_block.setHash(hash);
             break;
         }
         m_nonce += 1;
     }
 
     std::cout << "\n" << std::endl;
+}
+
+bool ProofOfWork::hashIsValid(const Hash& hash) {
+    const auto& array = hash.getHashAsVector();
+
+    for(size_t i = 0; i < 2; i++) {
+        if(array[i] != 0) {
+            return false;
+        }
+    }
+
+    return true;
 }

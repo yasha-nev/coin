@@ -1,5 +1,8 @@
 #include "CryptoppImpl.hpp"
 
+#define SHA256_HASH_SIZE 32
+#define RIPMD160_HASH_SIZE 20
+
 std::string CryptoppImpl::encodeBase58(const std::string& source) {
     return encodeBase58(source);
 }
@@ -8,24 +11,24 @@ std::string CryptoppImpl::decodeBase58(const std::string& str) {
     return decodeBase58(str);
 }
 
-std::array<uint8_t, 32> CryptoppImpl::sha256Hash(const std::string& message) {
+Hash CryptoppImpl::sha256Hash(const std::string& message) {
     CryptoPP::SHA256 hash;
 
     std::vector<CryptoPP::byte> byteArray(message.begin(), message.end());
 
-    std::array<uint8_t, 32> digest;
+    std::vector<uint8_t> digest(SHA256_HASH_SIZE);
     hash.CalculateDigest(digest.data(), byteArray.data(), byteArray.size());
-    return digest;
+    return Hash(digest);
 }
 
-std::array<uint8_t, 20> CryptoppImpl::ripemd160Hash(const std::string& message) {
+Hash CryptoppImpl::ripemd160Hash(const std::string& message) {
     CryptoPP::RIPEMD160 hash;
 
     std::vector<CryptoPP::byte> byteArray(message.begin(), message.end());
 
-    std::array<uint8_t, 20> digest;
+    std::vector<uint8_t> digest(RIPMD160_HASH_SIZE);
     hash.CalculateDigest(digest.data(), byteArray.data(), byteArray.size());
-    return digest;
+    return Hash(digest);
 }
 
 template<typename ArrayType>
@@ -37,8 +40,10 @@ static std::string toHex(const ArrayType& arr) {
     return ss.str();
 }
 
-std::string CryptoppImpl::sha256HashToString(const std::array<uint8_t, 32>& array) {
+std::string CryptoppImpl::sha256HashToString(const Hash& hash) {
     std::stringstream s;
+
+    const auto& array = hash.getHashAsVector();
 
     for(int i = 0; i < 8; i++) {
         uint32_t value = 0;
@@ -50,6 +55,7 @@ std::string CryptoppImpl::sha256HashToString(const std::array<uint8_t, 32>& arra
     return s.str();
 }
 
-std::string CryptoppImpl::ripemd160HashToString(const std::array<uint8_t, 20>& array) {
+std::string CryptoppImpl::ripemd160HashToString(const Hash& hash) {
+    const auto& array = hash.getHashAsVector();
     return toHex(array);
 }

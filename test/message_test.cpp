@@ -1,22 +1,28 @@
 #include "Block.hpp"
-#include "Message.hpp"
+#include "ByteReader.hpp"
+#include "ByteWriter.hpp"
+#include "net/Message.hpp"
 
 #include <array>
 #include <assert.h>
+#include <iostream>
 #include <list>
 #include <memory>
 
 void getBlockMsgTest() {
-    std::list<std::array<uint8_t, 32>> hashes;
+    std::list<Hash> hashes;
+    hashes.push_back(Hash(std::vector<uint8_t> { 2, 5, 1, 2, 5 }));
+    hashes.push_back(Hash(std::vector<uint8_t> { 4, 1, 5, 15, 25 }));
 
-    hashes.push_back(std::array<uint8_t, 32> { 1 });
-    hashes.push_back(std::array<uint8_t, 32> { 0 });
-
-    auto gblochMsg = GetBlocksMsg(hashes);
-
-    std::vector<uint8_t> encodeMsg = gblochMsg.toByte();
+    GetBlocksMsg gblochMsg = GetBlocksMsg(hashes);
     GetBlocksMsg gblochMsg2 = GetBlocksMsg();
-    gblochMsg2.parse(encodeMsg.data(), encodeMsg.size());
+
+    ByteWriter byteWriter;
+    gblochMsg.encode(byteWriter);
+    const auto& bytes = byteWriter.bytes();
+    ByteReader byteReader(as_bytes(bytes.data(), bytes.size()));
+
+    gblochMsg2.decode(byteReader);
 
     assert(gblochMsg.getClientId() == gblochMsg2.getClientId());
     assert(gblochMsg.getCommand() == gblochMsg2.getCommand());
@@ -24,16 +30,19 @@ void getBlockMsgTest() {
 }
 
 void invMsgTest() {
-    std::list<std::array<uint8_t, 32>> hashes;
+    std::list<Hash> hashes;
+    hashes.push_back(Hash(std::vector<uint8_t> { 2, 5, 1, 2, 5 }));
+    hashes.push_back(Hash(std::vector<uint8_t> { 4, 1, 5, 15, 25 }));
 
-    hashes.push_back(std::array<uint8_t, 32> { 1 });
-    hashes.push_back(std::array<uint8_t, 32> { 0 });
-
-    auto invMsg = InvMsg(InvTypes::iBlock, hashes);
-
-    std::vector<uint8_t> encodeMsg = invMsg.toByte();
+    InvMsg invMsg = InvMsg(InvTypes::iBlock, hashes);
     InvMsg invMsg2 = InvMsg();
-    invMsg2.parse(encodeMsg.data(), encodeMsg.size());
+
+    ByteWriter byteWriter;
+    invMsg.encode(byteWriter);
+    const auto& bytes = byteWriter.bytes();
+    ByteReader byteReader(as_bytes(bytes.data(), bytes.size()));
+
+    invMsg2.decode(byteReader);
 
     assert(invMsg.getClientId() == invMsg2.getClientId());
     assert(invMsg.getCommand() == invMsg2.getCommand());
@@ -41,16 +50,19 @@ void invMsgTest() {
 }
 
 void getDataMsgTest() {
-    std::list<std::array<uint8_t, 32>> hashes;
+    std::list<Hash> hashes;
+    hashes.push_back(Hash(std::vector<uint8_t> { 2, 5, 1, 2, 5 }));
+    hashes.push_back(Hash(std::vector<uint8_t> { 4, 1, 5, 15, 25 }));
 
-    hashes.push_back(std::array<uint8_t, 32> { 1 });
-    hashes.push_back(std::array<uint8_t, 32> { 0 });
-
-    auto getDataMsg = GetDataMsg(DataTypes::dBlock, hashes);
-
-    std::vector<uint8_t> encodeMsg = getDataMsg.toByte();
+    GetDataMsg getDataMsg = GetDataMsg(DataTypes::dBlock, hashes);
     GetDataMsg getDataMsg2 = GetDataMsg();
-    getDataMsg2.parse(encodeMsg.data(), encodeMsg.size());
+
+    ByteWriter byteWriter;
+    getDataMsg.encode(byteWriter);
+    const auto& bytes = byteWriter.bytes();
+    ByteReader byteReader(as_bytes(bytes.data(), bytes.size()));
+
+    getDataMsg2.decode(byteReader);
 
     assert(getDataMsg.getClientId() == getDataMsg2.getClientId());
     assert(getDataMsg.getCommand() == getDataMsg2.getCommand());
@@ -58,25 +70,29 @@ void getDataMsgTest() {
 }
 
 Block createBlock() {
-    std::array<uint8_t, 32> zero_hash = { 0 };
+    Hash zero_hash = createZeroHash();
     std::list<Transaction> txs;
     uint64_t id = 0;
     std::string address = "address";
     txs.push_back(TransactionFactory::createCoinBase(id, address));
-    auto block = Block(static_cast<uint64_t>(0), txs, zero_hash, std::array<uint8_t, 32>(), 0);
-    ProofOfWork pow(&block);
+    auto block = Block(static_cast<uint64_t>(0), txs, zero_hash, Hash(), 0);
+    ProofOfWork pow(block);
     pow.Run();
 
     return block;
 }
 
 void BlockMsgTest() {
-    auto block1 = createBlock();
-    auto blockMsg = BlockMsg(block1);
-
-    std::vector<uint8_t> encodeMsg = blockMsg.toByte();
+    Block block1 = createBlock();
+    BlockMsg blockMsg = BlockMsg(block1);
     BlockMsg blockMsg2 = BlockMsg();
-    blockMsg2.parse(encodeMsg.data(), encodeMsg.size());
+
+    ByteWriter byteWriter;
+    blockMsg.encode(byteWriter);
+    const auto& bytes = byteWriter.bytes();
+    ByteReader byteReader(as_bytes(bytes.data(), bytes.size()));
+
+    blockMsg2.decode(byteReader);
 
     assert(blockMsg.getClientId() == blockMsg2.getClientId());
     assert(blockMsg.getCommand() == blockMsg2.getCommand());
@@ -122,13 +138,17 @@ Transaction createTransaction() {
 
 void txMsgTest() {
 
-    auto tx1 = createTransaction();
+    Transaction tx1 = createTransaction();
 
-    auto txMsg = TxMsg(tx1);
-
-    std::vector<uint8_t> encodeMsg = txMsg.toByte();
+    TxMsg txMsg = TxMsg(tx1);
     TxMsg txMsg2 = TxMsg();
-    txMsg2.parse(encodeMsg.data(), encodeMsg.size());
+
+    ByteWriter byteWriter;
+    txMsg.encode(byteWriter);
+    const auto& bytes = byteWriter.bytes();
+    ByteReader byteReader(as_bytes(bytes.data(), bytes.size()));
+
+    txMsg2.decode(byteReader);
 
     assert(txMsg.getClientId() == txMsg2.getClientId());
     assert(txMsg.getCommand() == txMsg2.getCommand());
@@ -136,18 +156,21 @@ void txMsgTest() {
 }
 
 void noFoundMsgTest() {
-    auto noFoundMsg = NoFoundMsg();
-
-    std::vector<uint8_t> encodeMsg = noFoundMsg.toByte();
+    NoFoundMsg noFoundMsg = NoFoundMsg();
     NoFoundMsg noFoundMsg2 = NoFoundMsg();
-    noFoundMsg2.parse(encodeMsg.data(), encodeMsg.size());
+
+    ByteWriter byteWriter;
+    noFoundMsg.encode(byteWriter);
+    const auto& bytes = byteWriter.bytes();
+    ByteReader byteReader(as_bytes(bytes.data(), bytes.size()));
+
+    noFoundMsg2.decode(byteReader);
 
     assert(noFoundMsg.getClientId() == noFoundMsg2.getClientId());
     assert(noFoundMsg.getCommand() == noFoundMsg2.getCommand());
 }
 
 int main() {
-
     getBlockMsgTest();
 
     invMsgTest();

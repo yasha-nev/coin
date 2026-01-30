@@ -83,7 +83,7 @@ std::string DecodeBase58(const std::string& str) {
 
     result[0] = 0;
     int resultlen = 1;
-    for(int i = 0; i < str.size() - 1; i++) {
+    for(size_t i = 0; i < str.size() - 1; i++) {
 
         unsigned int carry = (unsigned int) ALPHABET_MAP[str[i]];
 
@@ -102,7 +102,7 @@ std::string DecodeBase58(const std::string& str) {
         }
     }
 
-    for(int i = 0; i < str.size() - 1 && str[i] == '1'; i++) {
+    for(size_t i = 0; i < str.size() - 1 && str[i] == '1'; i++) {
         result[resultlen++] = 0;
     }
 
