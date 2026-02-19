@@ -29,6 +29,6 @@ ClientID Client::getId() const noexcept {
     return m_id;
 }
 
-void Client::sendData(uint8_t* buffer, size_t n) {
-    send(m_sock, buffer, n, 0);
+void Client::sendData(std::span<const std::byte> buffer) {
+    send(m_sock, buffer.data(), buffer.size(), 0);
 }

@@ -20,8 +20,6 @@
 
 #define MAXNONCE 1000000
 
-class BlockChain;
-
 /*!
     \brief Блок
 
@@ -135,8 +133,6 @@ public:
     \param [in] ptr массив байтов
     */
     void decode(ByteReader& reader) override;
-
-    friend BlockChain;
 
 private:
     int64_t m_timeStamp;

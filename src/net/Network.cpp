@@ -4,9 +4,10 @@ using namespace std::literals::chrono_literals;
 
 Network::Network(int port, BlockChain& bc):
     m_bc(bc) {
-    m_serv = std::make_unique<Server>(port, [this](uint8_t* data, size_t len, long clientId) {
-        return this->messageHandler(data, len, clientId);
-    });
+    m_serv = std::make_unique<Server>(
+        port, [this](std::span<const std::byte> buffer, long clientId) {
+            return this->messageHandler(buffer, clientId);
+        });
     m_serv->start();
 
     for(std::pair<std::string, int> host: m_clientsIp) {
@@ -33,9 +34,8 @@ void Network::getBlocks() {
 
     ByteWriter byteWriter;
     msg.encode(byteWriter);
-    const std::vector<std::byte> bytes = byteWriter.bytes();
 
-    m_serv->sendDataTo(id, (uint8_t*) bytes.data(), bytes.size());
+    m_serv->sendDataTo(id, byteWriter.bytes());
 }
 
 void Network::sendToMempool(const Transaction& tx) {
@@ -50,9 +50,8 @@ void Network::sendToMempool(const Transaction& tx) {
 
     ByteWriter byteWriter;
     msg.encode(byteWriter);
-    const std::vector<std::byte> bytes = byteWriter.bytes();
 
-    m_serv->sendDataTo(id, (uint8_t*) bytes.data(), bytes.size());
+    m_serv->sendDataTo(id, byteWriter.bytes());
 }
 
 void Network::noFound(ClientID clintId) {
@@ -60,9 +59,8 @@ void Network::noFound(ClientID clintId) {
 
     ByteWriter byteWriter;
     msg.encode(byteWriter);
-    const std::vector<std::byte> bytes = byteWriter.bytes();
 
-    m_serv->sendDataTo(clintId, (uint8_t*) bytes.data(), bytes.size());
+    m_serv->sendDataTo(clintId, byteWriter.bytes());
 }
 
 void Network::inv(const Hash& hash, ClientID clientId) {
@@ -71,9 +69,8 @@ void Network::inv(const Hash& hash, ClientID clientId) {
 
     ByteWriter byteWriter;
     msg.encode(byteWriter);
-    const std::vector<std::byte> bytes = byteWriter.bytes();
 
-    m_serv->sendDataTo(clientId, (uint8_t*) bytes.data(), bytes.size());
+    m_serv->sendDataTo(clientId, byteWriter.bytes());
 }
 
 void Network::getData(const std::list<Hash>& hashes, ClientID clientId) {
@@ -81,9 +78,8 @@ void Network::getData(const std::list<Hash>& hashes, ClientID clientId) {
 
     ByteWriter byteWriter;
     msg.encode(byteWriter);
-    const std::vector<std::byte> bytes = byteWriter.bytes();
 
-    m_serv->sendDataTo(clientId, (uint8_t*) bytes.data(), bytes.size());
+    m_serv->sendDataTo(clientId, byteWriter.bytes());
 }
 
 void Network::sblock(const std::list<Hash>& hashes, ClientID clientId) {
@@ -98,9 +94,8 @@ void Network::sblock(const std::list<Hash>& hashes, ClientID clientId) {
 
         ByteWriter byteWriter;
         msg.encode(byteWriter);
-        const std::vector<std::byte> bytes = byteWriter.bytes();
 
-        m_serv->sendDataTo(clientId, (uint8_t*) bytes.data(), bytes.size());
+        m_serv->sendDataTo(clientId, byteWriter.bytes());
         std::this_thread::sleep_for(50ms);
     }
 }
@@ -116,17 +111,29 @@ void Network::connectTo(const std::string& host, int ip) {
     m_clientsIp.push_back(conn);
 }
 
-void Network::messageHandler(uint8_t* buffer, size_t n, ClientID clientId) {
-    MsgTypes type = static_cast<MsgTypes>(buffer[9]);
+void Network::messageHandler(std::span<const std::byte> buffer, ClientID clientId) {
 
-    ByteReader byteReader(as_bytes(buffer, n));
+    if(buffer.size() < sizeof(MessageHeader)) {
+        return;
+    }
+
+    MessageHeader header {};
+    std::memcpy(&header, buffer.data(), sizeof(MessageHeader));
+
+    if(buffer.size() < sizeof(MessageHeader) + header.payloadSize) {
+        return;
+    }
+
+    ByteReader byteReader(buffer);
+
+    MsgType type = header.command;
 
     switch(type) {
-        case(MsgTypes::gBlocks): {
-            auto getBlockMsg = std::make_unique<GetBlocksMsg>();
-            getBlockMsg->decode(byteReader);
+        case(MsgType::gBlocks): {
+            GetBlocksMsg getBlockMsg;
+            getBlockMsg.decode(byteReader);
 
-            const std::list<Hash>& hashes = getBlockMsg->getHashes();
+            const std::list<Hash>& hashes = getBlockMsg.getHashes();
 
             if(hashes.empty()) {
                 break;
@@ -135,31 +142,33 @@ void Network::messageHandler(uint8_t* buffer, size_t n, ClientID clientId) {
             inv(hashes.front(), clientId);
             break;
         }
-        case(MsgTypes::Inv): {
-            auto invMsg = std::make_unique<GetBlocksMsg>();
-            invMsg->decode(byteReader);
-            getData(invMsg->getHashes(), clientId);
+        case(MsgType::Inv): {
+            InvMsg invMsg;
+            invMsg.decode(byteReader);
+            getData(invMsg.getHashes(), clientId);
             break;
         }
-        case(MsgTypes::gData): {
-            auto getDataMsg = std::make_unique<GetDataMsg>();
-            getDataMsg->decode(byteReader);
-            sblock(getDataMsg->getHashes(), clientId);
+        case(MsgType::gData): {
+            GetDataMsg getDataMsg;
+            getDataMsg.decode(byteReader);
+            sblock(getDataMsg.getHashes(), clientId);
             break;
         }
-        case(MsgTypes::sBlock): {
-            auto blockMsg = std::make_unique<BlockMsg>();
-            blockMsg->decode(byteReader);
-            m_bc.putBlock(blockMsg->getBlock());
+        case(MsgType::sBlock): {
+            BlockMsg blockMsg;
+            blockMsg.decode(byteReader);
+            m_bc.putBlock(blockMsg.getBlock());
             break;
         }
-        case(MsgTypes::Tx): {
-            auto txMsg = std::make_unique<TxMsg>();
-            txMsg->decode(byteReader);
+        case(MsgType::Tx): {
+            TxMsg txMsg;
+            txMsg.decode(byteReader);
 
-            m_mtx.lock();
-            m_mempool.push_back(txMsg->getTransaction());
-            m_mtx.unlock();
+            std::lock_guard<std::mutex> lock(m_mtx);
+            m_mempool.push_back(txMsg.getTransaction());
+            break;
+        }
+        case(MsgType::noFound): {
             break;
         }
         default:

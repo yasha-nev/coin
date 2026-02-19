@@ -1,12 +1,10 @@
 #include "Message.hpp"
 
-#define STARTSIZE 9
-
 Message::~Message() {
 }
 
-MsgTypes Message::getCommand() noexcept {
-    return m_comm;
+MsgType Message::getCommand() noexcept {
+    return m_header.command;
 }
 
 void Message::setClientId(ClientID id) {
@@ -17,31 +15,38 @@ ClientID Message::getClientId() noexcept {
     return m_clientId;
 }
 
-void Message::encodeHeader(ByteWriter& byteWriter, size_t payloadSize, int checkSum) const {
-    std::string startString = STARTSTR;
-    byteWriter.write_bytes(as_bytes(startString.data(), startString.size()));
-    byteWriter.write<uint8_t>(static_cast<uint8_t>(m_comm));
-    byteWriter.write<size_t>(payloadSize);
-    byteWriter.write<int>(checkSum);
+void Message::encodeHeader(ByteWriter& byteWriter) const {
+    byteWriter.write_bytes(as_bytes(m_header.startString.data(), START_STRING_SIZE));
+    byteWriter.write<uint8_t>(static_cast<uint8_t>(m_header.command));
+    byteWriter.write<size_t>(m_header.payloadSize);
+    byteWriter.write_bytes(as_bytes(m_header.checkSum.data(), CHECK_SUM_SIZE));
 }
 
 void Message::decodeHeader(ByteReader& byteReader) {
-    std::string startString = STARTSTR;
-    byteReader.read_bytes(startString.size());
-    m_comm = static_cast<MsgTypes>(byteReader.read<uint8_t>());
-    byteReader.read<size_t>();
-    byteReader.read<int>();
+    auto startString = byteReader.read_bytes(START_STRING_SIZE);
+    std::memcpy(m_header.startString.data(), startString.data(), START_STRING_SIZE);
+    m_header.command = static_cast<MsgType>(byteReader.read<uint8_t>());
+    m_header.payloadSize = byteReader.read<size_t>();
+    auto checksum = byteReader.read_bytes(CHECK_SUM_SIZE);
+    std::memcpy(m_header.checkSum.data(), checksum.data(), CHECK_SUM_SIZE);
 }
 
-GetBlocksMsg::GetBlocksMsg() {
-    m_comm = MsgTypes::gBlocks;
-    m_ver = 0;
+GetBlocksMsg::GetBlocksMsg():
+    m_version(0) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::gBlocks;
+    // Protocol version + hashe Count + hashes
+    m_header.payloadSize = sizeof(uint8_t) + sizeof(size_t);
 }
 
-GetBlocksMsg::GetBlocksMsg(const std::list<Hash>& hashes) {
-    m_comm = MsgTypes::gBlocks;
-    m_ver = 0;
-    m_hashes = hashes;
+GetBlocksMsg::GetBlocksMsg(const std::list<Hash>& hashes):
+    m_version(0),
+    m_hashes(hashes) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::gBlocks;
+    // Protocol version + hashe Count + hashes + zero_hash
+    m_header.payloadSize = sizeof(uint8_t) + sizeof(size_t) +
+        sizeof(uint32_t) * 8 * (hashes.size() + 1);
 }
 
 const std::list<Hash>& GetBlocksMsg::getHashes() noexcept {
@@ -51,7 +56,7 @@ const std::list<Hash>& GetBlocksMsg::getHashes() noexcept {
 void GetBlocksMsg::decode(ByteReader& byteReader) {
     decodeHeader(byteReader);
 
-    m_ver = byteReader.read<uint8_t>();
+    m_version = byteReader.read<uint8_t>();
     size_t count = byteReader.read<size_t>();
     for(size_t i = 0; i < count - 1; i++) {
         Hash hash;
@@ -61,13 +66,13 @@ void GetBlocksMsg::decode(ByteReader& byteReader) {
 }
 
 void GetBlocksMsg::encode(ByteWriter& byteWriter) const {
+    encodeHeader(byteWriter);
+
+    byteWriter.write<uint8_t>(m_version);
+
     size_t count = m_hashes.size() + 1;
-    size_t payloadSize = sizeof(uint8_t) + sizeof(size_t) + sizeof(uint32_t) * 8 * (count);
-
-    encodeHeader(byteWriter, payloadSize, 0);
-
-    byteWriter.write<uint8_t>(m_ver);
     byteWriter.write<size_t>(count);
+
     for(const auto& hash: m_hashes) {
         hash.encode(byteWriter);
     }
@@ -85,15 +90,22 @@ void GetBlocksMsg::print() const noexcept {
     std::cout << std::endl;
 }
 
-InvMsg::InvMsg() {
-    m_comm = MsgTypes::Inv;
-    m_type = InvTypes::iBlock;
+InvMsg::InvMsg():
+    m_type(InvTypes::iBlock) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::Inv;
+    // Hashe Count + unique identif + hashes + zero_hash
+    m_header.payloadSize = sizeof(size_t) + sizeof(uint8_t);
 }
 
-InvMsg::InvMsg(InvTypes type, const std::list<Hash>& hashes) {
-    m_comm = MsgTypes::Inv;
-    m_hashes = hashes;
-    m_type = type;
+InvMsg::InvMsg(InvTypes type, const std::list<Hash>& hashes):
+    m_type(type),
+    m_hashes(hashes) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::Inv;
+    // Hashe Count + unique identif + hashes + zero_hash
+    m_header.payloadSize = sizeof(size_t) + sizeof(uint8_t) +
+        sizeof(uint32_t) * 8 * (m_hashes.size() + 1);
 }
 
 const std::list<Hash>& InvMsg::getHashes() noexcept {
@@ -114,12 +126,9 @@ void InvMsg::decode(ByteReader& byteReader) {
 }
 
 void InvMsg::encode(ByteWriter& byteWriter) const {
+    encodeHeader(byteWriter);
+
     size_t count = m_hashes.size() + 1;
-    size_t payloadSize = sizeof(size_t) + sizeof(uint8_t) * (m_hashes.size()) +
-        sizeof(uint8_t) * 32 * (count);
-
-    encodeHeader(byteWriter, payloadSize, 0);
-
     byteWriter.write<size_t>(count);
     for(const auto& hash: m_hashes) {
         byteWriter.write<uint8_t>(static_cast<uint8_t>(m_type));
@@ -139,15 +148,22 @@ void InvMsg::print() const noexcept {
     std::cout << std::endl;
 }
 
-GetDataMsg::GetDataMsg() {
-    m_comm = MsgTypes::gData;
-    m_type = DataTypes::dBlock;
+GetDataMsg::GetDataMsg():
+    m_type(DataTypes::dBlock) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::gData;
+    // number of  objects + unique identif + hashes + zero_hash
+    m_header.payloadSize = sizeof(size_t) + sizeof(uint8_t);
 }
 
-GetDataMsg::GetDataMsg(DataTypes type, const std::list<Hash>& hashes) {
-    m_comm = MsgTypes::gData;
-    m_hashes = hashes;
-    m_type = type;
+GetDataMsg::GetDataMsg(DataTypes type, const std::list<Hash>& hashes):
+    m_type(type),
+    m_hashes(hashes) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::gData;
+    // number of  objects + unique identif + hashes + zero_hash
+    m_header.payloadSize = sizeof(size_t) + sizeof(uint8_t) +
+        sizeof(uint32_t) * 8 * (hashes.size() + 1);
 }
 
 const std::list<Hash>& GetDataMsg::getHashes() noexcept {
@@ -168,12 +184,10 @@ void GetDataMsg::decode(ByteReader& byteReader) {
 }
 
 void GetDataMsg::encode(ByteWriter& byteWriter) const {
+
+    encodeHeader(byteWriter);
+
     size_t count = m_hashes.size() + 1;
-    size_t payloadSize = sizeof(size_t) + sizeof(uint8_t) * (m_hashes.size()) +
-        sizeof(uint32_t) * 8 * (count);
-
-    encodeHeader(byteWriter, payloadSize, 0);
-
     byteWriter.write<size_t>(count);
     for(const auto& hash: m_hashes) {
         byteWriter.write<uint8_t>(static_cast<uint8_t>(m_type));
@@ -194,12 +208,18 @@ void GetDataMsg::print() const noexcept {
 }
 
 BlockMsg::BlockMsg() {
-    m_comm = MsgTypes::sBlock;
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::sBlock;
+    // number of  objects
+    m_header.payloadSize = 0;
 }
 
-BlockMsg::BlockMsg(const Block& block) {
-    m_comm = MsgTypes::sBlock;
-    m_block = block;
+BlockMsg::BlockMsg(const Block& block):
+    m_block(block) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::sBlock;
+    // block size
+    m_header.payloadSize = m_block.size();
 }
 
 const Block& BlockMsg::getBlock() noexcept {
@@ -212,7 +232,7 @@ void BlockMsg::decode(ByteReader& byteReader) {
 }
 
 void BlockMsg::encode(ByteWriter& byteWriter) const {
-    encodeHeader(byteWriter, m_block.size(), 0);
+    encodeHeader(byteWriter);
     m_block.encode(byteWriter);
 }
 
@@ -223,12 +243,18 @@ void BlockMsg::print() const noexcept {
 }
 
 TxMsg::TxMsg() {
-    m_comm = MsgTypes::Tx;
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::Tx;
+    // Transaction size
+    m_header.payloadSize = 0;
 }
 
-TxMsg::TxMsg(const Transaction& tx) {
-    m_comm = MsgTypes::Tx;
-    m_tx = tx;
+TxMsg::TxMsg(const Transaction& tx):
+    m_tx(tx) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::Tx;
+    // Transaction size
+    m_header.payloadSize = m_tx.size();
 }
 
 const Transaction& TxMsg::getTransaction() noexcept {
@@ -241,7 +267,7 @@ void TxMsg::decode(ByteReader& byteReader) {
 }
 
 void TxMsg::encode(ByteWriter& byteWriter) const {
-    encodeHeader(byteWriter, m_tx.size(), 0);
+    encodeHeader(byteWriter);
     m_tx.encode(byteWriter);
 }
 
@@ -252,7 +278,9 @@ void TxMsg::print() const noexcept {
 }
 
 NoFoundMsg::NoFoundMsg() {
-    m_comm = MsgTypes::noFound;
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::noFound;
+    m_header.payloadSize = 0;
 }
 
 void NoFoundMsg::decode(ByteReader& byteReader) {
@@ -260,7 +288,7 @@ void NoFoundMsg::decode(ByteReader& byteReader) {
 }
 
 void NoFoundMsg::encode(ByteWriter& byteWriter) const {
-    encodeHeader(byteWriter, 0, 0);
+    encodeHeader(byteWriter);
 }
 
 void NoFoundMsg::print() const noexcept {

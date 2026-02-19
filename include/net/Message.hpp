@@ -21,13 +21,24 @@
 /*!
     \brief Типы сообщений
 */
-enum class MsgTypes {
+enum class MsgType : uint8_t {
     gBlocks = 0, /*!< getBlock message */
     gData = 1,   /*!< getData message */
     sBlock = 2,  /*!< Block message */
     Inv = 3,     /*!< INV message */
     Tx = 4,      /*!< TX message */
     noFound = 5  /*!< noFound message*/
+};
+
+#define START_STRING "f9beb4d9"
+#define START_STRING_SIZE 9
+#define CHECK_SUM_SIZE 33
+
+struct MessageHeader {
+    std::array<char, START_STRING_SIZE> startString;
+    MsgType command;
+    size_t payloadSize;
+    std::array<char, CHECK_SUM_SIZE> checkSum;
 };
 
 /*!
@@ -44,7 +55,7 @@ public:
 
     virtual void decode(ByteReader& byteReader) override = 0;
 
-    void encodeHeader(ByteWriter& byteWriter, size_t payloadSize, int checkSum) const;
+    void encodeHeader(ByteWriter& byteWriter) const;
 
     void decodeHeader(ByteReader& byteReader);
 
@@ -52,7 +63,7 @@ public:
      \brief Тип message
      \return байт
     */
-    MsgTypes getCommand() noexcept;
+    MsgType getCommand() noexcept;
 
     /*!
      \brief Задать id клиента
@@ -67,18 +78,22 @@ public:
     ClientID getClientId() noexcept;
 
     /*!
+     \brief заголовок сообщения
+     \return MessageHeader
+    */
+    const MessageHeader& getHeader();
+
+    /*!
      \brief Информация хронящаяся в сообщении
      */
     virtual void print() const noexcept = 0;
 
 protected:
+    MessageHeader m_header;
+
     ClientID m_clientId = -1; /*!< id клиента*/
 
-    uint8_t m_ver = 0; /*!< версия*/
-
     size_t m_size; /*!< размер сообщения*/
-public:
-    MsgTypes m_comm; /*!< тип сообщения*/
 };
 
 /*               Message Header
@@ -128,6 +143,8 @@ public:
     const std::list<Hash>& getHashes() noexcept;
 
 private:
+    uint8_t m_version = 0;
+
     std::list<Hash> m_hashes; /*!< список хэшей */
 };
 
@@ -148,7 +165,7 @@ private:
 /*!
     \brief типы данных в INV
 */
-enum class InvTypes {
+enum class InvTypes : uint8_t {
     iBlock = 0, /*!< Блок */
     iTx = 1     /*!< Транзакция */
 };
@@ -210,7 +227,7 @@ private:
 /*!
     \brief типы данных в getData сообщении
 */
-enum class DataTypes { dBlock = 0, dTx = 1 };
+enum class DataTypes : uint8_t { dBlock = 0, dTx = 1 };
 
 /*!
     \brief GetData Сообщение

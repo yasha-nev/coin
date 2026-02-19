@@ -2,7 +2,7 @@
 
 #define BUFLEN 1024
 
-Server::Server(int port, std::function<void(uint8_t*, size_t, ClientID)> messageHandler):
+Server::Server(int port, std::function<void(std::span<const std::byte>, ClientID)> messageHandler):
     m_status(socket_status::DISACTIVE),
     m_port(port),
     m_sock(-1),
@@ -119,20 +119,20 @@ bool Server::addClient(int clientSocket, sockaddr_in clientAddr) {
 
 void Server::readReceivedMessages() {
     size_t r;
-    uint8_t buff[BUFLEN];
-    bzero(buff, BUFLEN);
+    std::byte buffer[BUFLEN];
+    bzero(buffer, BUFLEN);
 
     for(size_t i = 1; i <= m_pollDescriptors.size(); i++) {
         if(m_pollDescriptors[i].fd != -1 && (m_pollDescriptors[i].revents & POLLIN)) {
             const auto& client = m_clients[i - 1];
             int clientSocket = client->getSocket();
-            r = recv(clientSocket, buff, BUFLEN, 0);
+            r = recv(clientSocket, buffer, BUFLEN, 0);
 
             if(r < 16) {
                 continue;
             }
 
-            this->m_messageHandler(buff, r, client->getId());
+            this->m_messageHandler(std::span<const std::byte>(buffer, r), client->getId());
         }
     }
 }
@@ -161,10 +161,10 @@ int Server::connectTo(const std::string& host, int port) {
     return 0;
 }
 
-void Server::sendDataTo(ClientID id, uint8_t* buffer, size_t n) {
+void Server::sendDataTo(ClientID id, std::span<const std::byte> buffer) {
     for(const auto& client: m_clients) {
         if(client->getId() == id) {
-            client->sendData(buffer, n);
+            client->sendData(buffer);
             break;
         }
     }

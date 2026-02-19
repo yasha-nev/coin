@@ -6,7 +6,9 @@
 #include "Message.hpp"
 #include "Server.hpp"
 
+#include <cstddef>
 #include <optional>
+#include <span>
 #include <utility>
 
 class BlockChain;
@@ -58,7 +60,7 @@ private:
     /*!
      \brief Обработчик сообщений
     */
-    void messageHandler(uint8_t* buffer, size_t n, ClientID lientId);
+    void messageHandler(std::span<const std::byte> buffer, ClientID lientId);
 
     /*!
      \brief Послать сообщение noFound
