@@ -1,69 +1,77 @@
 #include "LeveldbDataBase.hpp"
 #include "Transaction.hpp"
 
-#include <assert.h>
-#include <fstream>
-#include <iostream>
-#include <list>
+#include <gtest/gtest.h>
 
-static bool file_exist(std::string path) {
-    if(FILE* file = fopen(path.c_str(), "r")) {
-        fclose(file);
-        return true;
-    } else {
-        return false;
-    }
-}
+#include <filesystem>
 
-Block createBlock() {
-    Hash zero_hash = createZeroHash();
-    std::list<Transaction> txs;
-    uint64_t id = 0;
-    std::string address = "address";
-    txs.push_back(TransactionFactory::createCoinBase(id, address));
-    Block block = Block(static_cast<uint64_t>(0), txs, zero_hash, Hash(), 0);
-    ProofOfWork pow(block);
-    pow.Run();
+namespace fs = std::filesystem;
 
-    return block;
-}
-
-static bool blocksCompire(Block& block1, Block& block2) {
-    bool flag = true;
-
-    flag &= (block1.getHash() == block2.getHash());
-    flag &= (block1.getNonce() == block2.getNonce());
-    flag &= (block1.getPrevBlockHash() == block2.getPrevBlockHash());
-    flag &= (block1.getTimeStamp() == block2.getTimeStamp());
-    flag &= (block1.getTransactions() == block2.getTransactions());
-
-    return flag;
-}
-
-int main() {
-    LeveldbDataBase db = LeveldbDataBase();
-
-    if(file_exist(DBPATH)) {
-        std::remove(DBPATH);
+class LeveldbTest: public ::testing::Test {
+protected:
+    void SetUp() override {
+        cleanDb();
+        db.connect();
     }
 
-    db.connect();
+    void TearDown() override {
+        cleanDb();
+    }
 
-    Block block = createBlock();
+    void cleanDb() {
+        if(fs::exists(DBPATH)) {
+            fs::remove_all(DBPATH);
+        }
+    }
 
+    Block createTestBlock() {
+        Hash zero_hash = createZeroHash();
+        std::list<Transaction> txs;
+        txs.push_back(TransactionFactory::createCoinBase(0, "test_address"));
+
+        Block block(static_cast<uint64_t>(0), txs, zero_hash, Hash(), 0);
+        ProofOfWork pow(block);
+        pow.Run();
+        return block;
+    }
+
+    LeveldbDataBase db;
+};
+
+TEST_F(LeveldbTest, PutAndGetBlock) {
+    Block originalBlock = createTestBlock();
+    Hash blockHash = originalBlock.getHash();
+
+    db.putBlock(originalBlock);
+
+    auto curHash = db.getCurrentHash();
+    ASSERT_TRUE(curHash.has_value());
+    EXPECT_EQ(*curHash, blockHash);
+
+    auto retrievedBlock = db.getBlockByHash(blockHash);
+    ASSERT_TRUE(retrievedBlock.has_value());
+
+    EXPECT_EQ(originalBlock.getHash(), retrievedBlock->getHash());
+    EXPECT_EQ(originalBlock.getNonce(), retrievedBlock->getNonce());
+    EXPECT_EQ(originalBlock.getTimeStamp(), retrievedBlock->getTimeStamp());
+    EXPECT_EQ(originalBlock.getTransactions(), retrievedBlock->getTransactions());
+}
+
+TEST_F(LeveldbTest, GetCurrentId) {
+    Block block = createTestBlock();
     db.putBlock(block);
 
-    std::optional<Hash> curhash = db.getCurrentHash();
+    auto id = db.getCurrentId(block.getHash());
+    ASSERT_TRUE(id.has_value());
+    EXPECT_EQ(*id, 0);
+}
 
-    assert(curhash.has_value());
+TEST_F(LeveldbTest, GetNonExistentData) {
+    Hash fakeHash = createZeroHash();
 
-    assert(*curhash == block.getHash());
+    auto block = db.getBlockByHash(fakeHash);
+    EXPECT_FALSE(block.has_value());
 
-    std::optional<Block> block2 = db.getBlockByHash(*curhash);
-
-    assert(block2.has_value());
-
-    assert(blocksCompire(block, *block2));
-
-    assert(0 == db.getCurrentId(*curhash));
+    auto id = db.getCurrentId(fakeHash);
+    EXPECT_FALSE(id.has_value());
 }

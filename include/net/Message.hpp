@@ -6,7 +6,6 @@
 #include "Block.hpp"
 #include "ByteReader.hpp"
 #include "ByteWriter.hpp"
-#include "Client.hpp"
 #include "CryptoppImpl.hpp"
 #include "Hash.hpp"
 #include "Serializer.hpp"
@@ -66,18 +65,6 @@ public:
     MsgType getCommand() noexcept;
 
     /*!
-     \brief Задать id клиента
-     \param [in] id - id клиента
-    */
-    void setClientId(ClientID id);
-
-    /*!
-     \brief id клиента получившего сообщение
-     \return id
-    */
-    ClientID getClientId() noexcept;
-
-    /*!
      \brief заголовок сообщения
      \return MessageHeader
     */
@@ -90,8 +77,6 @@ public:
 
 protected:
     MessageHeader m_header;
-
-    ClientID m_clientId = -1; /*!< id клиента*/
 
     size_t m_size; /*!< размер сообщения*/
 };

@@ -8,6 +8,13 @@ set(LEVELDB_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
 set(CRYPTOPP_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest
+  GIT_TAG v1.15.2
+)
+
 FetchContent_Declare(
     leveldb
     GIT_REPOSITORY https://github.com/google/leveldb.git
@@ -22,7 +29,7 @@ FetchContent_Declare(
     OVERRIDE_FIND_PACKAGE
 )
 
-FetchContent_MakeAvailable(cryptopp-cmake leveldb)
+FetchContent_MakeAvailable(cryptopp-cmake leveldb googletest)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -110,46 +117,31 @@ target_link_libraries(main PRIVATE coin)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests)
 enable_testing()
+include(GoogleTest)
 
 #=============TESTS=================
 
-# Hash Test
-add_executable(hash_test test/hash_test.cpp)
-target_link_libraries(hash_test coin)
-add_test(NAME coin-hash COMMAND hash_test)
+set(ALL_TESTS
+    "hash_test"           "test/hash_test.cpp"
+    "txinput_test"        "test/txinput_test.cpp"
+    "txoutput_test"       "test/txoutput_test.cpp"
+    "transaction_test"    "test/transaction_test.cpp"
+    "block_test"          "test/block_test.cpp"
+    "leveldbDataBase_test" "test/LeveldbDataBase_test.cpp"
+    "message_test"        "test/message_test.cpp"
+)
 
-# Transaction Input Test
-add_executable(txinput_test test/txinput_test.cpp)
-target_link_libraries(txinput_test coin)
-add_test(NAME coin-txinput COMMAND txinput_test)
+while(ALL_TESTS)
+    list(POP_FRONT ALL_TESTS TEST_NAME TEST_SOURCE)
 
-# Transaction Output Test
-add_executable(txoutput_test test/txoutput_test.cpp)
-target_link_libraries(txoutput_test coin)
-add_test(NAME coin-txoutput COMMAND txoutput_test)
-
-# Transaction Test
-add_executable(transaction_test test/transaction_test.cpp)
-target_link_libraries(transaction_test coin)
-add_test(NAME coin-transaction COMMAND transaction_test)
-
-# Block Test
-add_executable(block_test test/block_test.cpp)
-target_link_libraries(block_test coin)
-add_test(NAME coin-block COMMAND block_test)
-
-# Level database test
-add_executable(leveldbDataBase_test test/LeveldbDataBase_test.cpp)
-target_link_libraries(leveldbDataBase_test coin)
-add_test(NAME coin-leveldbDatabase COMMAND leveldbDataBase_test)
-
-# Network messages test
-add_executable(message_test test/message_test.cpp)
-target_link_libraries(message_test coin)
-add_test(NAME coin-message COMMAND message_test)
-
-install(TARGETS txinput_test txoutput_test transaction_test block_test leveldbDataBase_test message_test
-        RUNTIME DESTINATION coin-tests)
+    add_executable(${TEST_NAME} ${TEST_SOURCE})
+    
+    target_link_libraries(${TEST_NAME} PRIVATE coin GTest::gtest_main)
+    
+    gtest_discover_tests(${TEST_NAME})
+    
+    install(TARGETS ${TEST_NAME} RUNTIME DESTINATION coin-tests)
+endwhile()
 
 
 

@@ -7,14 +7,6 @@ MsgType Message::getCommand() noexcept {
     return m_header.command;
 }
 
-void Message::setClientId(ClientID id) {
-    m_clientId = id;
-}
-
-ClientID Message::getClientId() noexcept {
-    return m_clientId;
-}
-
 void Message::encodeHeader(ByteWriter& byteWriter) const {
     byteWriter.write_bytes(as_bytes(m_header.startString.data(), START_STRING_SIZE));
     byteWriter.write<uint8_t>(static_cast<uint8_t>(m_header.command));
