@@ -2,8 +2,7 @@
 #define publickey_hpp
 
 #include "base58.hpp"
-#include "ripemd160.hpp"
-#include "sha256.hpp"
+#include "CryptoppImpl.hpp"
 
 #include <cmath>
 #include <fstream>

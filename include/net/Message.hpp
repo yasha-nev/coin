@@ -4,12 +4,14 @@
 #define STARTSTR "f9beb4d9"
 
 #include "Block.hpp"
-#include "sha256.hpp"
+#include "Client.hpp"
 
 #include <array>
 #include <inttypes.h>
 #include <list>
 #include <string.h>
+#include <memory>
+#include "CryptoppImpl.hpp"
 
 /*!
     \brief Типы сообщений
@@ -45,7 +47,7 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const = 0;
+    virtual std::vector<uint8_t> toByte() const = 0;
 
     /*!
      \brief Тип message
@@ -57,13 +59,13 @@ public:
      \brief Задать id клиента
      \param [in] id - id клиента
     */
-    void setClientId(int id);
+    void setClientId(ClientID id);
 
     /*!
      \brief id клиента получившего сообщение
      \return id
     */
-    int getClientId();
+    ClientID getClientId();
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -71,7 +73,7 @@ public:
     virtual void print() const = 0;
 
 protected:
-    int m_clientId = -1; /*!< id клиента*/
+    ClientID m_clientId = -1; /*!< id клиента*/
 
     uint8_t m_ver = 0; /*!< версия*/
 
@@ -110,7 +112,7 @@ public:
      \brief Конструктор с параметрами
      \param hashes - хэши блоков
     */
-    GetBlocksMsg(std::list<std::array<uint32_t, 8>> hashes);
+    GetBlocksMsg(const std::list<std::array<uint8_t, 32>> &hashes);
 
     /*!
      \brief Десериализация
@@ -124,7 +126,7 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -134,10 +136,10 @@ public:
     /*!
     \return список хэшей
     */
-    std::list<std::array<uint32_t, 8>> getHashes();
+    std::list<std::array<uint8_t, 32>> getHashes();
 
 private:
-    std::list<std::array<uint32_t, 8>> m_hashes; /*!< список хэшей */
+    std::list<std::array<uint8_t, 32>> m_hashes; /*!< список хэшей */
 };
 
 /*               Message Header
@@ -180,7 +182,7 @@ public:
      \param [in] type - тип сериализованных данных
      \param [in] hashes - список хэшей блоков
     */
-    InvMsg(InvTypes type, std::list<std::array<uint32_t, 8>> hashes);
+    InvMsg(InvTypes type, std::list<std::array<uint8_t, 32>> hashes);
 
     /*!
      \brief Десериализация
@@ -194,7 +196,7 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -204,12 +206,12 @@ public:
     /*!
     \return список хэшей
     */
-    std::list<std::array<uint32_t, 8>> getHashes();
+    std::list<std::array<uint8_t, 32>> getHashes();
 
 private:
     uint8_t m_type; /*!< Тип хранимых данных */
 
-    std::list<std::array<uint32_t, 8>> m_hashes; /*!< список хэшей */
+    std::list<std::array<uint8_t, 32>> m_hashes; /*!< список хэшей */
 };
 
 /*               Message Header
@@ -248,7 +250,7 @@ public:
      \brief Конструктор с параметрами
     \param [in] type - тип сериализованный данных
     */
-    GetDataMsg(DataTypes type, std::list<std::array<uint32_t, 8>> hashes);
+    GetDataMsg(DataTypes type, std::list<std::array<uint8_t, 32>> hashes);
 
     /*!
      \brief Десериализация
@@ -262,7 +264,7 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -272,12 +274,12 @@ public:
     /*!
     \return список хэшей
     */
-    std::list<std::array<uint32_t, 8>> getHashes();
+    std::list<std::array<uint8_t, 32>> getHashes();
 
 private:
     uint8_t m_type; /*!< тип хранимых данных */
 
-    std::list<std::array<uint32_t, 8>> m_hashes; /*!< список хэшей */
+    std::list<std::array<uint8_t, 32>> m_hashes; /*!< список хэшей */
 };
 
 /*               Message Header
@@ -321,7 +323,7 @@ public:
      \param [out] size - размер сообщения
      \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -361,7 +363,7 @@ public:
 
     virtual void parse(uint8_t* data, size_t size) override;
 
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении
@@ -405,7 +407,7 @@ public:
     \param [out] size - размер сообщения
     \return массив байт
     */
-    virtual std::unique_ptr<uint8_t[]> toByte(size_t& size) const override;
+    virtual std::vector<uint8_t> toByte() const override;
 
     /*!
      \brief Информация хронящаяся в сообщении

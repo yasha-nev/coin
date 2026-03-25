@@ -23,7 +23,7 @@ public:
      \param[in] port - порт
      \param[in] bc - локальная цепь блоков
     */
-    Network(std::list<std::pair<std::string, int>> clientIp, int port, BlockChain* bc);
+    Network(int port, BlockChain &bc);
 
     /*!
      \brief Деструктор
@@ -54,55 +54,48 @@ public:
     std::unique_ptr<Transaction> getFromMempool();
 
 private:
+
     /*!
      \brief Обработчик сообщений
     */
-    void process();
+    void messageHandler(uint8_t *buffer, size_t n, ClientID lientId);
 
     /*!
      \brief Послать сообщение noFound
      \param [in] clientId - id клиента
     */
-    void noFound(int clientId);
+    void noFound(ClientID clientId);
 
     /*!
      \brief Отправить сообщение inv
      \param [in] hash - список хэшей
      \param [in] clientId - id клиента
     */
-    void inv(std::array<uint32_t, 8> hash, int clientId);
+    void inv(std::array<uint8_t, 32> hash, ClientID clientId);
 
     /*!
      \brief Послать сообщение getData
      \param [in] hashes - список хэшей
      \param [in] clientId - id клиента
     */
-    void getData(std::list<std::array<uint32_t, 8>> hashes, int clientId);
+    void getData(std::list<std::array<uint8_t, 32>> hashes, ClientID clientId);
 
     /*!
      \brief Послать сообщение sBlock
      \param [in] hashes - список хэшей блоков
      \param [in] clientId - id клиента
     */
-    void sblock(std::list<std::array<uint32_t, 8>> hashes, int clientId);
+    void sblock(std::list<std::array<uint8_t, 32>> hashes, ClientID clientId);
 
-    std::unique_ptr<Server> m_serv; /*!< Сервер*/
+    std::unique_ptr<Server> m_serv;
 
-    BlockChain* m_bc; /*!< Локальный blockchain */
+    BlockChain &m_bc;
 
-    std::list<std::unique_ptr<Message>> m_msgs; /*!< Буффер сообщений*/
+    std::list<std::pair<std::string, int>> m_clientsIp;
 
-    std::list<std::pair<std::string, int>> m_clientsIp; /*!< список серверов*/
+    std::list<std::unique_ptr<Transaction>> m_mempool;
 
-    std::list<std::unique_ptr<Transaction>> m_mempool; /*!< Буффер транзакций без блока */
-
-    std::atomic<bool> m_run; /*!< Атомик для управления потоками */
-
-    std::mutex m_mtx; /*!< мьютекс для управления памятью*/
-
-    std::thread m_procThr; /*!< поток для обработки сообщений*/
-
-    int m_port; /*!< порт*/
+    std::mutex m_mtx;
 };
 
 #endif

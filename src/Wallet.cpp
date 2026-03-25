@@ -1,9 +1,9 @@
 #include "Wallet.hpp"
 
-Wallet::Wallet(BlockChain* bc, Network* net) {
-    m_bc = bc;
-    m_net = net;
-
+Wallet::Wallet(BlockChain &bc, Network &net) :
+    m_bc(bc),
+    m_net(net)
+{
     if(!file_exist("./priv.rem") || !file_exist("./pub.rem")) {
         RSACryptor rsa;
         m_pubkey = PublicKey(*rsa.getPublicKey());
@@ -33,7 +33,7 @@ std::string Wallet::getAddres() {
 }
 
 uint64_t Wallet::getBalance() {
-    return m_bc->getBalance(m_pubkey.getKey(), getAddres());
+    return m_bc.getBalance(m_pubkey.getKey(), getAddres());
 }
 
 std::string Wallet::checkSum(const std::string& payload) {
@@ -48,18 +48,18 @@ std::string Wallet::version() {
 void Wallet::createTransaction(const std::string& address, int value) {
     int rest;
 
-    std::list<TXInput> inputs = m_bc->getInputs(m_pubkey.getKey(), getAddres(), value, &rest);
+    std::list<TXInput> inputs = m_bc.getInputs(m_pubkey.getKey(), getAddres(), value, &rest);
     if(inputs.empty()) {
         std::cout << "not money" << std::endl;
         return;
     }
 
     std::unique_ptr<Transaction> tx = std::make_unique<RealTransaction>(
-        m_bc->getPastTransactionId() + 1, getAddres(), address, value, inputs, rest);
+        m_bc.getPastTransactionId() + 1, getAddres(), address, value, inputs, rest);
 
     transactionSign(tx);
 
-    m_net->sendToMempool(std::move(tx));
+    m_net.sendToMempool(std::move(tx));
 }
 
 void Wallet::transactionSign(std::unique_ptr<Transaction>& tx) {
@@ -69,10 +69,11 @@ void Wallet::transactionSign(std::unique_ptr<Transaction>& tx) {
     }
 
     for(size_t i = 0; i < tx->m_in.size(); i++) {
-        sha256 cryptor;
+        CryptoppImpl cryptor;
         std::string key = tx->m_in[i].m_pubkey + signstr;
-        cryptor.Hash(key);
-        tx->m_in[i].m_sign = cryptor.getHash();
+        auto hash = cryptor.sha256Hash(key);
+        tx->m_in[i].m_sign = cryptor.sha256HashToString(hash);
     }
+    
     return;
 }

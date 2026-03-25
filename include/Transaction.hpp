@@ -9,6 +9,8 @@
 #include <string.h>
 #include <string>
 
+#include <vector>
+
 #define REWARD 50
 
 /*!
@@ -50,6 +52,8 @@ public:
      \brief Перегрузка оператора  = перемещения
     */
     TXOutput& operator=(const TXOutput&& out);
+
+    bool operator == (const TXOutput &out) const;
 
     int m_value; /*!< количество монет */
 
@@ -97,6 +101,8 @@ public:
      \brief Перегрузка = перемещения
     */
     TXInput& operator=(const TXInput&& in);
+
+    bool operator== (const TXInput &in) const;
 
     uint64_t m_tranId; /*!< id транзакции */
 
@@ -168,7 +174,10 @@ public:
     \brief Вывод информации о транзакции в консоль
     */
     void print() const noexcept;
+
+    bool operator== (const Transaction &tx) const;
 };
+
 
 class CoinBaseTransaction: public Transaction {
 public:

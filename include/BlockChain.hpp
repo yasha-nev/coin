@@ -54,7 +54,7 @@ public:
      \param [in] hash - хэш блока
      \return блок
     */
-    std::unique_ptr<Block> getBlock(const std::array<uint32_t, 8>& hash) const noexcept;
+    std::unique_ptr<Block> getBlock(const std::array<uint8_t, 32>& hash) const noexcept;
 
     /*!
      \brief Получить последний записанный блок
@@ -66,15 +66,15 @@ public:
      \brief Получить хэш последнего блока
      \return хэш
     */
-    const std::array<uint32_t, 8>& getPastBlockHash() const noexcept;
+    const std::array<uint8_t, 32>& getPastBlockHash() const noexcept;
 
     /*!
      \brief Возвращает хэши блоков пока не дайдет до заданого, иначе все хэши
      \param [in] curHash - хэш блока
      \return список блоков
     */
-    std::list<std::array<uint32_t, 8>> getHashesBefore(
-        std::array<uint32_t, 8> curHash) const noexcept;
+    std::list<std::array<uint8_t, 32>> getHashesBefore(
+        std::array<uint8_t, 32> curHash) const noexcept;
 
     /*!
      \brief Создание списка неиспользованных выходов
@@ -98,7 +98,7 @@ private:
      \return указатель на созданный блок
     */
     std::unique_ptr<Block>
-    newBlock(uint64_t time, const std::list<Transaction>& tx, const std::array<uint32_t, 8>& hash);
+    newBlock(uint64_t time, const std::list<Transaction>& tx, const std::array<uint8_t, 32>& hash);
 
     /*!
      \brief Создание базового первого блока
@@ -106,7 +106,7 @@ private:
     */
     std::unique_ptr<Block> genesisBlock();
 
-    std::array<uint32_t, 8> m_cur_hash; /*!< хэш последнего блока*/
+    std::array<uint8_t, 32> m_cur_hash; /*!< хэш последнего блока*/
 
     std::unique_ptr<IDataBase> m_db; /*!< dao базы данных*/
 };
