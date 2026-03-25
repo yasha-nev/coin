@@ -4,10 +4,8 @@ Transaction::Transaction() {
     m_id = 0;
 }
 
-Transaction::Transaction(uint64_t id, int inCount, int outCount) {
+Transaction::Transaction(uint64_t id) {
     m_id = id;
-    m_in = std::vector<TXInput>(inCount);
-    m_out = std::vector<TXOutput>(outCount);
 }
 
 Transaction::~Transaction() {
@@ -167,7 +165,7 @@ bool Transaction::operator==(const Transaction& tx) const {
 }
 
 Transaction TransactionFactory::createCoinBase(const uint64_t& id, const std::string& pubkey) {
-    Transaction transaction(id, 0, 1);
+    Transaction transaction(id);
     transaction.m_out.push_back(TXOutput(REWARD, pubkey));
 
     transaction.sign();
@@ -183,12 +181,12 @@ Transaction TransactionFactory::createSimple(
     std::list<TXInput>& inputs,
     int rest) {
 
-    Transaction transaction(id, (int) inputs.size(), 0);
+    Transaction transaction(id);
 
     int i = 0;
     std::list<TXInput>::iterator it;
     for(it = inputs.begin(); it != inputs.end(); it++) {
-        transaction.m_in[i] = *it;
+        transaction.m_in.push_back(*it);
         i++;
     }
 

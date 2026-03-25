@@ -32,10 +32,8 @@ public:
     /*!
     \brief Конструктор с параметрами
     \param [in] id - id транзакции
-    \param [in] in_cout - количество входов
-    \param [in] out_count - количество выходов
     */
-    Transaction(uint64_t id, int in_cout, int out_count);
+    Transaction(uint64_t id);
 
     /*!
     \brief Диструктор
