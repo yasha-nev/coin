@@ -4,19 +4,24 @@
 #define STARTSTR "f9beb4d9"
 
 #include "Block.hpp"
+#include "ByteReader.hpp"
+#include "ByteWriter.hpp"
 #include "Client.hpp"
 #include "CryptoppImpl.hpp"
+#include "Hash.hpp"
+#include "Serializer.hpp"
 
 #include <array>
 #include <inttypes.h>
 #include <list>
 #include <memory>
+#include <sstream>
 #include <string.h>
 
 /*!
     \brief Типы сообщений
 */
-enum MsgTypes {
+enum class MsgType : uint8_t {
     gBlocks = 0, /*!< getBlock message */
     gData = 1,   /*!< getData message */
     sBlock = 2,  /*!< Block message */
@@ -25,35 +30,40 @@ enum MsgTypes {
     noFound = 5  /*!< noFound message*/
 };
 
+#define START_STRING "f9beb4d9"
+#define START_STRING_SIZE 9
+#define CHECK_SUM_SIZE 33
+
+struct MessageHeader {
+    std::array<char, START_STRING_SIZE> startString;
+    MsgType command;
+    size_t payloadSize;
+    std::array<char, CHECK_SUM_SIZE> checkSum;
+};
+
 /*!
     \brief Базовый класс сообщения
 */
-class Message {
+class Message: public Serializer {
 public:
     /*!
      \brief Виртуальный диструктор
     */
     virtual ~Message();
 
-    /*!
-     \brief Десериализация
-    \param [in] data - исходный массив байт
-    \param [in] size - размер сообщения
-    */
-    virtual void parse(uint8_t* data, size_t size) = 0;
+    virtual void encode(ByteWriter& byteWriter) const override = 0;
 
-    /*!
-     \brief Сериализация
-    \param [out] size - размер сообщения
-    \return массив байт
-    */
-    virtual std::vector<uint8_t> toByte() const = 0;
+    virtual void decode(ByteReader& byteReader) override = 0;
+
+    void encodeHeader(ByteWriter& byteWriter) const;
+
+    void decodeHeader(ByteReader& byteReader);
 
     /*!
      \brief Тип message
      \return байт
     */
-    uint8_t getCommand();
+    MsgType getCommand() noexcept;
 
     /*!
      \brief Задать id клиента
@@ -65,21 +75,25 @@ public:
      \brief id клиента получившего сообщение
      \return id
     */
-    ClientID getClientId();
+    ClientID getClientId() noexcept;
+
+    /*!
+     \brief заголовок сообщения
+     \return MessageHeader
+    */
+    const MessageHeader& getHeader();
 
     /*!
      \brief Информация хронящаяся в сообщении
      */
-    virtual void print() const = 0;
+    virtual void print() const noexcept = 0;
 
 protected:
+    MessageHeader m_header;
+
     ClientID m_clientId = -1; /*!< id клиента*/
 
-    uint8_t m_ver = 0; /*!< версия*/
-
     size_t m_size; /*!< размер сообщения*/
-public:
-    uint8_t m_comm; /*!< тип сообщения*/
 };
 
 /*               Message Header
@@ -112,34 +126,26 @@ public:
      \brief Конструктор с параметрами
      \param hashes - хэши блоков
     */
-    GetBlocksMsg(const std::list<std::array<uint8_t, 32>>& hashes);
+    GetBlocksMsg(const std::list<Hash>& hashes);
 
-    /*!
-     \brief Десериализация
-     \param [in] data - исходный массив байт
-     \param [in] size - размер сообщения
-    */
-    virtual void parse(uint8_t* data, size_t size) override;
+    virtual void encode(ByteWriter& byteWriter) const override;
 
-    /*!
-     \brief Сериализация
-     \param [out] size - размер сообщения
-     \return массив байт
-    */
-    virtual std::vector<uint8_t> toByte() const override;
+    virtual void decode(ByteReader& byteReader) override;
 
     /*!
      \brief Информация хронящаяся в сообщении
      */
-    virtual void print() const override;
+    virtual void print() const noexcept override;
 
     /*!
     \return список хэшей
     */
-    const std::list<std::array<uint8_t, 32>>& getHashes();
+    const std::list<Hash>& getHashes() noexcept;
 
 private:
-    std::list<std::array<uint8_t, 32>> m_hashes; /*!< список хэшей */
+    uint8_t m_version = 0;
+
+    std::list<Hash> m_hashes; /*!< список хэшей */
 };
 
 /*               Message Header
@@ -159,7 +165,7 @@ private:
 /*!
     \brief типы данных в INV
 */
-enum InvTypes {
+enum class InvTypes : uint8_t {
     iBlock = 0, /*!< Блок */
     iTx = 1     /*!< Транзакция */
 };
@@ -182,36 +188,26 @@ public:
      \param [in] type - тип сериализованных данных
      \param [in] hashes - список хэшей блоков
     */
-    InvMsg(InvTypes type, const std::list<std::array<uint8_t, 32>>& hashes);
+    InvMsg(InvTypes type, const std::list<Hash>& hashes);
 
-    /*!
-     \brief Десериализация
-     \param [in] data - исходный массив байт
-     \param [in] size - размер сообщения
-    */
-    virtual void parse(uint8_t* data, size_t size) override;
+    virtual void encode(ByteWriter& byteWriter) const override;
 
-    /*!
-     \brief Сериализация
-     \param [out] size - размер сообщения
-     \return массив байт
-    */
-    virtual std::vector<uint8_t> toByte() const override;
+    virtual void decode(ByteReader& byteReader) override;
 
     /*!
      \brief Информация хронящаяся в сообщении
      */
-    virtual void print() const override;
+    virtual void print() const noexcept override;
 
     /*!
     \return список хэшей
     */
-    const std::list<std::array<uint8_t, 32>>& getHashes();
+    const std::list<Hash>& getHashes() noexcept;
 
 private:
-    uint8_t m_type; /*!< Тип хранимых данных */
+    InvTypes m_type; /*!< Тип хранимых данных */
 
-    std::list<std::array<uint8_t, 32>> m_hashes; /*!< список хэшей */
+    std::list<Hash> m_hashes; /*!< список хэшей */
 };
 
 /*               Message Header
@@ -231,7 +227,7 @@ private:
 /*!
     \brief типы данных в getData сообщении
 */
-enum DataTypes { dBlock = 0, dTx = 1 };
+enum class DataTypes : uint8_t { dBlock = 0, dTx = 1 };
 
 /*!
     \brief GetData Сообщение
@@ -250,36 +246,26 @@ public:
      \brief Конструктор с параметрами
     \param [in] type - тип сериализованный данных
     */
-    GetDataMsg(DataTypes type, const std::list<std::array<uint8_t, 32>>& hashes);
+    GetDataMsg(DataTypes type, const std::list<Hash>& hashes);
 
-    /*!
-     \brief Десериализация
-    \param [in] data - исходный массив байт
-    \param [in] size - размер сообщения
-    */
-    virtual void parse(uint8_t* data, size_t size) override;
+    virtual void encode(ByteWriter& byteWriter) const override;
 
-    /*!
-     \brief Сериализация
-    \param [out] size - размер сообщения
-    \return массив байт
-    */
-    virtual std::vector<uint8_t> toByte() const override;
+    virtual void decode(ByteReader& byteReader) override;
 
     /*!
      \brief Информация хронящаяся в сообщении
      */
-    virtual void print() const override;
+    virtual void print() const noexcept override;
 
     /*!
     \return список хэшей
     */
-    const std::list<std::array<uint8_t, 32>>& getHashes();
+    const std::list<Hash>& getHashes() noexcept;
 
 private:
-    uint8_t m_type; /*!< тип хранимых данных */
+    DataTypes m_type; /*!< тип хранимых данных */
 
-    std::list<std::array<uint8_t, 32>> m_hashes; /*!< список хэшей */
+    std::list<Hash> m_hashes; /*!< список хэшей */
 };
 
 /*               Message Header
@@ -311,29 +297,19 @@ public:
     */
     BlockMsg(const Block& blocks);
 
-    /*!
-     \brief Десериализация
-     \param [in] data - исходный массив байт
-     \param [in] size - размер сообщения
-    */
-    virtual void parse(uint8_t* data, size_t size) override;
+    virtual void encode(ByteWriter& byteWriter) const override;
 
-    /*!
-     \brief Сериализация
-     \param [out] size - размер сообщения
-     \return массив байт
-    */
-    virtual std::vector<uint8_t> toByte() const override;
+    virtual void decode(ByteReader& byteReader) override;
 
     /*!
      \brief Информация хронящаяся в сообщении
      */
-    virtual void print() const override;
+    virtual void print() const noexcept override;
 
     /*!
      \return блок из цепи
     */
-    const Block& getBlock();
+    const Block& getBlock() noexcept;
 
 private:
     Block m_block; /*!< Блок из цепи */
@@ -361,16 +337,16 @@ public:
 
     TxMsg(const Transaction& tx);
 
-    virtual void parse(uint8_t* data, size_t size) override;
+    virtual void encode(ByteWriter& byteWriter) const override;
 
-    virtual std::vector<uint8_t> toByte() const override;
+    virtual void decode(ByteReader& byteReader) override;
 
     /*!
      \brief Информация хронящаяся в сообщении
      */
-    virtual void print() const override;
+    virtual void print() const noexcept override;
 
-    const Transaction& getTransaction();
+    const Transaction& getTransaction() noexcept;
 
 private:
     Transaction m_tx;
@@ -395,24 +371,14 @@ public:
     */
     NoFoundMsg();
 
-    /*!
-    Десериализация
-    \param [in] data - исходный массив байт
-    \param [in] size - размер сообщения
-    */
-    virtual void parse(uint8_t* data, size_t size) override;
+    virtual void encode(ByteWriter& byteWriter) const override;
 
-    /*!
-    Сериализация
-    \param [out] size - размер сообщения
-    \return массив байт
-    */
-    virtual std::vector<uint8_t> toByte() const override;
+    virtual void decode(ByteReader& byteReader) override;
 
     /*!
      \brief Информация хронящаяся в сообщении
      */
-    virtual void print() const override;
+    virtual void print() const noexcept override;
 };
 
 #endif

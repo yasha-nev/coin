@@ -7,6 +7,7 @@
 #include <sys/types.h>
 
 #include <netdb.h>
+#include <span>
 #include <unistd.h>
 
 using ClientID = long;
@@ -33,7 +34,7 @@ public:
      \brief Отправить сообщение
     \param [in] msg указатель на сообщение которое надо отправить
     */
-    void sendData(uint8_t* buffer, size_t n);
+    void sendData(std::span<const std::byte> buffer);
 
     /*!
      \brief Вернуть соке

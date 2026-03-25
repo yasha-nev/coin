@@ -36,6 +36,7 @@ uint64_t Wallet::getBalance() {
 }
 
 std::string Wallet::checkSum(const std::string& payload) {
+    (void) payload;
     std::string result;
     return result;
 }

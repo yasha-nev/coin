@@ -1,119 +1,87 @@
 #include "Message.hpp"
 
-#define STARTSIZE 9
-
 Message::~Message() {
 }
 
-uint8_t Message::getCommand() {
-    return m_comm;
+MsgType Message::getCommand() noexcept {
+    return m_header.command;
 }
 
 void Message::setClientId(ClientID id) {
     m_clientId = id;
 }
 
-ClientID Message::getClientId() {
+ClientID Message::getClientId() noexcept {
     return m_clientId;
 }
 
-GetBlocksMsg::GetBlocksMsg() {
-    m_comm = MsgTypes::gBlocks;
-    m_ver = 0;
+void Message::encodeHeader(ByteWriter& byteWriter) const {
+    byteWriter.write_bytes(as_bytes(m_header.startString.data(), START_STRING_SIZE));
+    byteWriter.write<uint8_t>(static_cast<uint8_t>(m_header.command));
+    byteWriter.write<size_t>(m_header.payloadSize);
+    byteWriter.write_bytes(as_bytes(m_header.checkSum.data(), CHECK_SUM_SIZE));
 }
 
-GetBlocksMsg::GetBlocksMsg(const std::list<std::array<uint8_t, 32>>& hashes) {
-    m_comm = MsgTypes::gBlocks;
-    m_ver = 0;
-    m_hashes = hashes;
+void Message::decodeHeader(ByteReader& byteReader) {
+    auto startString = byteReader.read_bytes(START_STRING_SIZE);
+    std::memcpy(m_header.startString.data(), startString.data(), START_STRING_SIZE);
+    m_header.command = static_cast<MsgType>(byteReader.read<uint8_t>());
+    m_header.payloadSize = byteReader.read<size_t>();
+    auto checksum = byteReader.read_bytes(CHECK_SUM_SIZE);
+    std::memcpy(m_header.checkSum.data(), checksum.data(), CHECK_SUM_SIZE);
 }
 
-const std::list<std::array<uint8_t, 32>>& GetBlocksMsg::getHashes() {
+GetBlocksMsg::GetBlocksMsg():
+    m_version(0) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::gBlocks;
+    // Protocol version + hashe Count + hashes
+    m_header.payloadSize = sizeof(uint8_t) + sizeof(size_t);
+}
+
+GetBlocksMsg::GetBlocksMsg(const std::list<Hash>& hashes):
+    m_version(0),
+    m_hashes(hashes) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::gBlocks;
+    // Protocol version + hashe Count + hashes + zero_hash
+    m_header.payloadSize = sizeof(uint8_t) + sizeof(size_t) +
+        sizeof(uint32_t) * 8 * (hashes.size() + 1);
+}
+
+const std::list<Hash>& GetBlocksMsg::getHashes() noexcept {
     return m_hashes;
 }
 
-void GetBlocksMsg::parse(uint8_t* data, size_t size) {
-    size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint8_t) * 32;
-    size_t count = 0;
-    size_t payload_size;
+void GetBlocksMsg::decode(ByteReader& byteReader) {
+    decodeHeader(byteReader);
 
-    memcpy(&payload_size, data + sizeof(char) * STARTSIZE + sizeof(uint8_t), sizeof(size_t));
-    size_t ptr = headerSize;
-    memcpy(&m_ver, data + ptr, sizeof(uint8_t));
-    ptr += sizeof(uint8_t);
-    memcpy(&count, data + ptr, sizeof(size_t));
-    ptr += sizeof(size_t);
-
-    for(int i = 0; i < count - 1; i++) {
-        std::array<uint8_t, 32> hash;
-        for(int j = 0; j < 32; j++) {
-            uint32_t h;
-            memcpy(&h, data + ptr + j * sizeof(uint8_t), sizeof(uint8_t));
-            hash[j] = h;
-        }
-
+    m_version = byteReader.read<uint8_t>();
+    size_t count = byteReader.read<size_t>();
+    for(size_t i = 0; i < count - 1; i++) {
+        Hash hash;
+        hash.decode(byteReader);
         m_hashes.push_back(hash);
-        ptr += sizeof(uint32_t) * 8;
     }
 }
 
-std::vector<uint8_t> GetBlocksMsg::toByte() const {
+void GetBlocksMsg::encode(ByteWriter& byteWriter) const {
+    encodeHeader(byteWriter);
+
+    byteWriter.write<uint8_t>(m_version);
+
     size_t count = m_hashes.size() + 1;
-    size_t payloadSize = sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint32_t) * 8 * (m_hashes.size() + 1);
-    size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint32_t) * 8;
+    byteWriter.write<size_t>(count);
 
-    size_t size = headerSize + payloadSize;
-
-    std::vector<uint8_t> byteArray(size);
-    uint8_t* msg = byteArray.data();
-    size_t ptr = 0;
-
-    // create header
-
-    memcpy(msg + ptr, STARTSTR, STARTSIZE);
-    ptr += STARTSIZE;
-    memcpy(msg + ptr, &m_comm, sizeof(uint8_t));
-    ptr += sizeof(uint8_t);
-    memcpy(msg + ptr, &payloadSize, sizeof(size_t));
-    ptr += sizeof(size_t);
-
-    ptr = headerSize;
-
-    // create payload
-
-    memcpy(msg + ptr, &m_ver, sizeof(uint8_t));
-    ptr += sizeof(uint8_t);
-    memcpy(msg + ptr, &count, sizeof(size_t));
-    ptr += sizeof(size_t);
-
-    for(std::array<uint8_t, 32> hash: m_hashes) {
-        for(int j = 0; j < 32; j++) {
-            uint32_t h = hash[j];
-            memcpy(msg + ptr + sizeof(uint8_t) * j, &h, sizeof(uint8_t));
-        }
-
-        ptr += sizeof(uint32_t) * 8;
+    for(const auto& hash: m_hashes) {
+        hash.encode(byteWriter);
     }
 
     uint8_t zerohash[32] = { 0 };
-    memcpy(msg + ptr, zerohash, sizeof(uint8_t) * 32);
-    ptr += sizeof(uint8_t) * 32;
-
-    // create checksum
-
-    CryptoppImpl cryptor;
-    std::array<uint8_t, 32> checksum = cryptor.sha256Hash(
-        std::string(reinterpret_cast<char*>(msg + headerSize), payloadSize));
-    ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
-    memcpy(msg + ptr, checksum.data(), sizeof(uint8_t) * 32);
-
-    return byteArray;
+    byteWriter.write_bytes(as_bytes(zerohash, sizeof(uint8_t) * 32));
 }
 
-void GetBlocksMsg::print() const {
+void GetBlocksMsg::print() const noexcept {
     CryptoppImpl cryptor;
     std::cout << "GetBlocksMsg\n";
     for(auto& itr: m_hashes) {
@@ -122,200 +90,117 @@ void GetBlocksMsg::print() const {
     std::cout << std::endl;
 }
 
-InvMsg::InvMsg() {
-    m_comm = MsgTypes::Inv;
-    m_type = 0;
+InvMsg::InvMsg():
+    m_type(InvTypes::iBlock) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::Inv;
+    // Hashe Count + unique identif + hashes + zero_hash
+    m_header.payloadSize = sizeof(size_t) + sizeof(uint8_t);
 }
 
-InvMsg::InvMsg(InvTypes type, const std::list<std::array<uint8_t, 32>>& hashes) {
-    m_comm = MsgTypes::Inv;
-    m_hashes = hashes;
-    m_type = static_cast<uint8_t>(type);
+InvMsg::InvMsg(InvTypes type, const std::list<Hash>& hashes):
+    m_type(type),
+    m_hashes(hashes) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::Inv;
+    // Hashe Count + unique identif + hashes + zero_hash
+    m_header.payloadSize = sizeof(size_t) + sizeof(uint8_t) +
+        sizeof(uint32_t) * 8 * (m_hashes.size() + 1);
 }
 
-const std::list<std::array<uint8_t, 32>>& InvMsg::getHashes() {
+const std::list<Hash>& InvMsg::getHashes() noexcept {
     return m_hashes;
 }
 
-void InvMsg::parse(uint8_t* data, size_t size) {
-    size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint32_t) * 8;
-    size_t count = 0;
-    size_t payload_size;
-    memcpy(&payload_size, data + sizeof(char) * STARTSIZE + sizeof(uint8_t), sizeof(size_t));
+void InvMsg::decode(ByteReader& byteReader) {
 
-    size_t ptr = headerSize;
-    memcpy(&count, data + ptr, sizeof(size_t));
-    ptr += sizeof(size_t);
+    decodeHeader(byteReader);
 
-    for(int i = 0; i < count - 1; i++) {
-        memcpy(&m_type, data + ptr, sizeof(uint8_t));
-        ptr += sizeof(uint8_t);
-        std::array<uint8_t, 32> hash;
-        for(int j = 0; j < 32; j++) {
-            uint32_t h;
-            memcpy(&h, data + ptr + j * sizeof(uint8_t), sizeof(uint8_t));
-            hash[j] = h;
-        }
-
+    size_t count = byteReader.read<size_t>();
+    for(size_t i = 0; i < count - 1; i++) {
+        m_type = static_cast<InvTypes>(byteReader.read<uint8_t>());
+        Hash hash;
+        hash.decode(byteReader);
         m_hashes.push_back(hash);
-        ptr += sizeof(uint32_t) * 8;
     }
 }
 
-std::vector<uint8_t> InvMsg::toByte() const {
+void InvMsg::encode(ByteWriter& byteWriter) const {
+    encodeHeader(byteWriter);
+
     size_t count = m_hashes.size() + 1;
-    size_t payloadSize = sizeof(size_t) + sizeof(uint8_t) * (m_hashes.size()) +
-        sizeof(uint32_t) * 8 * (m_hashes.size());
-    size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint32_t) * 8;
-    size_t size = headerSize + payloadSize;
-
-    std::vector<uint8_t> byteArray(size);
-    uint8_t* msg = byteArray.data();
-    size_t ptr = 0;
-
-    // create header
-
-    memcpy(msg + ptr, STARTSTR, STARTSIZE);
-    ptr += STARTSIZE;
-    memcpy(msg + ptr, &m_comm, sizeof(uint8_t));
-    ptr += sizeof(uint8_t);
-    memcpy(msg + ptr, &size, sizeof(size_t));
-    ptr += sizeof(size_t);
-
-    // create Payload
-    ptr = headerSize;
-
-    memcpy(msg + ptr, &count, sizeof(size_t));
-    ptr += sizeof(size_t);
-    for(std::array<uint8_t, 32> hash: m_hashes) {
-        memcpy(msg + ptr, &m_type, sizeof(uint8_t));
-        ptr += sizeof(uint8_t);
-
-        for(int j = 0; j < 32; j++) {
-            uint32_t h = hash[j];
-            memcpy(msg + ptr + sizeof(uint8_t) * j, &h, sizeof(uint8_t));
-        }
-
-        ptr += sizeof(uint32_t) * 8;
+    byteWriter.write<size_t>(count);
+    for(const auto& hash: m_hashes) {
+        byteWriter.write<uint8_t>(static_cast<uint8_t>(m_type));
+        hash.encode(byteWriter);
     }
-
-    // create Checksum
-
-    CryptoppImpl cryptor;
-    std::array<uint8_t, 32> checksum = cryptor.sha256Hash(
-        std::string(reinterpret_cast<char*>(msg + headerSize), payloadSize));
-    ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
-    memcpy(msg + ptr, checksum.data(), sizeof(uint8_t) * 32);
-
-    return byteArray;
+    uint8_t zerohash[32] = { 0 };
+    byteWriter.write_bytes(as_bytes(zerohash, sizeof(uint8_t) * 32));
 }
 
-void InvMsg::print() const {
+void InvMsg::print() const noexcept {
     CryptoppImpl cryptor;
     std::cout << "InvMsg\n";
-    std::cout << "Type: " << m_type << "\n";
+    std::cout << "Type: " << static_cast<uint8_t>(m_type) << "\n";
     for(auto& itr: m_hashes) {
         std::cout << cryptor.sha256HashToString(itr) << "\n";
     }
     std::cout << std::endl;
 }
 
-GetDataMsg::GetDataMsg() {
-    m_comm = MsgTypes::gData;
-    m_type = 0;
+GetDataMsg::GetDataMsg():
+    m_type(DataTypes::dBlock) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::gData;
+    // number of  objects + unique identif + hashes + zero_hash
+    m_header.payloadSize = sizeof(size_t) + sizeof(uint8_t);
 }
 
-GetDataMsg::GetDataMsg(DataTypes type, const std::list<std::array<uint8_t, 32>>& hashes) {
-    m_comm = MsgTypes::gData;
-    m_hashes = hashes;
-    m_type = static_cast<uint8_t>(type);
+GetDataMsg::GetDataMsg(DataTypes type, const std::list<Hash>& hashes):
+    m_type(type),
+    m_hashes(hashes) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::gData;
+    // number of  objects + unique identif + hashes + zero_hash
+    m_header.payloadSize = sizeof(size_t) + sizeof(uint8_t) +
+        sizeof(uint32_t) * 8 * (hashes.size() + 1);
 }
 
-const std::list<std::array<uint8_t, 32>>& GetDataMsg::getHashes() {
+const std::list<Hash>& GetDataMsg::getHashes() noexcept {
     return m_hashes;
 }
 
-void GetDataMsg::parse(uint8_t* data, size_t size) {
-    size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint32_t) * 8;
-    size_t count = 0;
-    size_t payload_size;
-    memcpy(&payload_size, data + sizeof(char) * STARTSIZE + sizeof(uint8_t), sizeof(size_t));
+void GetDataMsg::decode(ByteReader& byteReader) {
 
-    size_t ptr = headerSize;
-    memcpy(&count, data + ptr, sizeof(size_t));
-    ptr += sizeof(size_t);
+    decodeHeader(byteReader);
 
-    for(int i = 0; i < count - 1; i++) {
-        memcpy(&m_type, data + ptr, sizeof(uint8_t));
-        ptr += sizeof(uint8_t);
-        std::array<uint8_t, 32> hash;
-        for(int j = 0; j < 32; j++) {
-            uint32_t h;
-            memcpy(&h, data + ptr + j * sizeof(uint8_t), sizeof(uint8_t));
-            hash[j] = h;
-        }
-
+    size_t count = byteReader.read<size_t>();
+    for(size_t i = 0; i < count - 1; i++) {
+        m_type = static_cast<DataTypes>(byteReader.read<uint8_t>());
+        Hash hash;
+        hash.decode(byteReader);
         m_hashes.push_back(hash);
-        ptr += sizeof(uint32_t) * 8;
     }
 }
 
-std::vector<uint8_t> GetDataMsg::toByte() const {
+void GetDataMsg::encode(ByteWriter& byteWriter) const {
+
+    encodeHeader(byteWriter);
+
     size_t count = m_hashes.size() + 1;
-    size_t payloadSize = sizeof(size_t) + sizeof(uint8_t) * (m_hashes.size()) +
-        sizeof(uint32_t) * 8 * (m_hashes.size());
-    size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint32_t) * 8;
-    size_t size = headerSize + payloadSize;
-
-    std::vector<uint8_t> byteArray(size);
-    uint8_t* msg = byteArray.data();
-    size_t ptr = 0;
-
-    // create header
-
-    memcpy(msg + ptr, STARTSTR, STARTSIZE);
-    ptr += STARTSIZE;
-    memcpy(msg + ptr, &m_comm, sizeof(uint8_t));
-    ptr += sizeof(uint8_t);
-    memcpy(msg + ptr, &size, sizeof(size_t));
-    ptr += sizeof(size_t);
-
-    // create Payload
-    ptr = headerSize;
-
-    memcpy(msg + ptr, &count, sizeof(size_t));
-    ptr += sizeof(size_t);
-    for(std::array<uint8_t, 32> hash: m_hashes) {
-        memcpy(msg + ptr, &m_type, sizeof(uint8_t));
-        ptr += sizeof(uint8_t);
-
-        for(int j = 0; j < 32; j++) {
-            uint32_t h = hash[j];
-            memcpy(msg + ptr + sizeof(uint8_t) * j, &h, sizeof(uint8_t));
-        }
-
-        ptr += sizeof(uint32_t) * 8;
+    byteWriter.write<size_t>(count);
+    for(const auto& hash: m_hashes) {
+        byteWriter.write<uint8_t>(static_cast<uint8_t>(m_type));
+        hash.encode(byteWriter);
     }
-
-    // create Checksum
-
-    CryptoppImpl cryptor;
-    std::array<uint8_t, 32> checksum = cryptor.sha256Hash(
-        std::string(reinterpret_cast<char*>(msg + headerSize), payloadSize));
-    ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
-    memcpy(msg + ptr, checksum.data(), sizeof(uint8_t) * 32);
-
-    return byteArray;
+    uint8_t zerohash[32] = { 0 };
+    byteWriter.write_bytes(as_bytes(zerohash, sizeof(uint32_t) * 32));
 }
 
-void GetDataMsg::print() const {
+void GetDataMsg::print() const noexcept {
     CryptoppImpl cryptor;
     std::cout << "GetDataMsg\n";
-    std::cout << "Type: " << m_type << "\n";
+    std::cout << "Type: " << static_cast<int>(m_type) << "\n";
     for(auto& itr: m_hashes) {
         std::cout << cryptor.sha256HashToString(itr) << "\n";
     }
@@ -323,174 +208,90 @@ void GetDataMsg::print() const {
 }
 
 BlockMsg::BlockMsg() {
-    m_comm = MsgTypes::sBlock;
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::sBlock;
+    // number of  objects
+    m_header.payloadSize = 0;
 }
 
-BlockMsg::BlockMsg(const Block& block) {
-    m_comm = MsgTypes::sBlock;
-    m_block = block;
+BlockMsg::BlockMsg(const Block& block):
+    m_block(block) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::sBlock;
+    // block size
+    m_header.payloadSize = m_block.size();
 }
 
-const Block& BlockMsg::getBlock() {
+const Block& BlockMsg::getBlock() noexcept {
     return m_block;
 }
 
-void BlockMsg::parse(uint8_t* data, size_t size) {
-    size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint32_t) * 8;
-    size_t payload_size;
-    memcpy(&payload_size, data + sizeof(char) * STARTSIZE + sizeof(uint8_t), sizeof(size_t));
-
-    size_t ptr = headerSize;
-
-    // m_block->decode(data + ptr);
+void BlockMsg::decode(ByteReader& byteReader) {
+    decodeHeader(byteReader);
+    m_block.decode(byteReader);
 }
 
-std::vector<uint8_t> BlockMsg::toByte() const {
-    size_t payloadSize = m_block.size();
-    size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint32_t) * 8;
-    size_t size = headerSize + payloadSize;
-
-    std::vector<uint8_t> byteArray(size);
-    uint8_t* msg = byteArray.data();
-    size_t ptr = 0;
-
-    // create header
-
-    memcpy(msg + ptr, STARTSTR, STARTSIZE);
-    ptr += STARTSIZE;
-    memcpy(msg + ptr, &m_comm, sizeof(uint8_t));
-    ptr += sizeof(uint8_t);
-    memcpy(msg + ptr, &size, sizeof(size_t));
-    ptr += sizeof(size_t);
-
-    // create Payload
-    ptr = headerSize;
-    std::vector<uint8_t> encBlock(m_block.size());
-    // m_block->encode(encBlock.data());
-    memcpy(msg + ptr, encBlock.data(), m_block.size());
-    ptr += m_block.size();
-
-    // create Checksum
-
-    CryptoppImpl cryptor;
-    std::array<uint8_t, 32> checksum = cryptor.sha256Hash(
-        std::string(reinterpret_cast<char*>(msg + headerSize), payloadSize));
-    ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
-    memcpy(msg + ptr, checksum.data(), sizeof(uint8_t) * 32);
-
-    return byteArray;
+void BlockMsg::encode(ByteWriter& byteWriter) const {
+    encodeHeader(byteWriter);
+    m_block.encode(byteWriter);
 }
 
-void BlockMsg::print() const {
+void BlockMsg::print() const noexcept {
     std::cout << "BlockMsg\n";
     m_block.print();
     std::cout << std::endl;
 }
 
 TxMsg::TxMsg() {
-    m_comm = MsgTypes::Tx;
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::Tx;
+    // Transaction size
+    m_header.payloadSize = 0;
 }
 
-TxMsg::TxMsg(const Transaction& tx) {
-    m_comm = MsgTypes::Tx;
-    m_tx = tx;
+TxMsg::TxMsg(const Transaction& tx):
+    m_tx(tx) {
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::Tx;
+    // Transaction size
+    m_header.payloadSize = m_tx.size();
 }
 
-const Transaction& TxMsg::getTransaction() {
+const Transaction& TxMsg::getTransaction() noexcept {
     return m_tx;
 }
 
-void TxMsg::parse(uint8_t* data, size_t size) {
-    size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint32_t) * 8;
-    size_t payload_size;
-    memcpy(&payload_size, data + STARTSIZE + sizeof(uint8_t), sizeof(size_t));
-    size_t ptr = headerSize;
-    // toDO
-    // m_tx decode
+void TxMsg::decode(ByteReader& byteReader) {
+    decodeHeader(byteReader);
+    m_tx.decode(byteReader);
 }
 
-std::vector<uint8_t> TxMsg::toByte() const {
-    size_t payloadSize = m_tx.size();
-    size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint32_t) * 8;
-    size_t size = headerSize + payloadSize;
-
-    std::vector<uint8_t> byteArray(size);
-    uint8_t* msg = byteArray.data();
-    size_t ptr = 0;
-
-    // create header
-
-    memcpy(msg + ptr, STARTSTR, STARTSIZE);
-    ptr += STARTSIZE;
-    memcpy(msg + ptr, &m_comm, sizeof(uint8_t));
-    ptr += sizeof(uint8_t);
-    memcpy(msg + ptr, &size, sizeof(size_t));
-    ptr += sizeof(size_t);
-
-    // create Payload
-    ptr = headerSize;
-    // toDO
-    // m_tx encode
-
-    // create Checksum
-
-    CryptoppImpl cryptor;
-    ;
-    std::array<uint8_t, 32> checksum = cryptor.sha256Hash(
-        std::string(reinterpret_cast<char*>(msg + headerSize), payloadSize));
-    ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
-    memcpy(msg + ptr, checksum.data(), sizeof(uint32_t) * 8);
-
-    return byteArray;
+void TxMsg::encode(ByteWriter& byteWriter) const {
+    encodeHeader(byteWriter);
+    m_tx.encode(byteWriter);
 }
 
-void TxMsg::print() const {
+void TxMsg::print() const noexcept {
     std::cout << "TxMsg\n";
     m_tx.print();
     std::cout << std::endl;
 }
 
 NoFoundMsg::NoFoundMsg() {
-    m_comm = MsgTypes::noFound;
+    memcpy(m_header.startString.data(), START_STRING, START_STRING_SIZE);
+    m_header.command = MsgType::noFound;
+    m_header.payloadSize = 0;
 }
 
-void NoFoundMsg::parse(uint8_t* data, size_t size) {
+void NoFoundMsg::decode(ByteReader& byteReader) {
+    decodeHeader(byteReader);
 }
 
-std::vector<uint8_t> NoFoundMsg::toByte() const {
-    size_t payloadSize = 0;
-    size_t headerSize = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t) +
-        sizeof(uint32_t) * 8;
-    size_t size = headerSize + payloadSize;
-
-    std::vector<uint8_t> byteArray(size);
-    uint8_t* msg = byteArray.data();
-    size_t ptr = 0;
-
-    // create header
-
-    memcpy(msg + ptr, STARTSTR, STARTSIZE);
-    ptr += STARTSIZE;
-    memcpy(msg + ptr, &m_comm, sizeof(uint8_t));
-    ptr += sizeof(uint8_t);
-    memcpy(msg + ptr, &size, sizeof(size_t));
-    ptr += sizeof(size_t);
-
-    // create Checksum
-    CryptoppImpl cryptor;
-    std::array<uint8_t, 32> checksum = cryptor.sha256Hash("12345678");
-
-    ptr = sizeof(char) * STARTSIZE + sizeof(uint8_t) + sizeof(size_t);
-    memcpy(msg + ptr, checksum.data(), sizeof(uint8_t) * 32);
-
-    return byteArray;
+void NoFoundMsg::encode(ByteWriter& byteWriter) const {
+    encodeHeader(byteWriter);
 }
 
-void NoFoundMsg::print() const {
+void NoFoundMsg::print() const noexcept {
     std::cout << "NoFoundMsg\n";
     std::cout << std::endl;
 }

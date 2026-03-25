@@ -36,10 +36,6 @@ Transaction createTransaction() {
 }
 
 int main() {
-
-    uint64_t id = 0;
-    std::string address = "to";
-
     Transaction tx1 = createTransaction();
 
     ByteWriter byteWriter;

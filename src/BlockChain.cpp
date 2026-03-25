@@ -12,24 +12,17 @@ bool file_exist(const std::string& path) {
     }
 }
 
-static bool checkFirstBlock(const std::array<uint8_t, 32>& hash) {
-    bool flag = true;
-
-    for(int i = 0; i < 32; i++) {
-        if(hash[i] != 0) {
-            flag = false;
-        }
-    }
-
-    return flag;
-}
-
 BlockChain::BlockChain(std::unique_ptr<IDataBase> db):
     m_db(std::move(db)) {
     bool exists = file_exist(DBPATH);
     m_db->connect();
     if(exists) {
-        m_cur_hash = m_db->getCurrentHash();
+        std::optional<Hash> hash = m_db->getCurrentHash();
+
+        if(hash.has_value()) {
+            m_cur_hash = *hash;
+        }
+
     } else {
         Block block = genesisBlock();
         m_cur_hash = block.getHash();
@@ -45,7 +38,7 @@ void BlockChain::createBlock(uint64_t time, const std::list<Transaction>& tx) {
 }
 
 Block BlockChain::genesisBlock() {
-    std::array<uint8_t, 32> zero_hash = { 0 };
+    Hash zero_hash = createZeroHash();
     std::list<Transaction> txList;
 
     uint64_t id = 0;
@@ -62,11 +55,10 @@ Block BlockChain::genesisBlock() {
 }
 
 void BlockChain::printChain() const noexcept {
-    std::array<uint8_t, 32> hash;
-    hash = m_cur_hash;
+    Hash hash = m_cur_hash;
     std::string blc;
 
-    while(!checkFirstBlock(hash)) {
+    while(!checkZeroHash(hash)) {
         std::optional<Block> block = getBlock(hash);
 
         if(!block.has_value()) {
@@ -78,18 +70,17 @@ void BlockChain::printChain() const noexcept {
     }
 }
 
-std::list<std::array<uint8_t, 32>> BlockChain::getHashesBefore(
-    std::array<uint8_t, 32> curHash) const noexcept {
-    std::list<std::array<uint8_t, 32>> lst;
+std::list<Hash> BlockChain::getHashesBefore(const Hash& curHash) const noexcept {
+    std::list<Hash> lst;
 
-    std::array<uint8_t, 32> hash = m_cur_hash;
+    Hash hash = m_cur_hash;
     std::string blc;
 
     if(curHash == hash) {
         return lst;
     }
 
-    while(!checkFirstBlock(hash)) {
+    while(!checkZeroHash(hash)) {
         if(hash == curHash) {
             break;
         }
@@ -111,13 +102,13 @@ std::list<std::array<uint8_t, 32>> BlockChain::getHashesBefore(
 Block BlockChain::newBlock(
     uint64_t time,
     const std::list<Transaction>& tx,
-    const std::array<uint8_t, 32>& prevHashBlock) {
-    Block block = Block(time, tx, prevHashBlock, std::array<uint8_t, 32>(), 0);
+    const Hash& prevHashBlock) {
+    Block block = Block(time, tx, prevHashBlock, Hash(), 0);
 
-    ProofOfWork pow(&block);
+    ProofOfWork pow(block);
     pow.Run();
 
-    return std::move(block);
+    return block;
 }
 
 void BlockChain::putBlock(const Block& block) {
@@ -125,7 +116,7 @@ void BlockChain::putBlock(const Block& block) {
     m_cur_hash = block.getHash();
 }
 
-std::optional<Block> BlockChain::getBlock(const std::array<uint8_t, 32>& hash) const noexcept {
+std::optional<Block> BlockChain::getBlock(const Hash& hash) const noexcept {
     return m_db->getBlockByHash(hash);
 }
 
@@ -133,7 +124,7 @@ std::optional<Block> BlockChain::getPastBlock() const noexcept {
     return m_db->getBlockByHash(m_cur_hash);
 }
 
-const std::array<uint8_t, 32>& BlockChain::getPastBlockHash() const noexcept {
+const Hash& BlockChain::getPastBlockHash() const noexcept {
     return m_cur_hash;
 }
 
@@ -159,7 +150,7 @@ TXOutput* getOutputs(const std::string& from, int value, int* count) {
 uint64_t BlockChain::getBalance(const std::string& pubkey, const std::string& address)
     const noexcept {
     int sum = 0;
-    std::array<uint8_t, 32> hash;
+    Hash hash = m_cur_hash;
 
     struct outId {
         uint64_t id;
@@ -168,10 +159,9 @@ uint64_t BlockChain::getBalance(const std::string& pubkey, const std::string& ad
 
     std::vector<struct outId> outIds;
 
-    hash = m_cur_hash;
     std::string blc;
 
-    while(!checkFirstBlock(hash)) {
+    while(!checkZeroHash(hash)) {
         std::optional<Block> block = getBlock(hash);
         hash = block->getPrevBlockHash();
 
@@ -226,7 +216,7 @@ std::list<TXInput> BlockChain::getInputs(
 
     int sum = 0;
 
-    std::array<uint8_t, 32> hash;
+    Hash hash = m_cur_hash;
 
     *rest = 0;
 
@@ -237,10 +227,9 @@ std::list<TXInput> BlockChain::getInputs(
 
     std::vector<struct outId> outIds;
 
-    hash = m_cur_hash;
     std::string blc;
 
-    while(!checkFirstBlock(hash)) {
+    while(!checkZeroHash(hash)) {
         std::optional<Block> block = getBlock(hash);
         if(!block.has_value()) {
             break;

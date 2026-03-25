@@ -16,11 +16,11 @@ public:
 
     virtual void putBlock(const Block& block) = 0;
 
-    virtual std::array<uint8_t, 32> getCurrentHash() = 0;
+    virtual std::optional<Hash> getCurrentHash() = 0;
 
-    virtual uint64_t getCurrentId(const std::array<uint8_t, 32>& hash) = 0;
+    virtual std::optional<uint64_t> getCurrentId(const Hash& hash) = 0;
 
-    virtual std::optional<Block> getBlockByHash(const std::array<uint8_t, 32>& hash) = 0;
+    virtual std::optional<Block> getBlockByHash(const Hash& hash) = 0;
 };
 
 #endif

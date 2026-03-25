@@ -3,11 +3,11 @@
 
 #include "TXInput.hpp"
 #include "TXOutput.hpp"
+#include "crypto/CryptoppImpl.hpp"
 #include "serialization/ByteReader.hpp"
 #include "serialization/ByteWriter.hpp"
 #include "serialization/Serializer.hpp"
 
-#include <Crypto/CryptoppImpl.hpp>
 #include <inttypes.h>
 #include <iomanip>
 #include <iostream>
@@ -51,7 +51,7 @@ public:
     /*!
     \brief Парсит поля транзакции в строку
     */
-    std::string toString();
+    std::string toString() const;
 
     /*!
     \brief Размер транзакции в байтах

@@ -2,11 +2,12 @@
 #define Block_hpp
 
 #include "Transaction.hpp"
+#include "crypto/CryptoppImpl.hpp"
+#include "crypto/Hash.hpp"
 #include "serialization/ByteReader.hpp"
 #include "serialization/ByteWriter.hpp"
 #include "serialization/Serializer.hpp"
 
-#include <Crypto/CryptoppImpl.hpp>
 #include <array>
 #include <ctype.h>
 #include <inttypes.h>
@@ -18,36 +19,6 @@
 #include <string>
 
 #define MAXNONCE 1000000
-
-class BlockChain;
-
-/*!
-    \brief Доказательство работы
-
-    Поиск хэша блока с учетом правил
-*/
-class ProofOfWork {
-public:
-    /*!
-     \brief Конструктор
-     \param [in] block - блок для хэширования
-    */
-    ProofOfWork(class Block* block);
-
-    /*!
-     \brief Процесс поиска хэша
-    */
-    void Run();
-
-private:
-    std::string PrepareData(); /*!< Данные для хэширования*/
-
-    std::array<uint8_t, 32> m_target; /*!< Массив сравнения хэша*/
-
-    Block* m_block; /*!< Блок для хэширования*/
-
-    uint64_t m_nonce; /*!< Подбираемое случайное число*/
-};
 
 /*!
     \brief Блок
@@ -76,8 +47,8 @@ public:
     Block(
         const int64_t& timeStamp,
         const std::list<Transaction>& txs,
-        const std::array<uint8_t, 32>& prevBlockHash,
-        const std::array<uint8_t, 32>& hash,
+        const Hash& prevBlockHash,
+        const Hash& hash,
         const int64_t& nonce);
 
     /*!
@@ -96,13 +67,13 @@ public:
      \brief Хэш предыдущего блока
      \return массив байт
     */
-    const std::array<uint8_t, 32>& getPrevBlockHash() const noexcept;
+    const Hash& getPrevBlockHash() const noexcept;
 
     /*!
      \brief Хэш блока
      \return Массив байт
     */
-    const std::array<uint8_t, 32>& getHash() const noexcept;
+    const Hash& getHash() const noexcept;
 
     /*!
      \brief Подобраное случайное число
@@ -132,13 +103,13 @@ public:
      \brief Задать хэш предыдущего блока
      \param [in] hash хэш предыдущего блока
     */
-    void setPrevBlockHash(const std::array<uint8_t, 32>& hash) noexcept;
+    void setPrevBlockHash(const Hash& hash) noexcept;
 
     /*!
      \brief Задать хэш блока
      \param [in] hash хэш блока
     */
-    void setHash(const std::array<uint8_t, 32>& hash) noexcept;
+    void setHash(const Hash& hash) noexcept;
 
     /*!
      \brief Найти размер блока
@@ -163,22 +134,44 @@ public:
     */
     void decode(ByteReader& reader) override;
 
-    friend BlockChain;
-
 private:
     int64_t m_timeStamp;
 
     std::list<Transaction> m_tx;
 
-    std::array<uint8_t, 32> m_prevBlockHash;
+    Hash m_prevBlockHash;
 
-    std::array<uint8_t, 32> m_hash;
+    Hash m_hash;
 
     uint64_t m_nonce;
-
-    friend ProofOfWork;
 };
 
-void printBigInt(uint32_t* bigint);
+/*!
+    \brief Доказательство работы
+
+    Поиск хэша блока с учетом правил
+*/
+class ProofOfWork {
+public:
+    /*!
+     \brief Конструктор
+     \param [in] block - блок для хэширования
+    */
+    ProofOfWork(Block& block);
+
+    /*!
+     \brief Процесс поиска хэша
+    */
+    void Run();
+
+private:
+    bool hashIsValid(const Hash& hash);
+
+    std::string PrepareData(); /*!< Данные для хэширования*/
+
+    Block& m_block; /*!< Блок для хэширования*/
+
+    uint64_t m_nonce; /*!< Подбираемое случайное число*/
+};
 
 #endif

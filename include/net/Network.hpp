@@ -6,7 +6,9 @@
 #include "Message.hpp"
 #include "Server.hpp"
 
+#include <cstddef>
 #include <optional>
+#include <span>
 #include <utility>
 
 class BlockChain;
@@ -58,7 +60,7 @@ private:
     /*!
      \brief Обработчик сообщений
     */
-    void messageHandler(uint8_t* buffer, size_t n, ClientID lientId);
+    void messageHandler(std::span<const std::byte> buffer, ClientID lientId);
 
     /*!
      \brief Послать сообщение noFound
@@ -71,21 +73,21 @@ private:
      \param [in] hash - список хэшей
      \param [in] clientId - id клиента
     */
-    void inv(const std::array<uint8_t, 32>& hash, ClientID clientId);
+    void inv(const Hash& hash, ClientID clientId);
 
     /*!
      \brief Послать сообщение getData
      \param [in] hashes - список хэшей
      \param [in] clientId - id клиента
     */
-    void getData(const std::list<std::array<uint8_t, 32>>& hashes, ClientID clientId);
+    void getData(const std::list<Hash>& hashes, ClientID clientId);
 
     /*!
      \brief Послать сообщение sBlock
      \param [in] hashes - список хэшей блоков
      \param [in] clientId - id клиента
     */
-    void sblock(const std::list<std::array<uint8_t, 32>>& hashes, ClientID clientId);
+    void sblock(const std::list<Hash>& hashes, ClientID clientId);
 
     std::unique_ptr<Server> m_serv;
 

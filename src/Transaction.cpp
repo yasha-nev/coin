@@ -63,20 +63,20 @@ void Transaction::decode(ByteReader& byteReader) {
     m_id = byteReader.read<uint64_t>();
 
     size_t inCount = byteReader.read<size_t>();
-    for(int i = 0; i < inCount; i++) {
+    for(size_t i = 0; i < inCount; i++) {
         TXInput input;
         input.decode(byteReader);
         m_in.emplace_back(input);
     }
     size_t outCount = byteReader.read<size_t>();
-    for(int i = 0; i < outCount; i++) {
+    for(size_t i = 0; i < outCount; i++) {
         TXOutput output;
         output.decode(byteReader);
         m_out.push_back(output);
     }
 }
 
-std::string Transaction::toString() {
+std::string Transaction::toString() const {
     std::string result;
     result += std::to_string(m_id);
     result += std::to_string(m_in.size());

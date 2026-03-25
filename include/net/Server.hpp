@@ -17,6 +17,7 @@
 #include <mutex>
 #include <netdb.h>
 #include <poll.h>
+#include <span>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,7 +44,7 @@ public:
      \param[in] port - порт
      \param[in] msgs - буффер сообщений
     */
-    Server(int port, std::function<void(uint8_t*, size_t, ClientID)> messageHandler);
+    Server(int port, std::function<void(std::span<const std::byte>, ClientID)> messageHandler);
 
     /*!
      \brief Диструктор
@@ -74,7 +75,7 @@ public:
      \param [in] buffer - массив байтов сообщения
      \param [in] n - размер сообщения
     */
-    void sendDataTo(ClientID cliendId, uint8_t* buffer, size_t n);
+    void sendDataTo(ClientID cliendId, std::span<const std::byte> buffer);
 
     /*!
      \brief Получить список клиентов сервера
@@ -107,7 +108,7 @@ private:
 
     std::mutex m_mtx; /*!< мьютекс для работы с потоками*/
 
-    std::function<void(uint8_t*, size_t, long)> m_messageHandler;
+    std::function<void(std::span<const std::byte>, long)> m_messageHandler;
 };
 
 #endif

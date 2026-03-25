@@ -44,8 +44,8 @@ inline std::span<const std::byte> as_bytes(const T* ptr, size_t size)
     return { reinterpret_cast<const std::byte*>(ptr), size };
 }
 
-template<typename T, size_t N>
-inline std::span<const std::byte> as_bytes(const std::array<T, N>& arr)
+template<typename T>
+inline std::span<const std::byte> as_bytes(const std::vector<T>& arr)
     requires(sizeof(T) == 1)
 {
     return std::as_bytes(std::span(arr));

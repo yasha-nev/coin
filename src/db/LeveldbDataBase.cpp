@@ -13,28 +13,33 @@ void LeveldbDataBase::connect() {
     m_db = std::unique_ptr<leveldb::DB>(rawDb);
 }
 
-std::array<uint8_t, 32> LeveldbDataBase::getCurrentHash() {
-    std::array<uint8_t, 32> res;
+std::optional<Hash> LeveldbDataBase::getCurrentHash() {
+    Hash res;
     std::string hash;
 
-    m_db->Get(leveldb::ReadOptions(), "l", &hash);
+    leveldb::Status status = m_db->Get(leveldb::ReadOptions(), "l", &hash);
 
-    uint8_t* ptr = (uint8_t*) hash.c_str();
-    for(int i = 0; i < 32; i++) {
-        res[i] = *ptr;
-        ptr++;
+    if(status.IsIOError() || status.IsNotFound()) {
+        return std::nullopt;
     }
+
+    ByteReader byteReader(as_bytes(hash.data(), hash.size()));
+    res.decode(byteReader);
 
     return res;
 }
 
-uint64_t LeveldbDataBase::getCurrentId(const std::array<uint8_t, 32>& hash) {
+std::optional<uint64_t> LeveldbDataBase::getCurrentId(const Hash& hash) {
     auto block = getBlockByHash(hash);
+
+    if(!block.has_value()) {
+        return std::nullopt;
+    }
 
     const auto& transactions = block->getTransactions();
 
     if(transactions.empty()) {
-        return -1;
+        return std::nullopt;
     }
 
     const auto& lastTransaction = transactions.back();
@@ -42,11 +47,19 @@ uint64_t LeveldbDataBase::getCurrentId(const std::array<uint8_t, 32>& hash) {
     return id;
 }
 
-std::optional<Block> LeveldbDataBase::getBlockByHash(const std::array<uint8_t, 32>& hash) {
+std::optional<Block> LeveldbDataBase::getBlockByHash(const Hash& hash) {
     std::string byteBlock;
+    ByteWriter byteWriter;
 
-    leveldb::Slice key((char*) hash.data(), hash.size());
-    m_db->Get(leveldb::ReadOptions(), key, &byteBlock);
+    hash.encode(byteWriter);
+    const auto& bytes = byteWriter.bytes();
+
+    leveldb::Slice key((char*) bytes.data(), bytes.size());
+    leveldb::Status status = m_db->Get(leveldb::ReadOptions(), key, &byteBlock);
+
+    if(status.IsIOError() || status.IsNotFound()) {
+        return std::nullopt;
+    }
 
     Block block = Block();
 
@@ -57,15 +70,19 @@ std::optional<Block> LeveldbDataBase::getBlockByHash(const std::array<uint8_t, 3
 }
 
 void LeveldbDataBase::putBlock(const Block& block) {
-    ByteWriter bytewriter;
-    block.encode(bytewriter);
+    ByteWriter hashByteWriter;
+    const Hash& hash = block.getHash();
+    hash.encode(hashByteWriter);
+    const auto& hashBytes = hashByteWriter.bytes();
 
-    const auto& bytes = bytewriter.bytes();
+    leveldb::Slice key((char*) hashBytes.data(), hashBytes.size());
 
-    leveldb::Slice key((char*) block.getHash().data(), block.getHash().size());
+    ByteWriter blockByteWriter;
+    block.encode(blockByteWriter);
+    const auto& blockBytes = blockByteWriter.bytes();
 
-    leveldb::Slice value((char*) bytes.data(), bytes.size());
-    leveldb::Slice value_hash((char*) block.getHash().data(), block.getHash().size());
+    leveldb::Slice value((char*) blockBytes.data(), blockBytes.size());
+    leveldb::Slice value_hash((char*) hashBytes.data(), hashBytes.size());
 
     m_db->Put(leveldb::WriteOptions(), key, value);
     m_db->Put(leveldb::WriteOptions(), "l", value_hash);
