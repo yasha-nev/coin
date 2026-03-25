@@ -122,10 +122,10 @@ void Transaction::sign() {
     }
 
     for(auto& in: m_in) {
-        auto cryptor = crypto::createCryptoppImpl();
+        auto hashEncoder = IHashEncoder::create();
         std::string key = in.getPublicKey() + signstr;
-        auto hash = cryptor->sha256Hash(key);
-        in.setSignarure(cryptor->sha256HashToString(hash));
+        auto hash = hashEncoder->sha256Hash(key);
+        in.setSignarure(hashEncoder->sha256HashToString(hash));
     }
 }
 

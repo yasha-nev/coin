@@ -1,17 +1,17 @@
-#include "crypto/CryptoppImpl.hpp"
+#include "crypto/CryptoppHashEncoder.hpp"
 
 #define SHA256_HASH_SIZE 32
 #define RIPMD160_HASH_SIZE 20
 
-std::string CryptoppImpl::encodeBase58(const std::string& source) {
-    return encodeBase58(source);
+std::string CryptoppHashEncoder::encodeBase58(const std::string& source) {
+    return EncodeBase58(source);
 }
 
-std::string CryptoppImpl::decodeBase58(const std::string& str) {
-    return decodeBase58(str);
+std::string CryptoppHashEncoder::decodeBase58(const std::string& str) {
+    return DecodeBase58(str);
 }
 
-Hash CryptoppImpl::sha256Hash(const std::string& message) {
+Hash CryptoppHashEncoder::sha256Hash(const std::string& message) {
     CryptoPP::SHA256 hash;
 
     std::vector<CryptoPP::byte> byteArray(message.begin(), message.end());
@@ -21,7 +21,7 @@ Hash CryptoppImpl::sha256Hash(const std::string& message) {
     return Hash(digest);
 }
 
-Hash CryptoppImpl::ripemd160Hash(const std::string& message) {
+Hash CryptoppHashEncoder::ripemd160Hash(const std::string& message) {
     CryptoPP::RIPEMD160 hash;
 
     std::vector<CryptoPP::byte> byteArray(message.begin(), message.end());
@@ -40,7 +40,7 @@ static std::string toHex(const ArrayType& arr) {
     return ss.str();
 }
 
-std::string CryptoppImpl::sha256HashToString(const Hash& hash) {
+std::string CryptoppHashEncoder::sha256HashToString(const Hash& hash) {
     std::stringstream s;
 
     const auto& array = hash.getHashAsVector();
@@ -55,11 +55,11 @@ std::string CryptoppImpl::sha256HashToString(const Hash& hash) {
     return s.str();
 }
 
-std::string CryptoppImpl::ripemd160HashToString(const Hash& hash) {
+std::string CryptoppHashEncoder::ripemd160HashToString(const Hash& hash) {
     const auto& array = hash.getHashAsVector();
     return toHex(array);
 }
 
-std::unique_ptr<ICrypto> crypto::createCryptoppImpl() {
-    return std::make_unique<CryptoppImpl>();
+std::unique_ptr<IHashEncoder> IHashEncoder::create() {
+    return std::make_unique<CryptoppHashEncoder>();
 }

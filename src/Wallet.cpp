@@ -3,28 +3,26 @@
 Wallet::Wallet(BlockChain& bc, Network& net):
     m_bc(bc),
     m_net(net) {
-    if(!std::filesystem::exists("./priv.rem") || !std::filesystem::exists("./pub.rem")) {
-        RSACryptor rsa;
-        m_pubkey = PublicKey(*rsa.getPublicKey());
-        m_privkey = PrivateKey(*rsa.getPrivateKey());
-    } else {
-        m_privkey = PrivateKey("./priv.rem");
-        m_pubkey = PublicKey("./pub.rem");
-    }
+
+    auto rsaProcessor = IRsaProcessor::create("./");
+
+    m_privkey = rsaProcessor->getPrivateKeyBase58();
+    m_pubkey = rsaProcessor->getPublicKeyBase58();
 }
 
 Wallet::~Wallet() {
-    m_privkey.save("./priv.rem");
-    m_pubkey.save("./pub.rem");
 }
 
 std::string Wallet::getAddres() {
-    std::string pubKeyHash = m_pubkey.hash();
-    std::string sum = checkSum(pubKeyHash);
+    std::string sum = checkSum(m_pubkey);
 
-    std::string src = version() + pubKeyHash + sum;
+    std::string src = version() + m_pubkey + sum;
 
-    std::string res = EncodeBase58(src);
+    auto hashEncoder = IHashEncoder::create();
+
+    Hash ripmd = hashEncoder->ripemd160Hash(src);
+    std::string ripmdstr = hashEncoder->ripemd160HashToString(ripmd);
+    std::string res = hashEncoder->encodeBase58(ripmdstr);
 
     res.pop_back();
 
@@ -32,7 +30,7 @@ std::string Wallet::getAddres() {
 }
 
 uint64_t Wallet::getBalance() {
-    return m_bc.getBalance(m_pubkey.getKey(), getAddres());
+    return m_bc.getBalance(m_pubkey, getAddres());
 }
 
 std::string Wallet::checkSum(const std::string& payload) {
@@ -48,7 +46,7 @@ std::string Wallet::version() {
 void Wallet::createTransaction(const std::string& address, int value) {
     int rest;
 
-    std::list<TXInput> inputs = m_bc.getInputs(m_pubkey.getKey(), getAddres(), value, &rest);
+    std::list<TXInput> inputs = m_bc.getInputs(m_pubkey, getAddres(), value, &rest);
     if(inputs.empty()) {
         std::cout << "not money" << std::endl;
         return;

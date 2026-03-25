@@ -4,7 +4,7 @@
 
 #include "Block.hpp"
 #include "crypto/Hash.hpp"
-#include "crypto/ICrypto.hpp"
+#include "crypto/IHashEncoder.hpp"
 #include "serialization/ByteReader.hpp"
 #include "serialization/ByteWriter.hpp"
 #include "serialization/Serializer.hpp"

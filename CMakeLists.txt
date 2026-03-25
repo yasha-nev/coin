@@ -61,10 +61,8 @@ set(SRCS
     src/Mainer.cpp
     src/db/LeveldbDataBase.cpp
     src/crypto/Hash.cpp
-    src/crypto/RSACryptor.cpp
-    src/crypto/publickey.cpp
-    src/crypto/privatekey.cpp
-    src/crypto/CryptoppImpl.cpp
+    src/crypto/CryptoppHashEncoder.cpp
+    src/crypto/CryptoppRsaProcessor.cpp
     src/crypto/base58.cpp
     src/net/Client.cpp
     src/net/Message.cpp
@@ -83,11 +81,10 @@ set(HEADERS
     include/db/IDataBase.hpp
     include/db/LeveldbDataBase.hpp
     include/crypto/Hash.hpp
-    include/crypto/ICrypto.hpp
-    include/crypto/CryptoppImpl.hpp
-    include/crypto/RSACryptor.hpp
-    include/crypto/publickey.hpp
-    include/crypto/privatekey.hpp
+    include/crypto/IHashEncoder.hpp
+    include/crypto/CryptoppHashEncoder.hpp
+    include/crypto/IRsaProcessor.hpp
+    include/crypto/CryptoppRsaProcessor.hpp
     include/crypto/base58.hpp
     include/net/Client.hpp
     include/net/Message.hpp

@@ -5,9 +5,9 @@
 #include <memory>
 #include <string>
 
-class ICrypto {
+class IHashEncoder {
 public:
-    virtual ~ICrypto() = default;
+    virtual ~IHashEncoder() = default;
 
     virtual std::string encodeBase58(const std::string& source) = 0;
 
@@ -20,8 +20,6 @@ public:
     virtual std::string sha256HashToString(const Hash& hash) = 0;
 
     virtual std::string ripemd160HashToString(const Hash& hash) = 0;
-};
 
-namespace crypto {
-    std::unique_ptr<ICrypto> createCryptoppImpl();
-}
+    static std::unique_ptr<IHashEncoder> create();
+};

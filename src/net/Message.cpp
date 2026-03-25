@@ -74,10 +74,10 @@ void GetBlocksMsg::encode(ByteWriter& byteWriter) const {
 }
 
 void GetBlocksMsg::print() const noexcept {
-    auto cryptor = crypto::createCryptoppImpl();
+    auto hashEncoder = IHashEncoder::create();
     std::cout << "GetBlocksMsg\n";
     for(auto& itr: m_hashes) {
-        std::cout << cryptor->sha256HashToString(itr) << "\n";
+        std::cout << hashEncoder->sha256HashToString(itr) << "\n";
     }
     std::cout << std::endl;
 }
@@ -131,11 +131,11 @@ void InvMsg::encode(ByteWriter& byteWriter) const {
 }
 
 void InvMsg::print() const noexcept {
-    auto cryptor = crypto::createCryptoppImpl();
+    auto hashEncoder = IHashEncoder::create();
     std::cout << "InvMsg\n";
     std::cout << "Type: " << static_cast<uint8_t>(m_type) << "\n";
     for(auto& itr: m_hashes) {
-        std::cout << cryptor->sha256HashToString(itr) << "\n";
+        std::cout << hashEncoder->sha256HashToString(itr) << "\n";
     }
     std::cout << std::endl;
 }
@@ -190,11 +190,11 @@ void GetDataMsg::encode(ByteWriter& byteWriter) const {
 }
 
 void GetDataMsg::print() const noexcept {
-    auto cryptor = crypto::createCryptoppImpl();
+    auto hashEncoder = IHashEncoder::create();
     std::cout << "GetDataMsg\n";
     std::cout << "Type: " << static_cast<int>(m_type) << "\n";
     for(auto& itr: m_hashes) {
-        std::cout << cryptor->sha256HashToString(itr) << "\n";
+        std::cout << hashEncoder->sha256HashToString(itr) << "\n";
     }
     std::cout << std::endl;
 }

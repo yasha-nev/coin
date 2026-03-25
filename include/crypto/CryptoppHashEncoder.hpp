@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Hash.hpp"
-#include "ICrypto.hpp"
+#include "IHashEncoder.hpp"
 #include "base58.hpp"
 
 #include <cryptopp/base64.h>
@@ -17,7 +17,7 @@
 #include <sstream>
 #include <vector>
 
-class CryptoppImpl: public ICrypto {
+class CryptoppHashEncoder: public IHashEncoder {
 public:
     std::string encodeBase58(const std::string& source) override;
 

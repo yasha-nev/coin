@@ -2,11 +2,8 @@
 
 #include "BlockChain.hpp"
 #include "Transaction.hpp"
-#include "crypto/ICrypto.hpp"
-#include "crypto/RSACryptor.hpp"
+#include "crypto/IRsaProcessor.hpp"
 #include "crypto/base58.hpp"
-#include "crypto/privatekey.hpp"
-#include "crypto/publickey.hpp"
 #include "net/Network.hpp"
 
 /*!
@@ -62,9 +59,9 @@ protected:
     */
     std::string version();
 
-    PrivateKey m_privkey; /*!< приватный ключ*/
+    std::string m_privkey; /*!< приватный ключ*/
 
-    PublicKey m_pubkey; /*!< Публичный ключ*/
+    std::string m_pubkey; /*!< Публичный ключ*/
 
     BlockChain& m_bc; /*!< Локальная цепь блоков*/
 

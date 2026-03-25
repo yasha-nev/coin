@@ -3,9 +3,6 @@
 #include "BlockChain.hpp"
 #include "Transaction.hpp"
 #include "Wallet.hpp"
-#include "crypto/RSACryptor.hpp"
-#include "crypto/privatekey.hpp"
-#include "crypto/publickey.hpp"
 #include "net/Network.hpp"
 
 /*!
