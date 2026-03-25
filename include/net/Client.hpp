@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+
 #include <netdb.h>
 #include <unistd.h>
 
@@ -32,7 +33,7 @@ public:
      \brief Отправить сообщение
     \param [in] msg указатель на сообщение которое надо отправить
     */
-    void sendData(uint8_t *buffer, size_t n);
+    void sendData(uint8_t* buffer, size_t n);
 
     /*!
      \brief Вернуть соке

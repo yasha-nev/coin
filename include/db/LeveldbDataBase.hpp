@@ -3,9 +3,11 @@
 
 #include "Block.hpp"
 #include "IDataBase.hpp"
+
 #include <leveldb/db.h>
 
 #include <memory>
+#include <optional>
 
 /*!
     \brief DAO для работы с базой данных leveldb
@@ -21,7 +23,7 @@ public:
     \brief Запись блока в базу данных
     \param [in] block - блок данных
     */
-    void putBlock(const std::unique_ptr<Block>& block) override;
+    void putBlock(const Block& block) override;
 
     /*!
     \brief Достает последний записанный блок
@@ -41,7 +43,7 @@ public:
     \param [in] hash - хэш блока
     \return блок  данных
     */
-    std::unique_ptr<Block> getBlockByHash(const std::array<uint8_t, 32>& hash) override;
+    std::optional<Block> getBlockByHash(const std::array<uint8_t, 32>& hash) override;
 
 private:
     std::unique_ptr<leveldb::DB> m_db; /*!< указатель на базу данных*/

@@ -1,6 +1,13 @@
 #ifndef Transaction_hpp
 #define Transaction_hpp
 
+#include "TXInput.hpp"
+#include "TXOutput.hpp"
+#include "serialization/ByteReader.hpp"
+#include "serialization/ByteWriter.hpp"
+#include "serialization/Serializer.hpp"
+
+#include <Crypto/CryptoppImpl.hpp>
 #include <inttypes.h>
 #include <iomanip>
 #include <iostream>
@@ -8,110 +15,9 @@
 #include <sstream>
 #include <string.h>
 #include <string>
-
 #include <vector>
 
 #define REWARD 50
-
-/*!
-    \brief Выход транзакции
-
-     Хранит информацию куда был сделал перевод
-*/
-class TXOutput {
-public:
-    /*!
-     \brief Конструктор
-    */
-    TXOutput() {};
-
-    /*!
-     \brief Конструктор копирования
-    */
-    TXOutput(const TXOutput& out);
-
-    /*!
-     \brief Конструктор перемещения
-    */
-    TXOutput(const TXOutput&& out);
-
-    /*!
-     \brief Конструктор с параметрами
-
-     \param [in] value - количество передоваемых монет
-     \param [in] pubkey - адрес кошелька
-    */
-    TXOutput(int value, const std::string& pubkey);
-
-    /*!
-     \brief Перегрузка оператора  =
-    */
-    TXOutput& operator=(const TXOutput& out);
-
-    /*!
-     \brief Перегрузка оператора  = перемещения
-    */
-    TXOutput& operator=(const TXOutput&& out);
-
-    bool operator == (const TXOutput &out) const;
-
-    int m_value; /*!< количество монет */
-
-    std::string m_address; /*!< адрес кошелька */
-};
-
-/*!
-    \brief Вход транзакции
-
-    Хранит информацию откуда были взяты средства
-    Является частью Транзакции
-*/
-class TXInput {
-public:
-    /*!
-     \brief Конструктор
-    */
-    TXInput() {};
-
-    /*!
-     \brief Конструктор копирования
-    */
-    TXInput(const TXInput& in);
-
-    /*!
-     \brief Конструктор перемещения
-    */
-    TXInput(const TXInput&& in);
-
-    /*!
-     \brief Конструктор с параметрами
-
-    \param [in] transId - id транзакции
-    \param [in] outIndex - индекс выхода в транзакции
-    \param [in] pubkey - публичный ключ отправителя
-    */
-    TXInput(const uint64_t& transId, int outIndex, const std::string& pubkey);
-
-    /*!
-     \brief Перегрузка =
-    */
-    TXInput& operator=(const TXInput& in);
-
-    /*!
-     \brief Перегрузка = перемещения
-    */
-    TXInput& operator=(const TXInput&& in);
-
-    bool operator== (const TXInput &in) const;
-
-    uint64_t m_tranId; /*!< id транзакции */
-
-    int m_outIndex; /*!< индекс выхода в транзакции*/
-
-    std::string m_pubkey; /*!< публичный ключ */
-
-    std::string m_sign; /*!< цифровая подпись */
-};
 
 /*!
     \brief Транзакция
@@ -119,16 +25,9 @@ public:
     Является частью блока
     Хранит информацию о переводах средств
 */
-class Transaction {
+class Transaction: public Serializer {
 public:
-    /*!
-    \brief Базовый конструктор
-    */
-    uint64_t m_id; /*!< id транзакции */
-
-    std::vector<TXInput> m_in; /*!< Входы */
-
-    std::vector<TXOutput> m_out; /*!< Выходы */
+    Transaction();
 
     /*!
     \brief Конструктор с параметрами
@@ -139,14 +38,15 @@ public:
     Transaction(uint64_t id, int in_cout, int out_count);
 
     /*!
-    \brief Конструктор копирования
-    */
-    Transaction(Transaction* tx);
-
-    /*!
     \brief Диструктор
     */
     ~Transaction();
+
+    uint64_t getId() const noexcept;
+
+    const std::vector<TXInput>& getInputs() const noexcept;
+
+    const std::vector<TXOutput>& getOutputs() const noexcept;
 
     /*!
     \brief Парсит поля транзакции в строку
@@ -154,42 +54,50 @@ public:
     std::string toString();
 
     /*!
-    \brief Размер транзакции
+    \brief Размер транзакции в байтах
     */
     size_t size() const noexcept;
 
     /*!
     \brief Сериализация транзакции
-    \param [in] ptr - массив байт для записи
+    \return - массив байт для записи
     */
-    void encode(uint8_t* ptr);
+    void encode(ByteWriter& writer) const override;
 
     /*!
     \brief Десериализация транзакции
-    \param [in] ptr - массив байт для чтения
+    \param [in] data - массив байт для чтения
     */
-    void decode(uint8_t* ptr);
+    void decode(ByteReader& reader) override;
+
+    /*!
+    \brief Подписать транзакцию
+    */
+    void sign();
 
     /*!
     \brief Вывод информации о транзакции в консоль
     */
     void print() const noexcept;
 
-    bool operator== (const Transaction &tx) const;
+    /*!
+    \brief Перегрузка оператора сравнения
+    */
+    bool operator==(const Transaction& tx) const;
+
+protected:
+    uint64_t m_id; /*!< идентификатор транзакции */
+
+    std::vector<TXInput> m_in; /*!< Массив Входом */
+
+    std::vector<TXOutput> m_out; /*!< Массив Выходов */
+
+    friend class TransactionFactory;
 };
 
-
-class CoinBaseTransaction: public Transaction {
+class TransactionFactory {
 public:
-    CoinBaseTransaction(uint64_t& id, std::string& address);
-
-private:
-    std::string m_address;
-};
-
-class RealTransaction: public Transaction {
-public:
-    RealTransaction(
+    static Transaction createSimple(
         const uint64_t& id,
         const std::string& from,
         const std::string& to,
@@ -197,14 +105,7 @@ public:
         std::list<TXInput>& inputs,
         int rest);
 
-private:
-    std::string m_from;
-
-    std::string m_to;
-
-    int m_value;
-
-    int m_rest;
+    static Transaction createCoinBase(const uint64_t& id, const std::string& address);
 };
 
 #endif /* Transaction_hpp */

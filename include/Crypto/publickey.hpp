@@ -1,8 +1,8 @@
 #ifndef publickey_hpp
 #define publickey_hpp
 
-#include "base58.hpp"
 #include "CryptoppImpl.hpp"
+#include "base58.hpp"
 
 #include <cmath>
 #include <fstream>

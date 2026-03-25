@@ -1,16 +1,16 @@
 #include "Block.hpp"
 #include "Message.hpp"
 
-#include <memory>
-#include <list>
 #include <array>
 #include <assert.h>
+#include <list>
+#include <memory>
 
 void getBlockMsgTest() {
     std::list<std::array<uint8_t, 32>> hashes;
 
-    hashes.push_back(std::array<uint8_t, 32>{1});
-    hashes.push_back(std::array<uint8_t, 32>{0});
+    hashes.push_back(std::array<uint8_t, 32> { 1 });
+    hashes.push_back(std::array<uint8_t, 32> { 0 });
 
     auto gblochMsg = GetBlocksMsg(hashes);
 
@@ -26,8 +26,8 @@ void getBlockMsgTest() {
 void invMsgTest() {
     std::list<std::array<uint8_t, 32>> hashes;
 
-    hashes.push_back(std::array<uint8_t, 32>{1});
-    hashes.push_back(std::array<uint8_t, 32>{0});
+    hashes.push_back(std::array<uint8_t, 32> { 1 });
+    hashes.push_back(std::array<uint8_t, 32> { 0 });
 
     auto invMsg = InvMsg(InvTypes::iBlock, hashes);
 
@@ -43,8 +43,8 @@ void invMsgTest() {
 void getDataMsgTest() {
     std::list<std::array<uint8_t, 32>> hashes;
 
-    hashes.push_back(std::array<uint8_t, 32>{1});
-    hashes.push_back(std::array<uint8_t, 32>{0});
+    hashes.push_back(std::array<uint8_t, 32> { 1 });
+    hashes.push_back(std::array<uint8_t, 32> { 0 });
 
     auto getDataMsg = GetDataMsg(DataTypes::dBlock, hashes);
 
@@ -57,16 +57,16 @@ void getDataMsgTest() {
     assert(getDataMsg.getHashes() == getDataMsg2.getHashes());
 }
 
-std::unique_ptr<Block> createBlock(){
-    std::array<uint8_t, 32> zero_hash = {0};
+Block createBlock() {
+    std::array<uint8_t, 32> zero_hash = { 0 };
     std::list<Transaction> txs;
     uint64_t id = 0;
     std::string address = "address";
-    txs.push_back(CoinBaseTransaction(id, address));
-    auto block = std::make_unique<Block>(static_cast<uint64_t>(0), txs, zero_hash, std::array<uint8_t, 32>(), 0);
-    ProofOfWork pow(block.get());
+    txs.push_back(TransactionFactory::createCoinBase(id, address));
+    auto block = Block(static_cast<uint64_t>(0), txs, zero_hash, std::array<uint8_t, 32>(), 0);
+    ProofOfWork pow(&block);
     pow.Run();
-    
+
     return block;
 }
 
@@ -81,43 +81,43 @@ void BlockMsgTest() {
     assert(blockMsg.getClientId() == blockMsg2.getClientId());
     assert(blockMsg.getCommand() == blockMsg2.getCommand());
 
-    auto block2 = blockMsg2.getBlock();
+    Block block2 = blockMsg2.getBlock();
 
-    assert(block1->getTimeStamp() == block2->getTimeStamp());
-    assert(block1->getNonce() == block2->getNonce());
-    assert(block1->getHash() == block2->getHash());
-    assert(block1->getPrevBlockHash() == block2->getPrevBlockHash());
+    assert(block1.getTimeStamp() == block2.getTimeStamp());
+    assert(block1.getNonce() == block2.getNonce());
+    assert(block1.getHash() == block2.getHash());
+    assert(block1.getPrevBlockHash() == block2.getPrevBlockHash());
 }
 
-std::unique_ptr<Transaction> createTransaction(){
-    
+Transaction createTransaction() {
+
     std::list<TXInput> inputs;
-    
+
     // =========== input1 ========= //
-    
+
     uint64_t transid = 0;
     std::string pubkey = "pubkey_1";
     TXInput input_1 = TXInput(transid, -1, pubkey);
     inputs.push_back(input_1);
-    
+
     // =========== input2 ========= //
     transid = 1;
     pubkey = "pubkey_2";
     TXInput input_2 = TXInput(transid, 50, pubkey);
     inputs.push_back(input_2);
-    
+
     // =========== input3 ========= //
     transid = 1;
     pubkey = "pubkey_2";
     TXInput input_3 = TXInput(transid, 2, pubkey);
     inputs.push_back(input_3);
-    
+
     // ======= Transaction ======== //
     uint64_t id = 5;
     std::string from = "from";
     std::string to = "to";
-    
-    return std::make_unique<RealTransaction>(id, from, to, 0, inputs, 0);
+
+    return TransactionFactory::createSimple(id, from, to, 0, inputs, 0);
 }
 
 void txMsgTest() {
@@ -132,7 +132,7 @@ void txMsgTest() {
 
     assert(txMsg.getClientId() == txMsg2.getClientId());
     assert(txMsg.getCommand() == txMsg2.getCommand());
-    assert(*txMsg.getTransaction() == *txMsg2.getTransaction());
+    assert(txMsg.getTransaction() == txMsg2.getTransaction());
 }
 
 void noFoundMsgTest() {
@@ -146,19 +146,18 @@ void noFoundMsgTest() {
     assert(noFoundMsg.getCommand() == noFoundMsg2.getCommand());
 }
 
+int main() {
 
-int main(){
-    
     getBlockMsgTest();
-    
+
     invMsgTest();
-    
+
     getDataMsgTest();
-    
+
     BlockMsgTest();
-    
+
     txMsgTest();
-    
+
     noFoundMsgTest();
 
     return 0;

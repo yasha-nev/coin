@@ -6,6 +6,7 @@
 #include "Message.hpp"
 #include "Server.hpp"
 
+#include <optional>
 #include <utility>
 
 class BlockChain;
@@ -23,7 +24,7 @@ public:
      \param[in] port - порт
      \param[in] bc - локальная цепь блоков
     */
-    Network(int port, BlockChain &bc);
+    Network(int port, BlockChain& bc);
 
     /*!
      \brief Деструктор
@@ -38,7 +39,7 @@ public:
     /*!
      \brief Отправить транзакцию в буффер
     */
-    void sendToMempool(std::unique_ptr<Transaction> tx);
+    void sendToMempool(const Transaction& tx);
 
     /*!
      \brief Создать соединение
@@ -51,14 +52,13 @@ public:
      \brief Получить транзакцию из буфера для создания блока
      \return укалатель на транзакцию
     */
-    std::unique_ptr<Transaction> getFromMempool();
+    std::optional<Transaction> getFromMempool();
 
 private:
-
     /*!
      \brief Обработчик сообщений
     */
-    void messageHandler(uint8_t *buffer, size_t n, ClientID lientId);
+    void messageHandler(uint8_t* buffer, size_t n, ClientID lientId);
 
     /*!
      \brief Послать сообщение noFound
@@ -71,29 +71,29 @@ private:
      \param [in] hash - список хэшей
      \param [in] clientId - id клиента
     */
-    void inv(std::array<uint8_t, 32> hash, ClientID clientId);
+    void inv(const std::array<uint8_t, 32>& hash, ClientID clientId);
 
     /*!
      \brief Послать сообщение getData
      \param [in] hashes - список хэшей
      \param [in] clientId - id клиента
     */
-    void getData(std::list<std::array<uint8_t, 32>> hashes, ClientID clientId);
+    void getData(const std::list<std::array<uint8_t, 32>>& hashes, ClientID clientId);
 
     /*!
      \brief Послать сообщение sBlock
      \param [in] hashes - список хэшей блоков
      \param [in] clientId - id клиента
     */
-    void sblock(std::list<std::array<uint8_t, 32>> hashes, ClientID clientId);
+    void sblock(const std::list<std::array<uint8_t, 32>>& hashes, ClientID clientId);
 
     std::unique_ptr<Server> m_serv;
 
-    BlockChain &m_bc;
+    BlockChain& m_bc;
 
     std::list<std::pair<std::string, int>> m_clientsIp;
 
-    std::list<std::unique_ptr<Transaction>> m_mempool;
+    std::list<Transaction> m_mempool;
 
     std::mutex m_mtx;
 };

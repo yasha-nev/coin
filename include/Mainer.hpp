@@ -3,11 +3,11 @@
 
 #include "BlockChain.hpp"
 #include "Network.hpp"
+#include "RSACryptor.hpp"
 #include "Transaction.hpp"
 #include "Wallet.hpp"
 #include "privatekey.hpp"
 #include "publickey.hpp"
-#include "RSACryptor.hpp"
 
 /*!
     \brief Майнер
@@ -21,7 +21,7 @@ public:
      \param [in] bc указатель на локальный блокчейн
      \param [in] net указатель на клиента p2p сети
     */
-    Mainer(BlockChain &bc, Network &net);
+    Mainer(BlockChain& bc, Network& net);
 
     /*!
      \brief Диструкток

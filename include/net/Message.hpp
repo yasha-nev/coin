@@ -5,13 +5,13 @@
 
 #include "Block.hpp"
 #include "Client.hpp"
+#include "CryptoppImpl.hpp"
 
 #include <array>
 #include <inttypes.h>
 #include <list>
-#include <string.h>
 #include <memory>
-#include "CryptoppImpl.hpp"
+#include <string.h>
 
 /*!
     \brief Типы сообщений
@@ -112,7 +112,7 @@ public:
      \brief Конструктор с параметрами
      \param hashes - хэши блоков
     */
-    GetBlocksMsg(const std::list<std::array<uint8_t, 32>> &hashes);
+    GetBlocksMsg(const std::list<std::array<uint8_t, 32>>& hashes);
 
     /*!
      \brief Десериализация
@@ -136,7 +136,7 @@ public:
     /*!
     \return список хэшей
     */
-    std::list<std::array<uint8_t, 32>> getHashes();
+    const std::list<std::array<uint8_t, 32>>& getHashes();
 
 private:
     std::list<std::array<uint8_t, 32>> m_hashes; /*!< список хэшей */
@@ -182,7 +182,7 @@ public:
      \param [in] type - тип сериализованных данных
      \param [in] hashes - список хэшей блоков
     */
-    InvMsg(InvTypes type, std::list<std::array<uint8_t, 32>> hashes);
+    InvMsg(InvTypes type, const std::list<std::array<uint8_t, 32>>& hashes);
 
     /*!
      \brief Десериализация
@@ -206,7 +206,7 @@ public:
     /*!
     \return список хэшей
     */
-    std::list<std::array<uint8_t, 32>> getHashes();
+    const std::list<std::array<uint8_t, 32>>& getHashes();
 
 private:
     uint8_t m_type; /*!< Тип хранимых данных */
@@ -250,7 +250,7 @@ public:
      \brief Конструктор с параметрами
     \param [in] type - тип сериализованный данных
     */
-    GetDataMsg(DataTypes type, std::list<std::array<uint8_t, 32>> hashes);
+    GetDataMsg(DataTypes type, const std::list<std::array<uint8_t, 32>>& hashes);
 
     /*!
      \brief Десериализация
@@ -274,7 +274,7 @@ public:
     /*!
     \return список хэшей
     */
-    std::list<std::array<uint8_t, 32>> getHashes();
+    const std::list<std::array<uint8_t, 32>>& getHashes();
 
 private:
     uint8_t m_type; /*!< тип хранимых данных */
@@ -309,7 +309,7 @@ public:
      \brief Конструктор с параметром
      \param [in] blocks - блок из цепи
     */
-    BlockMsg(std::unique_ptr<Block>& blocks);
+    BlockMsg(const Block& blocks);
 
     /*!
      \brief Десериализация
@@ -333,10 +333,10 @@ public:
     /*!
      \return блок из цепи
     */
-    Block* getBlock();
+    const Block& getBlock();
 
 private:
-    std::unique_ptr<Block> m_block; /*!< Блок из цепи */
+    Block m_block; /*!< Блок из цепи */
 };
 
 /*               Message Header
@@ -359,7 +359,7 @@ class TxMsg: public Message {
 public:
     TxMsg();
 
-    TxMsg(std::unique_ptr<Transaction>& tx);
+    TxMsg(const Transaction& tx);
 
     virtual void parse(uint8_t* data, size_t size) override;
 
@@ -370,10 +370,10 @@ public:
      */
     virtual void print() const override;
 
-    Transaction* getTransaction();
+    const Transaction& getTransaction();
 
 private:
-    std::unique_ptr<Transaction> m_tx;
+    Transaction m_tx;
 };
 
 /*               Message Header

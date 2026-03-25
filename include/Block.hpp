@@ -2,16 +2,20 @@
 #define Block_hpp
 
 #include "Transaction.hpp"
+#include "serialization/ByteReader.hpp"
+#include "serialization/ByteWriter.hpp"
+#include "serialization/Serializer.hpp"
 
+#include <Crypto/CryptoppImpl.hpp>
 #include <array>
 #include <ctype.h>
 #include <inttypes.h>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string.h>
 #include <string>
-#include <CryptoppImpl.hpp>
 
 #define MAXNONCE 1000000
 
@@ -50,7 +54,7 @@ private:
 
     Блок в цепи
 */
-class Block {
+class Block: public Serializer {
 public:
     /*!
      \brief Диструктор
@@ -71,15 +75,10 @@ public:
     */
     Block(
         const int64_t& timeStamp,
-        const std::list<Transaction>& tx,
+        const std::list<Transaction>& txs,
         const std::array<uint8_t, 32>& prevBlockHash,
         const std::array<uint8_t, 32>& hash,
         const int64_t& nonce);
-
-    /*!
-     \brief Конструктор копирования
-    */
-    Block(Block* block);
 
     /*!
      \brief Время создания блока
@@ -91,7 +90,7 @@ public:
      \brief Список транзакций
      \return Список указателей
     */
-    const std::list<Transaction>& getTransaction() const noexcept;
+    const std::list<Transaction>& getTransactions() const noexcept;
 
     /*!
      \brief Хэш предыдущего блока
@@ -121,7 +120,7 @@ public:
      \brief Задать список транзакций
      \param [in] trans список транзакций
     */
-    void setTransaction(const std::list<Transaction>& trans) noexcept;
+    void setTransaction(const std::list<Transaction>& trans);
 
     /*!
      \brief Задать случайное число
@@ -156,26 +155,26 @@ public:
      \brief Сериализация блока
      \param [out] ptr - размер блока
     */
-    void encode(uint8_t* ptr);
+    void encode(ByteWriter& writer) const override;
 
     /*!
     Десериализация блока
     \param [in] ptr массив байтов
     */
-    void decode(uint8_t* ptr);
+    void decode(ByteReader& reader) override;
 
     friend BlockChain;
 
 private:
-    int64_t m_timeStamp; /*!< время создания*/
+    int64_t m_timeStamp;
 
-    std::list<Transaction> m_tx; /*!< список транзакций*/
+    std::list<Transaction> m_tx;
 
-    std::array<uint8_t, 32> m_prevBlockHash; /*!< хэш предыдущего блока*/
+    std::array<uint8_t, 32> m_prevBlockHash;
 
-    std::array<uint8_t, 32> m_hash; /*!< хэш блока*/
+    std::array<uint8_t, 32> m_hash;
 
-    uint64_t m_nonce; /*!< случайное число*/
+    uint64_t m_nonce;
 
     friend ProofOfWork;
 };

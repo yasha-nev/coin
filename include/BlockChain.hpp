@@ -7,6 +7,7 @@
 #include <array>
 #include <list>
 #include <memory>
+#include <optional>
 #include <vector>
 
 /*!
@@ -28,7 +29,7 @@ public:
      \brief Подожить блок в базе данных
      \param [in] block указатель на блок
     */
-    void putBlock(std::unique_ptr<Block>& block);
+    void putBlock(const Block& block);
 
     /*!
      \brief Создать блок из списка транзакций
@@ -54,13 +55,13 @@ public:
      \param [in] hash - хэш блока
      \return блок
     */
-    std::unique_ptr<Block> getBlock(const std::array<uint8_t, 32>& hash) const noexcept;
+    std::optional<Block> getBlock(const std::array<uint8_t, 32>& hash) const noexcept;
 
     /*!
      \brief Получить последний записанный блок
      \return Блок
     */
-    std::unique_ptr<Block> getPastBlock() const noexcept;
+    std::optional<Block> getPastBlock() const noexcept;
 
     /*!
      \brief Получить хэш последнего блока
@@ -97,14 +98,14 @@ private:
      \param [in] hash - хэш предыдущего блока
      \return указатель на созданный блок
     */
-    std::unique_ptr<Block>
+    Block
     newBlock(uint64_t time, const std::list<Transaction>& tx, const std::array<uint8_t, 32>& hash);
 
     /*!
      \brief Создание базового первого блока
      \return указатель на созданный блок
     */
-    std::unique_ptr<Block> genesisBlock();
+    Block genesisBlock();
 
     std::array<uint8_t, 32> m_cur_hash; /*!< хэш последнего блока*/
 
