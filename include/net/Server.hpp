@@ -1,5 +1,4 @@
-#ifndef Server_hpp
-#define Server_hpp
+#pragma once
 
 #include "Client.hpp"
 
@@ -110,5 +109,3 @@ private:
 
     std::function<void(std::span<const std::byte>, long)> m_messageHandler;
 };
-
-#endif

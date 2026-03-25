@@ -1,7 +1,7 @@
 #include "Block.hpp"
-#include "ByteReader.hpp"
-#include "ByteWriter.hpp"
 #include "net/Message.hpp"
+#include "serialization/ByteReader.hpp"
+#include "serialization/ByteWriter.hpp"
 
 #include <gtest/gtest.h>
 

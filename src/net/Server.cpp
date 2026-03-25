@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "net/Server.hpp"
 
 #define BUFLEN 1024
 

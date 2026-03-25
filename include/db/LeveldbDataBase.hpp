@@ -1,5 +1,4 @@
-#ifndef DB_hpp
-#define DB_hpp
+#pragma once
 
 #include "Block.hpp"
 #include "IDataBase.hpp"
@@ -48,5 +47,3 @@ public:
 private:
     std::unique_ptr<leveldb::DB> m_db; /*!< указатель на базу данных*/
 };
-
-#endif /* DB_hpp */

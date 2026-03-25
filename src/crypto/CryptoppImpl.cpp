@@ -1,4 +1,4 @@
-#include "CryptoppImpl.hpp"
+#include "crypto/CryptoppImpl.hpp"
 
 #define SHA256_HASH_SIZE 32
 #define RIPMD160_HASH_SIZE 20
@@ -58,4 +58,8 @@ std::string CryptoppImpl::sha256HashToString(const Hash& hash) {
 std::string CryptoppImpl::ripemd160HashToString(const Hash& hash) {
     const auto& array = hash.getHashAsVector();
     return toHex(array);
+}
+
+std::unique_ptr<ICrypto> crypto::createCryptoppImpl() {
+    return std::make_unique<CryptoppImpl>();
 }

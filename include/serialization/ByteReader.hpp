@@ -1,5 +1,4 @@
-#ifndef ByteReader_hpp
-#define ByteReader_hpp
+#pragma once
 
 #include <cstring>
 #include <span>
@@ -44,5 +43,3 @@ private:
     std::span<const std::byte> m_data;
     size_t m_position;
 };
-
-#endif

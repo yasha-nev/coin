@@ -3,20 +3,12 @@
 #include <cstdint>
 #include <memory>
 
-bool file_exist(const std::string& path) {
-    if(FILE* file = fopen(path.c_str(), "r")) {
-        fclose(file);
-        return true;
-    } else {
-        return false;
-    }
-}
-
 BlockChain::BlockChain(std::unique_ptr<IDataBase> db):
     m_db(std::move(db)) {
-    bool exists = file_exist(DBPATH);
+
     m_db->connect();
-    if(exists) {
+
+    if(std::filesystem::exists(DBPATH)) {
         std::optional<Hash> hash = m_db->getCurrentHash();
 
         if(hash.has_value()) {

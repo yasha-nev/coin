@@ -1,8 +1,8 @@
-#ifndef ICRYPTO_hpp
-#define ICRYPTO_hpp
+#pragma once
 
 #include "Hash.hpp"
 
+#include <memory>
 #include <string>
 
 class ICrypto {
@@ -22,4 +22,6 @@ public:
     virtual std::string ripemd160HashToString(const Hash& hash) = 0;
 };
 
-#endif
+namespace crypto {
+    std::unique_ptr<ICrypto> createCryptoppImpl();
+}

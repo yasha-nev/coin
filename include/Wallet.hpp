@@ -1,14 +1,13 @@
-#ifndef Wallet_hpp
-#define Wallet_hpp
+#pragma once
 
 #include "BlockChain.hpp"
-#include "CryptoppImpl.hpp"
-#include "Network.hpp"
-#include "RSACryptor.hpp"
 #include "Transaction.hpp"
-#include "base58.hpp"
-#include "privatekey.hpp"
-#include "publickey.hpp"
+#include "crypto/ICrypto.hpp"
+#include "crypto/RSACryptor.hpp"
+#include "crypto/base58.hpp"
+#include "crypto/privatekey.hpp"
+#include "crypto/publickey.hpp"
+#include "net/Network.hpp"
 
 /*!
     \brief Кошелек
@@ -71,5 +70,3 @@ protected:
 
     Network& m_net; /*!<  экземпляр p2p сети*/
 };
-
-#endif /* Wallet_hpp */

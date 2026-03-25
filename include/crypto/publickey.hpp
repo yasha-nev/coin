@@ -1,5 +1,4 @@
-#ifndef publickey_hpp
-#define publickey_hpp
+#pragma once
 
 #include "CryptoppImpl.hpp"
 #include "base58.hpp"
@@ -90,4 +89,3 @@ private:
     */
     long encodeChar(int c);
 };
-#endif /* publickey_hpp */

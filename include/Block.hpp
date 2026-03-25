@@ -1,9 +1,8 @@
-#ifndef Block_hpp
-#define Block_hpp
+#pragma once
 
 #include "Transaction.hpp"
-#include "crypto/CryptoppImpl.hpp"
 #include "crypto/Hash.hpp"
+#include "crypto/ICrypto.hpp"
 #include "serialization/ByteReader.hpp"
 #include "serialization/ByteWriter.hpp"
 #include "serialization/Serializer.hpp"
@@ -173,5 +172,3 @@ private:
 
     uint64_t m_nonce; /*!< Подбираемое случайное число*/
 };
-
-#endif

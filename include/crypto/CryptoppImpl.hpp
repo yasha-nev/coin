@@ -1,5 +1,4 @@
-#ifndef CRYPTOPPIMPL_hpp
-#define CRYPTOPPIMPL_hpp
+#pragma once
 
 #include "Hash.hpp"
 #include "ICrypto.hpp"
@@ -32,5 +31,3 @@ public:
 
     std::string ripemd160HashToString(const Hash& hash) override;
 };
-
-#endif

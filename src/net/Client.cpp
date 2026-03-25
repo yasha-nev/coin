@@ -1,4 +1,4 @@
-#include "Client.hpp"
+#include "net/Client.hpp"
 
 Client::Client(int socket, sockaddr_in addr, ClientID id):
     m_id(id),

@@ -4,9 +4,7 @@ project(coin VERSION 1.0 LANGUAGES CXX)
 
 include(FetchContent)
 
-set(LEVELDB_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
-set(CRYPTOPP_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+#===================GoogleTest=========================
 
 include(FetchContent)
 FetchContent_Declare(
@@ -15,12 +13,25 @@ FetchContent_Declare(
   GIT_TAG v1.15.2
 )
 
+FetchContent_MakeAvailable(googletest)
+
+#=====================LevelDB===========================
+
+set(LEVELDB_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
     leveldb
     GIT_REPOSITORY https://github.com/google/leveldb.git
     GIT_TAG 1.23
     OVERRIDE_FIND_PACKAGE
 )
+
+FetchContent_MakeAvailable(leveldb)
+
+#=====================Cryptopp===========================
+
+set(CRYPTOPP_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
     cryptopp-cmake
@@ -29,23 +40,16 @@ FetchContent_Declare(
     OVERRIDE_FIND_PACKAGE
 )
 
-FetchContent_MakeAvailable(cryptopp-cmake leveldb googletest)
+FetchContent_MakeAvailable(cryptopp-cmake )
+
+#======================General============================
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(
     include
-    include/crypto
-    include/net
-    include/db
-    include/serialization
-    
-    src
-    src/db
-    src/crypto
-    src/net
-    )
+)
 
 set(SRCS
     src/Wallet.cpp
@@ -100,26 +104,22 @@ add_compile_options(
     -Wextra
     )
 
+#======================libcoin============================
 
-#===========LIBRARY=================
-add_library(coin STATIC ${SRCS} ${HEADERS})
+add_library(libcoin STATIC ${SRCS} ${HEADERS})
+target_include_directories(libcoin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(libcoin PUBLIC leveldb cryptopp)
 
-target_include_directories(coin PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
+#=======================coin==============================
 
-target_link_libraries(coin PUBLIC leveldb cryptopp)
+add_executable(coin main.cpp)
+target_link_libraries(coin PRIVATE libcoin)
 
-#=============COIN==================
-add_executable(main main.cpp)
-target_link_libraries(main PRIVATE coin)
+#=======================tests==============================
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests)
 enable_testing()
 include(GoogleTest)
-
-#=============TESTS=================
 
 set(ALL_TESTS
     "hash_test"           "test/hash_test.cpp"
@@ -136,7 +136,7 @@ while(ALL_TESTS)
 
     add_executable(${TEST_NAME} ${TEST_SOURCE})
     
-    target_link_libraries(${TEST_NAME} PRIVATE coin GTest::gtest_main)
+    target_link_libraries(${TEST_NAME} PRIVATE libcoin GTest::gtest_main)
     
     gtest_discover_tests(${TEST_NAME})
     

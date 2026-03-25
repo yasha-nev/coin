@@ -1,5 +1,4 @@
-#ifndef TXInput_hpp
-#define TXInput_hpp
+#pragma once
 
 #include "serialization/ByteReader.hpp"
 #include "serialization/ByteWriter.hpp"
@@ -112,5 +111,3 @@ private:
 
     std::string m_sign; /*!< цифровая подпись */
 };
-
-#endif

@@ -19,9 +19,9 @@ protected:
 
 TEST_F(BlockTest, ProofOfWorkValidation) {
     Block block = createTestBlock();
-    CryptoppImpl cryptor;
+    auto cryptor = crypto::createCryptoppImpl();
 
-    std::string hashStr = cryptor.sha256HashToString(block.getHash());
+    std::string hashStr = cryptor->sha256HashToString(block.getHash());
 
     EXPECT_EQ(hashStr, "0000a50fa6922fdf263171c43e8cb925e0af6a855195b3db29b404b1b7cb851c");
 

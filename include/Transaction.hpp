@@ -1,9 +1,8 @@
-#ifndef Transaction_hpp
-#define Transaction_hpp
+#pragma once
 
 #include "TXInput.hpp"
 #include "TXOutput.hpp"
-#include "crypto/CryptoppImpl.hpp"
+#include "crypto/ICrypto.hpp"
 #include "serialization/ByteReader.hpp"
 #include "serialization/ByteWriter.hpp"
 #include "serialization/Serializer.hpp"
@@ -105,5 +104,3 @@ public:
 
     static Transaction createCoinBase(const uint64_t& id, const std::string& address);
 };
-
-#endif /* Transaction_hpp */

@@ -1,4 +1,4 @@
-#include "privatekey.hpp"
+#include "crypto/privatekey.hpp"
 
 PrivateKey::PrivateKey(long _d, long _n) {
     d = _d;

@@ -1,5 +1,4 @@
-#ifndef TXOutput_hpp
-#define TXOutput_hpp
+#pragma once
 
 #include "serialization/ByteReader.hpp"
 #include "serialization/ByteWriter.hpp"
@@ -88,5 +87,3 @@ private:
 
     std::string m_address; /*!< адрес кошелька */
 };
-
-#endif

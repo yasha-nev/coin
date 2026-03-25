@@ -1,5 +1,4 @@
-#ifndef rsa_hpp
-#define rsa_hpp
+#pragma once
 
 #include "privatekey.hpp"
 #include "publickey.hpp"
@@ -56,5 +55,3 @@ private:
     */
     void createKeys();
 };
-
-#endif /* rsa_hpp */

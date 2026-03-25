@@ -1,5 +1,4 @@
-#ifndef IDATABASE_hpp
-#define IDATABASE_hpp
+#pragma once
 
 #include "Block.hpp"
 
@@ -22,5 +21,3 @@ public:
 
     virtual std::optional<Block> getBlockByHash(const Hash& hash) = 0;
 };
-
-#endif

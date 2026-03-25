@@ -1,4 +1,4 @@
-#include "base58.hpp"
+#include "crypto/base58.hpp"
 
 const char* const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const signed char ALPHABET_MAP[256] = {

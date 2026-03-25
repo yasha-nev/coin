@@ -1,5 +1,4 @@
-#ifndef ByteWriter_hpp
-#define ByteWriter_hpp
+#pragma once
 
 #include <cassert>
 #include <cstddef>
@@ -50,5 +49,3 @@ inline std::span<const std::byte> as_bytes(const std::vector<T>& arr)
 {
     return std::as_bytes(std::span(arr));
 }
-
-#endif

@@ -1,4 +1,4 @@
-#include "publickey.hpp"
+#include "crypto/publickey.hpp"
 
 PublicKey::PublicKey(long _e, long _n) {
     e = _e;

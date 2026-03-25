@@ -1,10 +1,8 @@
+#pragma once
 
-#ifndef Hash_hpp
-#define Hash_hpp
-
-#include "ByteReader.hpp"
-#include "ByteWriter.hpp"
-#include "Serializer.hpp"
+#include "serialization/ByteReader.hpp"
+#include "serialization/ByteWriter.hpp"
+#include "serialization/Serializer.hpp"
 
 #include <inttypes.h>
 #include <vector>
@@ -55,5 +53,3 @@ private:
 Hash createZeroHash();
 
 bool checkZeroHash(const Hash& hash);
-
-#endif

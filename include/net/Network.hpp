@@ -1,6 +1,5 @@
 
-#ifndef Network_hpp
-#define Network_hpp
+#pragma once
 
 #include "BlockChain.hpp"
 #include "Message.hpp"
@@ -99,5 +98,3 @@ private:
 
     std::mutex m_mtx;
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef Client_hpp
-#define Client_hpp
+#pragma once
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -67,5 +66,3 @@ private:
 
     struct sockaddr_in m_cliaddr; /*!< unix адрес*/
 };
-
-#endif

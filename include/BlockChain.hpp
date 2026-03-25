@@ -1,10 +1,10 @@
-#ifndef BlockChain_hpp
-#define BlockChain_hpp
+#pragma once
 
 #include "Block.hpp"
-#include "IDataBase.hpp"
+#include "db/IDataBase.hpp"
 
 #include <array>
+#include <filesystem>
 #include <list>
 #include <memory>
 #include <optional>
@@ -109,12 +109,3 @@ private:
 
     std::unique_ptr<IDataBase> m_db; /*!< dao базы данных*/
 };
-
-/*!
- \brief Проверка файла на существования
- \param [in] path - Путь к файлу
- \return результат поиска
-*/
-bool file_exist(const std::string& path);
-
-#endif

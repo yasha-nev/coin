@@ -1,7 +1,7 @@
 #include "BlockChain.hpp"
-#include "LeveldbDataBase.hpp"
+#include "db/LeveldbDataBase.hpp"
 #include "Mainer.hpp"
-#include "Message.hpp"
+#include "net/Message.hpp"
 #include "Wallet.hpp"
 
 void CLI(BlockChain& bc, Wallet wallet, Network& net) {

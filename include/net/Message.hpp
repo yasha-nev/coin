@@ -1,14 +1,13 @@
-#ifndef Message_hpp
-#define Message_hpp
+#pragma once
 
 #define STARTSTR "f9beb4d9"
 
 #include "Block.hpp"
-#include "ByteReader.hpp"
-#include "ByteWriter.hpp"
-#include "CryptoppImpl.hpp"
-#include "Hash.hpp"
-#include "Serializer.hpp"
+#include "crypto/Hash.hpp"
+#include "crypto/ICrypto.hpp"
+#include "serialization/ByteReader.hpp"
+#include "serialization/ByteWriter.hpp"
+#include "serialization/Serializer.hpp"
 
 #include <array>
 #include <inttypes.h>
@@ -365,5 +364,3 @@ public:
      */
     virtual void print() const noexcept override;
 };
-
-#endif

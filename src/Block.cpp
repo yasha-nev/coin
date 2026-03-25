@@ -102,13 +102,13 @@ void Block::decode(ByteReader& byteReader) {
 }
 
 void Block::print() const noexcept {
-    CryptoppImpl cryptor;
+    auto cryptor = crypto::createCryptoppImpl();
     std::cout << std::setfill('=') << std::setw(40) << "BLOCK" << std::setfill('=') << std::setw(40)
               << "\n";
     std::cout << "|time: " << m_timeStamp << "\n";
     std::cout << "|Nonce: " << m_nonce << "\n";
-    std::cout << "|Hash: " << cryptor.sha256HashToString(m_hash) << "\n";
-    std::cout << "|PrevHash: " << cryptor.sha256HashToString(m_prevBlockHash) << "\n";
+    std::cout << "|Hash: " << cryptor->sha256HashToString(m_hash) << "\n";
+    std::cout << "|PrevHash: " << cryptor->sha256HashToString(m_prevBlockHash) << "\n";
 
     for(const auto& tx: m_tx) {
         tx.print();
@@ -123,13 +123,13 @@ ProofOfWork::ProofOfWork(Block& block):
 
 std::string ProofOfWork::PrepareData() {
     std::string data;
-    CryptoppImpl cryptor;
+    auto cryptor = crypto::createCryptoppImpl();
     data += std::to_string(m_block.getTimeStamp());
 
     for(const auto& tx: m_block.getTransactions()) {
         data += tx.toString();
     }
-    data += cryptor.sha256HashToString(m_block.getPrevBlockHash());
+    data += cryptor->sha256HashToString(m_block.getPrevBlockHash());
     data += std::to_string(m_nonce);
     return data;
 }
@@ -137,12 +137,12 @@ std::string ProofOfWork::PrepareData() {
 void ProofOfWork::Run() {
     m_nonce = 0;
     Hash hash;
-    CryptoppImpl Crypto;
+    auto cryptor = crypto::createCryptoppImpl();
     std::cout << "==============Block Hashing==============\n";
     while(m_nonce < MAXNONCE) {
         std::string data = PrepareData();
 
-        hash = Crypto.sha256Hash(data);
+        hash = cryptor->sha256Hash(data);
 
         if(m_nonce % 100000 == 0) {
             std::cout << ">";

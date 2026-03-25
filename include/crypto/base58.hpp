@@ -1,5 +1,4 @@
-#ifndef base58_hpp
-#define base58_hpp
+#pragma once
 
 #include <string>
 
@@ -16,5 +15,3 @@ std::string EncodeBase58(const std::string& source);
  \return Декодированная строка
 */
 std::string DecodeBase58(const std::string& str);
-
-#endif /* base58_hpp */

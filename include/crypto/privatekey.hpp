@@ -1,5 +1,4 @@
-#ifndef privatekey_hpp
-#define privatekey_hpp
+#pragma once
 
 #include "base58.hpp"
 
@@ -83,5 +82,3 @@ private:
     */
     long decodeNum(long c);
 };
-
-#endif /* privatekey_hpp */

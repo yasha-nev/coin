@@ -1,13 +1,12 @@
-#ifndef Mainer_hpp
-#define Mainer_hpp
+#pragma once
 
 #include "BlockChain.hpp"
-#include "Network.hpp"
-#include "RSACryptor.hpp"
 #include "Transaction.hpp"
 #include "Wallet.hpp"
-#include "privatekey.hpp"
-#include "publickey.hpp"
+#include "crypto/RSACryptor.hpp"
+#include "crypto/privatekey.hpp"
+#include "crypto/publickey.hpp"
+#include "net/Network.hpp"
 
 /*!
     \brief Майнер
@@ -40,5 +39,3 @@ private:
 
     std::mutex m_mtx; /*!< Управления данными в потоке */
 };
-
-#endif /* Mainer_hpp */

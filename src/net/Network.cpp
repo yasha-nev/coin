@@ -1,4 +1,4 @@
-#include "Network.hpp"
+#include "net/Network.hpp"
 
 using namespace std::literals::chrono_literals;
 

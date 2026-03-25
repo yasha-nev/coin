@@ -3,7 +3,7 @@
 Wallet::Wallet(BlockChain& bc, Network& net):
     m_bc(bc),
     m_net(net) {
-    if(!file_exist("./priv.rem") || !file_exist("./pub.rem")) {
+    if(!std::filesystem::exists("./priv.rem") || !std::filesystem::exists("./pub.rem")) {
         RSACryptor rsa;
         m_pubkey = PublicKey(*rsa.getPublicKey());
         m_privkey = PrivateKey(*rsa.getPrivateKey());

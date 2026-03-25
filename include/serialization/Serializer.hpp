@@ -1,6 +1,4 @@
-#ifndef Serializer_hpp
-#define Serializer_hpp
-
+#pragma once
 #include "ByteReader.hpp"
 #include "ByteWriter.hpp"
 
@@ -15,5 +13,3 @@ public:
 
     virtual void decode(ByteReader& reader) = 0;
 };
-
-#endif
